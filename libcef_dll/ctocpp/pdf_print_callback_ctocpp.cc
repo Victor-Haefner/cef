@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,16 +9,19 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=4441f1255165e1ac0b3f0b5a373d06e8fed3e800$
+// $hash=0b9a4766622f15290ae7328c08f1b28eb2d2275d$
 //
 
 #include "libcef_dll/ctocpp/pdf_print_callback_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall")
 void CefPdfPrintCallbackCToCpp::OnPdfPrintFinished(const CefString& path,
                                                    bool ok) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_pdf_print_callback_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_pdf_print_finished))
     return;
@@ -38,6 +41,12 @@ void CefPdfPrintCallbackCToCpp::OnPdfPrintFinished(const CefString& path,
 
 CefPdfPrintCallbackCToCpp::CefPdfPrintCallbackCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefPdfPrintCallbackCToCpp::~CefPdfPrintCallbackCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_pdf_print_callback_t* CefCToCppRefCounted<
     CefPdfPrintCallbackCToCpp,
@@ -45,16 +54,8 @@ cef_pdf_print_callback_t* CefCToCppRefCounted<
     cef_pdf_print_callback_t>::UnwrapDerived(CefWrapperType type,
                                              CefPdfPrintCallback* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefPdfPrintCallbackCToCpp,
-                                         CefPdfPrintCallback,
-                                         cef_pdf_print_callback_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefPdfPrintCallbackCToCpp,

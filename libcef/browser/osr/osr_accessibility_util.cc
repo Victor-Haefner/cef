@@ -9,6 +9,7 @@
 #include <utility>
 
 #include "base/json/string_escape.h"
+#include "base/stl_util.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/stringprintf.h"
 #include "content/public/browser/ax_event_notification_details.h"
@@ -102,21 +103,22 @@ struct PopulateAxNodeAttributes {
       case ax::mojom::IntAttribute::kActivedescendantId:
       case ax::mojom::IntAttribute::kInPageLinkTargetId:
       case ax::mojom::IntAttribute::kErrormessageId:
-      case ax::mojom::IntAttribute::kDetailsId:
+      case ax::mojom::IntAttribute::kDOMNodeId:
+      case ax::mojom::IntAttribute::kDropeffect:
       case ax::mojom::IntAttribute::kMemberOfId:
       case ax::mojom::IntAttribute::kNextFocusId:
       case ax::mojom::IntAttribute::kNextOnLineId:
       case ax::mojom::IntAttribute::kPreviousFocusId:
       case ax::mojom::IntAttribute::kPreviousOnLineId:
-      case ax::mojom::IntAttribute::kChildTreeId:
       case ax::mojom::IntAttribute::kSetSize:
       case ax::mojom::IntAttribute::kPosInSet:
+      case ax::mojom::IntAttribute::kPopupForId:
         attributes->SetInt(ToString(attr.first), attr.second);
         break;
       case ax::mojom::IntAttribute::kDefaultActionVerb:
         attributes->SetString(
             ToString(attr.first),
-            ui::ActionVerbToUnlocalizedString(
+            ui::ToString(
                 static_cast<ax::mojom::DefaultActionVerb>(attr.second)));
         break;
       case ax::mojom::IntAttribute::kInvalidState: {
@@ -136,6 +138,12 @@ struct PopulateAxNodeAttributes {
             ToString(attr.first),
             ToString(static_cast<ax::mojom::Restriction>(attr.second)));
         break;
+      case ax::mojom::IntAttribute::kListStyle: {
+        auto state = static_cast<ax::mojom::ListStyle>(attr.second);
+        if (ax::mojom::ListStyle::kNone != state) {
+          attributes->SetString(ToString(attr.first), ToString(state));
+        }
+      } break;
       case ax::mojom::IntAttribute::kSortDirection: {
         auto state = static_cast<ax::mojom::SortDirection>(attr.second);
         if (ax::mojom::SortDirection::kNone != state) {
@@ -177,24 +185,34 @@ struct PopulateAxNodeAttributes {
         }
       } break;
       case ax::mojom::IntAttribute::kTextStyle: {
-        auto text_style = static_cast<ax::mojom::TextStyle>(attr.second);
-        if (text_style == ax::mojom::TextStyle::kNone)
-          break;
-
         static ax::mojom::TextStyle textStyleArr[] = {
-            ax::mojom::TextStyle::kTextStyleBold,
-            ax::mojom::TextStyle::kTextStyleItalic,
-            ax::mojom::TextStyle::kTextStyleUnderline,
-            ax::mojom::TextStyle::kTextStyleLineThrough};
+            ax::mojom::TextStyle::kBold, ax::mojom::TextStyle::kItalic,
+            ax::mojom::TextStyle::kUnderline,
+            ax::mojom::TextStyle::kLineThrough,
+            ax::mojom::TextStyle::kOverline};
 
         CefRefPtr<CefListValue> list = CefListValue::Create();
         int index = 0;
         // Iterate and find which states are set.
-        for (unsigned i = 0; i < arraysize(textStyleArr); i++) {
+        for (unsigned i = 0; i < base::size(textStyleArr); i++) {
           if (attr.second & static_cast<int>(textStyleArr[i]))
             list->SetString(index++, ToString(textStyleArr[i]));
         }
         attributes->SetList(ToString(attr.first), list);
+      } break;
+      case ax::mojom::IntAttribute::kTextOverlineStyle:
+      case ax::mojom::IntAttribute::kTextStrikethroughStyle:
+      case ax::mojom::IntAttribute::kTextUnderlineStyle: {
+        auto state = static_cast<ax::mojom::TextDecorationStyle>(attr.second);
+        if (ax::mojom::TextDecorationStyle::kNone != state) {
+          attributes->SetString(ToString(attr.first), ToString(state));
+        }
+      } break;
+      case ax::mojom::IntAttribute::kAriaCellColumnSpan:
+      case ax::mojom::IntAttribute::kAriaCellRowSpan:
+      case ax::mojom::IntAttribute::kImageAnnotationStatus: {
+        // TODO(cef): Implement support for Image Annotation Status,
+        // kAriaCellColumnSpan and kAriaCellRowSpan
       } break;
     }
   }
@@ -236,7 +254,7 @@ struct PopulateAxNodeAttributes {
               ax::mojom::MarkerType::kTextMatch};
 
           // Iterate and find which markers are set.
-          for (unsigned j = 0; j < arraysize(marktypeArr); j++) {
+          for (unsigned j = 0; j < base::size(marktypeArr); j++) {
             if (attr.second[i] & static_cast<int>(marktypeArr[j]))
               list->SetString(index++, ToString(marktypeArr[j]));
           }
@@ -259,18 +277,23 @@ CefRefPtr<CefDictionaryValue> ToCefValue(const ui::AXNodeData& node) {
   value->SetString("role", ToString(node.role));
   value->SetList("state", ToCefValue(node.state));
 
-  if (node.offset_container_id != -1)
-    value->SetInt("offset_container_id", node.offset_container_id);
+  if (node.relative_bounds.offset_container_id != -1) {
+    value->SetInt("offset_container_id",
+                  node.relative_bounds.offset_container_id);
+  }
 
-  value->SetDictionary("location", ToCefValue(node.location));
+  value->SetDictionary("location", ToCefValue(node.relative_bounds.bounds));
 
   // Transform matrix is private, so we set the string that Clients can parse
   // and use if needed.
-  if (node.transform && !node.transform->IsIdentity())
-    value->SetString("transform", node.transform->ToString());
+  if (node.relative_bounds.transform &&
+      !node.relative_bounds.transform->IsIdentity()) {
+    value->SetString("transform", node.relative_bounds.transform->ToString());
+  }
 
-  if (!node.child_ids.empty())
+  if (!node.child_ids.empty()) {
     value->SetList("child_ids", ToCefValue(node.child_ids));
+  }
 
   CefRefPtr<CefListValue> actions_strings;
   size_t actions_idx = 0;
@@ -317,14 +340,14 @@ CefRefPtr<CefDictionaryValue> ToCefValue(const ui::AXNodeData& node) {
 CefRefPtr<CefDictionaryValue> ToCefValue(const ui::AXTreeData& treeData) {
   CefRefPtr<CefDictionaryValue> value = CefDictionaryValue::Create();
 
-  if (treeData.tree_id != -1)
-    value->SetInt("tree_id", treeData.tree_id);
+  if (!treeData.tree_id.ToString().empty())
+    value->SetString("tree_id", treeData.tree_id.ToString());
 
-  if (treeData.parent_tree_id != -1)
-    value->SetInt("parent_tree_id", treeData.parent_tree_id);
+  if (!treeData.parent_tree_id.ToString().empty())
+    value->SetString("parent_tree_id", treeData.parent_tree_id.ToString());
 
-  if (treeData.focused_tree_id != -1)
-    value->SetInt("focused_tree_id", treeData.focused_tree_id);
+  if (!treeData.focused_tree_id.ToString().empty())
+    value->SetString("focused_tree_id", treeData.focused_tree_id.ToString());
 
   if (!treeData.doctype.empty())
     value->SetString("doctype", treeData.doctype);
@@ -404,8 +427,8 @@ CefRefPtr<CefDictionaryValue> ToCefValue(
     const content::AXEventNotificationDetails& eventData) {
   CefRefPtr<CefDictionaryValue> value = CefDictionaryValue::Create();
 
-  if (eventData.ax_tree_id != -1)
-    value->SetInt("ax_tree_id", eventData.ax_tree_id);
+  if (!eventData.ax_tree_id.ToString().empty())
+    value->SetString("ax_tree_id", eventData.ax_tree_id.ToString());
 
   if (eventData.updates.size() > 0) {
     CefRefPtr<CefListValue> updates = CefListValue::Create();
@@ -456,8 +479,8 @@ CefRefPtr<CefDictionaryValue> ToCefValue(
   if (locData.id != -1)
     value->SetInt("id", locData.id);
 
-  if (locData.ax_tree_id != -1)
-    value->SetInt("ax_tree_id", locData.ax_tree_id);
+  if (!locData.ax_tree_id.ToString().empty())
+    value->SetString("ax_tree_id", locData.ax_tree_id.ToString());
 
   value->SetDictionary("new_location", ToCefValue(locData.new_location));
 

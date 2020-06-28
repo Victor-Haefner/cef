@@ -16,15 +16,14 @@
 #include "libcef/renderer/browser_impl.h"
 
 #include "base/compiler_specific.h"
-#include "base/message_loop/message_loop.h"
+#include "base/message_loop/message_loop_current.h"
+#include "base/optional.h"
 #include "base/sequenced_task_runner.h"
 #include "chrome/common/plugin.mojom.h"
 #include "content/public/renderer/content_renderer_client.h"
 #include "content/public/renderer/render_thread.h"
-#include "services/service_manager/public/cpp/binder_registry.h"
-#include "services/service_manager/public/cpp/connector.h"
+#include "mojo/public/cpp/bindings/generic_pending_receiver.h"
 #include "services/service_manager/public/cpp/local_interface_provider.h"
-#include "services/service_manager/public/cpp/service.h"
 
 namespace blink {
 class WebURLLoaderFactory;
@@ -40,6 +39,10 @@ class ExtensionsRendererClient;
 class ResourceRequestPolicy;
 }  // namespace extensions
 
+namespace visitedlink {
+class VisitedLinkReader;
+}
+
 namespace web_cache {
 class WebCacheImpl;
 }
@@ -50,10 +53,10 @@ struct Cef_CrossOriginWhiteListEntry_Params;
 class ChromePDFPrintClient;
 class SpellCheck;
 
-class CefContentRendererClient : public content::ContentRendererClient,
-                                 public service_manager::Service,
-                                 public service_manager::LocalInterfaceProvider,
-                                 public base::MessageLoop::DestructionObserver {
+class CefContentRendererClient
+    : public content::ContentRendererClient,
+      public service_manager::LocalInterfaceProvider,
+      public base::MessageLoopCurrent::DestructionObserver {
  public:
   CefContentRendererClient();
   ~CefContentRendererClient() override;
@@ -70,8 +73,8 @@ class CefContentRendererClient : public content::ContentRendererClient,
   // Called from CefBrowserImpl::OnDestruct().
   void OnBrowserDestroyed(CefBrowserImpl* browser);
 
-  // Returns true if a guest view associated with the specified RenderView.
-  bool HasGuestViewForView(content::RenderView* view);
+  // Returns the guest view associated with the specified RenderView if any.
+  CefGuestView* GetGuestViewForView(content::RenderView* view);
 
   // Called from CefGuestView::OnDestruct().
   void OnGuestViewDestroyed(CefGuestView* guest_view);
@@ -85,10 +88,9 @@ class CefContentRendererClient : public content::ContentRendererClient,
     return uncaught_exception_stack_size_;
   }
 
-  // Used by CefRenderURLRequest to create WebURLLoaders.
-  blink::WebURLLoaderFactory* url_loader_factory() const {
-    return url_loader_factory_.get();
-  }
+  // Returns a factory that only supports unintercepted http(s) and blob
+  // requests. Used by CefRenderURLRequest.
+  blink::WebURLLoaderFactory* GetDefaultURLLoaderFactory();
 
   void WebKitInitialized();
 
@@ -102,27 +104,26 @@ class CefContentRendererClient : public content::ContentRendererClient,
 
   // ContentRendererClient implementation.
   void RenderThreadStarted() override;
+  void ExposeInterfacesToBrowser(mojo::BinderMap* binders) override;
   void RenderThreadConnected() override;
   void RenderFrameCreated(content::RenderFrame* render_frame) override;
   void RenderViewCreated(content::RenderView* render_view) override;
+  bool IsPluginHandledExternally(content::RenderFrame* render_frame,
+                                 const blink::WebElement& plugin_element,
+                                 const GURL& original_url,
+                                 const std::string& mime_type) override;
   bool OverrideCreatePlugin(content::RenderFrame* render_frame,
                             const blink::WebPluginParams& params,
                             blink::WebPlugin** plugin) override;
-  bool ShouldFork(blink::WebLocalFrame* frame,
-                  const GURL& url,
-                  const std::string& http_method,
-                  bool is_initial_navigation,
-                  bool is_server_redirect,
-                  bool* send_referrer) override;
   void WillSendRequest(blink::WebLocalFrame* frame,
                        ui::PageTransition transition_type,
                        const blink::WebURL& url,
+                       const net::SiteForCookies& site_for_cookies,
                        const url::Origin* initiator_origin,
                        GURL* new_url,
                        bool* attach_same_site_cookies) override;
-  unsigned long long VisitedLinkHash(const char* canonical_url,
-                                     size_t length) override;
-  bool IsLinkVisited(unsigned long long link_hash) override;
+  uint64_t VisitedLinkHash(const char* canonical_url, size_t length) override;
+  bool IsLinkVisited(uint64_t link_hash) override;
   bool IsOriginIsolatedPepperPlugin(const base::FilePath& plugin_path) override;
   content::BrowserPluginDelegate* CreateBrowserPluginDelegate(
       content::RenderFrame* render_frame,
@@ -137,30 +138,28 @@ class CefContentRendererClient : public content::ContentRendererClient,
   void RunScriptsAtDocumentIdle(content::RenderFrame* render_frame) override;
   void DevToolsAgentAttached() override;
   void DevToolsAgentDetached() override;
-  void CreateRendererService(
-      service_manager::mojom::ServiceRequest service_request) override;
-
-  // service_manager::Service implementation.
-  void OnStart() override;
-  void OnBindInterface(const service_manager::BindSourceInfo& remote_info,
-                       const std::string& name,
-                       mojo::ScopedMessagePipeHandle handle) override;
+  std::unique_ptr<content::URLLoaderThrottleProvider>
+  CreateURLLoaderThrottleProvider(
+      content::URLLoaderThrottleProviderType provider_type) override;
+  bool RequiresWebComponentsV0(const GURL& url) override;
 
   // service_manager::LocalInterfaceProvider implementation.
   void GetInterface(const std::string& name,
                     mojo::ScopedMessagePipeHandle request_handle) override;
 
-  // MessageLoop::DestructionObserver implementation.
+  // MessageLoopCurrent::DestructionObserver implementation.
   void WillDestroyCurrentMessageLoop() override;
 
  private:
-  void BrowserCreated(content::RenderView* render_view,
-                      content::RenderFrame* render_frame);
+  // Maybe create a new browser object, return the existing one, or return
+  // nullptr for guest views.
+  CefRefPtr<CefBrowserImpl> MaybeCreateBrowser(
+      content::RenderView* render_view,
+      content::RenderFrame* render_frame,
+      base::Optional<bool>* is_windowless);
 
   // Perform cleanup work for single-process mode.
   void RunSingleProcessCleanupOnUIThread();
-
-  service_manager::Connector* GetConnector();
 
   // Time at which this object was created. This is very close to the time at
   // which the RendererMain function was entered.
@@ -170,7 +169,9 @@ class CefContentRendererClient : public content::ContentRendererClient,
   std::unique_ptr<CefRenderThreadObserver> observer_;
   std::unique_ptr<web_cache::WebCacheImpl> web_cache_impl_;
   std::unique_ptr<SpellCheck> spellcheck_;
-  std::unique_ptr<blink::WebURLLoaderFactory> url_loader_factory_;
+  std::unique_ptr<visitedlink::VisitedLinkReader> visited_link_slave_;
+
+  std::unique_ptr<blink::WebURLLoaderFactory> default_url_loader_factory_;
 
   // Map of RenderView pointers to CefBrowserImpl references.
   typedef std::map<content::RenderView*, CefRefPtr<CefBrowserImpl>> BrowserMap;
@@ -198,11 +199,6 @@ class CefContentRendererClient : public content::ContentRendererClient,
   // Access must be protected by |single_process_cleanup_lock_|.
   bool single_process_cleanup_complete_;
   base::Lock single_process_cleanup_lock_;
-
-  std::unique_ptr<service_manager::Connector> connector_;
-  service_manager::mojom::ConnectorRequest connector_request_;
-  std::unique_ptr<service_manager::ServiceContext> service_context_;
-  service_manager::BinderRegistry registry_;
 
   DISALLOW_COPY_AND_ASSIGN(CefContentRendererClient);
 };

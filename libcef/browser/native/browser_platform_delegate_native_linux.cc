@@ -10,21 +10,25 @@
 #include "libcef/browser/context.h"
 #include "libcef/browser/native/menu_runner_linux.h"
 #include "libcef/browser/native/window_delegate_view.h"
-#include "libcef/browser/native/window_x11.h"
 #include "libcef/browser/thread_util.h"
 
+#include "base/no_destructor.h"
 #include "content/browser/renderer_host/render_widget_host_impl.h"
 #include "content/public/browser/native_web_keyboard_event.h"
 #include "content/public/browser/render_view_host.h"
-#include "content/public/common/renderer_preferences.h"
+#include "third_party/blink/public/mojom/renderer_preferences.mojom.h"
 #include "ui/events/keycodes/dom/dom_key.h"
 #include "ui/events/keycodes/dom/keycode_converter.h"
 #include "ui/events/keycodes/keyboard_code_conversion_x.h"
 #include "ui/events/keycodes/keyboard_code_conversion_xkb.h"
 #include "ui/events/keycodes/keysym_to_unicode.h"
 #include "ui/gfx/font_render_params.h"
-#include "ui/views/widget/desktop_aura/desktop_window_tree_host_x11.h"
 #include "ui/views/widget/widget.h"
+
+#if defined(USE_X11)
+#include "libcef/browser/native/window_x11.h"
+#include "ui/views/widget/desktop_aura/desktop_window_tree_host_x11.h"
+#endif
 
 namespace {
 
@@ -40,11 +44,14 @@ long GetSystemUptime() {
 
 CefBrowserPlatformDelegateNativeLinux::CefBrowserPlatformDelegateNativeLinux(
     const CefWindowInfo& window_info,
-    SkColor background_color)
-    : CefBrowserPlatformDelegateNative(window_info, background_color),
+    SkColor background_color,
+    bool use_external_begin_frame)
+    : CefBrowserPlatformDelegateNativeAura(window_info,
+                                           background_color,
+                                           false,
+                                           use_external_begin_frame),
       host_window_created_(false),
-      window_widget_(nullptr),
-      window_x11_(nullptr) {}
+      window_widget_(nullptr) {}
 
 void CefBrowserPlatformDelegateNativeLinux::BrowserDestroyed(
     CefBrowserHostImpl* browser) {
@@ -57,7 +64,6 @@ void CefBrowserPlatformDelegateNativeLinux::BrowserDestroyed(
 }
 
 bool CefBrowserPlatformDelegateNativeLinux::CreateHostWindow() {
-  DCHECK(!window_x11_);
   DCHECK(!window_widget_);
 
   if (window_info_.width == 0)
@@ -68,9 +74,13 @@ bool CefBrowserPlatformDelegateNativeLinux::CreateHostWindow() {
   gfx::Rect rect(window_info_.x, window_info_.y, window_info_.width,
                  window_info_.height);
 
+#if defined(USE_X11)
+  DCHECK(!window_x11_);
   // Create a new window object. It will delete itself when the associated X11
   // window is destroyed.
-  window_x11_ = new CefWindowX11(browser_, window_info_.parent_window, rect);
+  window_x11_ =
+      new CefWindowX11(browser_, window_info_.parent_window, rect,
+                       CefString(&window_info_.window_name).ToString());
   window_info_.window = window_x11_->xwindow();
 
   host_window_created_ = true;
@@ -78,8 +88,9 @@ bool CefBrowserPlatformDelegateNativeLinux::CreateHostWindow() {
   // Add a reference that will be released in BrowserDestroyed().
   browser_->AddRef();
 
-  CefWindowDelegateView* delegate_view =
-      new CefWindowDelegateView(GetBackgroundColor());
+  CefWindowDelegateView* delegate_view = new CefWindowDelegateView(
+      GetBackgroundColor(), window_x11_->TopLevelAlwaysOnTop(),
+      GetBoundsChangedCallback());
   delegate_view->Init(window_info_.window, browser_->web_contents(),
                       gfx::Rect(gfx::Point(), rect.size()));
 
@@ -87,15 +98,13 @@ bool CefBrowserPlatformDelegateNativeLinux::CreateHostWindow() {
   window_widget_->Show();
 
   window_x11_->Show();
+#endif  // defined(USE_X11)
 
   // As an additional requirement on Linux, we must set the colors for the
   // render widgets in webkit.
-  content::RendererPreferences* prefs =
+  blink::mojom::RendererPreferences* prefs =
       browser_->web_contents()->GetMutableRendererPrefs();
   prefs->focus_ring_color = SkColorSetARGB(255, 229, 151, 0);
-  prefs->thumb_active_color = SkColorSetRGB(244, 244, 244);
-  prefs->thumb_inactive_color = SkColorSetRGB(234, 234, 234);
-  prefs->track_color = SkColorSetRGB(211, 211, 211);
 
   prefs->active_selection_bg_color = SkColorSetRGB(30, 144, 255);
   prefs->active_selection_fg_color = SK_ColorWHITE;
@@ -103,24 +112,25 @@ bool CefBrowserPlatformDelegateNativeLinux::CreateHostWindow() {
   prefs->inactive_selection_fg_color = SkColorSetRGB(50, 50, 50);
 
   // Set font-related attributes.
-  CR_DEFINE_STATIC_LOCAL(
-      const gfx::FontRenderParams, params,
-      (gfx::GetFontRenderParams(gfx::FontRenderParamsQuery(), NULL)));
-  prefs->should_antialias_text = params.antialiasing;
-  prefs->use_subpixel_positioning = params.subpixel_positioning;
-  prefs->hinting = params.hinting;
-  prefs->use_autohinter = params.autohinter;
-  prefs->use_bitmaps = params.use_bitmaps;
-  prefs->subpixel_rendering = params.subpixel_rendering;
+  static const base::NoDestructor<gfx::FontRenderParams> params(
+      gfx::GetFontRenderParams(gfx::FontRenderParamsQuery(), nullptr));
+  prefs->should_antialias_text = params->antialiasing;
+  prefs->use_subpixel_positioning = params->subpixel_positioning;
+  prefs->hinting = params->hinting;
+  prefs->use_autohinter = params->autohinter;
+  prefs->use_bitmaps = params->use_bitmaps;
+  prefs->subpixel_rendering = params->subpixel_rendering;
 
-  browser_->web_contents()->GetRenderViewHost()->SyncRendererPrefs();
+  browser_->web_contents()->SyncRendererPrefs();
 
   return true;
 }
 
 void CefBrowserPlatformDelegateNativeLinux::CloseHostWindow() {
+#if defined(USE_X11)
   if (window_x11_)
     window_x11_->Close();
+#endif
 }
 
 CefWindowHandle CefBrowserPlatformDelegateNativeLinux::GetHostWindowHandle()
@@ -144,18 +154,21 @@ void CefBrowserPlatformDelegateNativeLinux::SendFocusEvent(bool setFocus) {
     browser_->web_contents()->Focus();
   }
 
+#if defined(USE_X11)
   if (window_x11_) {
     // Give native focus to the DesktopNativeWidgetAura for the root window.
     // Needs to be done via the ::Window so that keyboard focus is assigned
     // correctly.
     window_x11_->Focus();
   }
+#endif  // defined(USE_X11)
 }
 
 void CefBrowserPlatformDelegateNativeLinux::NotifyMoveOrResizeStarted() {
   // Call the parent method to dismiss any existing popups.
   CefBrowserPlatformDelegate::NotifyMoveOrResizeStarted();
 
+#if defined(USE_X11)
   if (!window_x11_)
     return;
 
@@ -173,13 +186,16 @@ void CefBrowserPlatformDelegateNativeLinux::NotifyMoveOrResizeStarted() {
   content::RenderWidgetHostImpl::From(
       browser_->web_contents()->GetRenderViewHost()->GetWidget())
       ->SendScreenRects();
+#endif  // defined(USE_X11)
 }
 
 void CefBrowserPlatformDelegateNativeLinux::SizeTo(int width, int height) {
+#if defined(USE_X11)
   if (window_x11_) {
     window_x11_->SetBounds(
         gfx::Rect(window_x11_->bounds().origin(), gfx::Size(width, height)));
   }
+#endif  // defined(USE_X11)
 }
 
 gfx::Point CefBrowserPlatformDelegateNativeLinux::GetScreenPoint(
@@ -187,6 +203,7 @@ gfx::Point CefBrowserPlatformDelegateNativeLinux::GetScreenPoint(
   if (windowless_handler_)
     return windowless_handler_->GetParentScreenPoint(view);
 
+#if defined(USE_X11)
   if (!window_x11_)
     return view;
 
@@ -196,6 +213,8 @@ gfx::Point CefBrowserPlatformDelegateNativeLinux::GetScreenPoint(
   const gfx::Rect& bounds_in_screen = window_x11_->GetBoundsInScreen();
   return gfx::Point(bounds_in_screen.x() + view.x(),
                     bounds_in_screen.y() + view.y());
+#endif  // defined(USE_X11)
+  return gfx::Point();
 }
 
 void CefBrowserPlatformDelegateNativeLinux::ViewText(const std::string& text) {
@@ -228,139 +247,21 @@ void CefBrowserPlatformDelegateNativeLinux::ViewText(const std::string& text) {
   ALLOW_UNUSED_LOCAL(result);
 }
 
-void CefBrowserPlatformDelegateNativeLinux::HandleKeyboardEvent(
+bool CefBrowserPlatformDelegateNativeLinux::HandleKeyboardEvent(
     const content::NativeWebKeyboardEvent& event) {
   // TODO(cef): Is something required here to handle shortcut keys?
+  return false;
 }
 
-void CefBrowserPlatformDelegateNativeLinux::HandleExternalProtocol(
-    const GURL& url) {}
-
-void CefBrowserPlatformDelegateNativeLinux::TranslateKeyEvent(
-    content::NativeWebKeyboardEvent& result,
-    const CefKeyEvent& key_event) const {
-  result.windows_key_code = key_event.windows_key_code;
-  result.native_key_code = key_event.native_key_code;
-  result.is_system_key = key_event.is_system_key ? 1 : 0;
-  switch (key_event.type) {
-    case KEYEVENT_RAWKEYDOWN:
-    case KEYEVENT_KEYDOWN:
-      result.SetType(blink::WebInputEvent::kRawKeyDown);
-      break;
-    case KEYEVENT_KEYUP:
-      result.SetType(blink::WebInputEvent::kKeyUp);
-      break;
-    case KEYEVENT_CHAR:
-      result.SetType(blink::WebInputEvent::kChar);
-      break;
-    default:
-      NOTREACHED();
-  }
-
-  // Populate DOM values that will be passed to JavaScript handlers via
-  // KeyboardEvent.
-  result.dom_code = static_cast<int>(
-      ui::KeycodeConverter::NativeKeycodeToDomCode(key_event.native_key_code));
-  int keysym = ui::XKeysymForWindowsKeyCode(
-      static_cast<ui::KeyboardCode>(key_event.windows_key_code),
-      !!(key_event.modifiers & EVENTFLAG_SHIFT_DOWN));
-  base::char16 ch = ui::GetUnicodeCharacterFromXKeySym(keysym);
-  result.dom_key = static_cast<int>(ui::XKeySymToDomKey(keysym, ch));
-
-  result.text[0] = key_event.character;
-  result.unmodified_text[0] = key_event.unmodified_character;
-
-  result.SetModifiers(result.GetModifiers() |
-                      TranslateModifiers(key_event.modifiers));
-}
-
-void CefBrowserPlatformDelegateNativeLinux::TranslateClickEvent(
-    blink::WebMouseEvent& result,
-    const CefMouseEvent& mouse_event,
-    CefBrowserHost::MouseButtonType type,
-    bool mouseUp,
-    int clickCount) const {
-  TranslateMouseEvent(result, mouse_event);
-
-  switch (type) {
-    case MBT_LEFT:
-      result.SetType(mouseUp ? blink::WebInputEvent::kMouseUp
-                             : blink::WebInputEvent::kMouseDown);
-      result.button = blink::WebMouseEvent::Button::kLeft;
-      break;
-    case MBT_MIDDLE:
-      result.SetType(mouseUp ? blink::WebInputEvent::kMouseUp
-                             : blink::WebInputEvent::kMouseDown);
-      result.button = blink::WebMouseEvent::Button::kMiddle;
-      break;
-    case MBT_RIGHT:
-      result.SetType(mouseUp ? blink::WebInputEvent::kMouseUp
-                             : blink::WebInputEvent::kMouseDown);
-      result.button = blink::WebMouseEvent::Button::kRight;
-      break;
-    default:
-      NOTREACHED();
-  }
-
-  result.click_count = clickCount;
-}
-
-void CefBrowserPlatformDelegateNativeLinux::TranslateMoveEvent(
-    blink::WebMouseEvent& result,
-    const CefMouseEvent& mouse_event,
-    bool mouseLeave) const {
-  TranslateMouseEvent(result, mouse_event);
-
-  if (!mouseLeave) {
-    result.SetType(blink::WebInputEvent::kMouseMove);
-    if (mouse_event.modifiers & EVENTFLAG_LEFT_MOUSE_BUTTON)
-      result.button = blink::WebMouseEvent::Button::kLeft;
-    else if (mouse_event.modifiers & EVENTFLAG_MIDDLE_MOUSE_BUTTON)
-      result.button = blink::WebMouseEvent::Button::kMiddle;
-    else if (mouse_event.modifiers & EVENTFLAG_RIGHT_MOUSE_BUTTON)
-      result.button = blink::WebMouseEvent::Button::kRight;
-    else
-      result.button = blink::WebMouseEvent::Button::kNoButton;
-  } else {
-    result.SetType(blink::WebInputEvent::kMouseLeave);
-    result.button = blink::WebMouseEvent::Button::kNoButton;
-  }
-
-  result.click_count = 0;
-}
-
-void CefBrowserPlatformDelegateNativeLinux::TranslateWheelEvent(
-    blink::WebMouseWheelEvent& result,
-    const CefMouseEvent& mouse_event,
-    int deltaX,
-    int deltaY) const {
-  result = blink::WebMouseWheelEvent();
-  TranslateMouseEvent(result, mouse_event);
-
-  result.SetType(blink::WebInputEvent::kMouseWheel);
-
-  static const double scrollbarPixelsPerGtkTick = 40.0;
-  result.delta_x = deltaX;
-  result.delta_y = deltaY;
-  result.wheel_ticks_x = deltaX / scrollbarPixelsPerGtkTick;
-  result.wheel_ticks_y = deltaY / scrollbarPixelsPerGtkTick;
-  result.has_precise_scrolling_deltas = true;
-
-  if (mouse_event.modifiers & EVENTFLAG_LEFT_MOUSE_BUTTON)
-    result.button = blink::WebMouseEvent::Button::kLeft;
-  else if (mouse_event.modifiers & EVENTFLAG_MIDDLE_MOUSE_BUTTON)
-    result.button = blink::WebMouseEvent::Button::kMiddle;
-  else if (mouse_event.modifiers & EVENTFLAG_RIGHT_MOUSE_BUTTON)
-    result.button = blink::WebMouseEvent::Button::kRight;
-  else
-    result.button = blink::WebMouseEvent::Button::kNoButton;
-}
+// static
+void CefBrowserPlatformDelegate::HandleExternalProtocol(const GURL& url) {}
 
 CefEventHandle CefBrowserPlatformDelegateNativeLinux::GetEventHandle(
     const content::NativeWebKeyboardEvent& event) const {
-  if (!event.os_event)
-    return NULL;
-  return const_cast<CefEventHandle>(event.os_event->native_event());
+  // TODO(cef): We need to return an XEvent* from this method, but
+  // |event.os_event->native_event()| now returns a ui::Event* instead.
+  // See https://crbug.com/965991.
+  return nullptr;
 }
 
 std::unique_ptr<CefMenuRunner>
@@ -368,23 +269,61 @@ CefBrowserPlatformDelegateNativeLinux::CreateMenuRunner() {
   return base::WrapUnique(new CefMenuRunnerLinux);
 }
 
-void CefBrowserPlatformDelegateNativeLinux::TranslateMouseEvent(
-    blink::WebMouseEvent& result,
-    const CefMouseEvent& mouse_event) const {
-  // position
-  result.SetPositionInWidget(mouse_event.x, mouse_event.y);
+gfx::Point CefBrowserPlatformDelegateNativeLinux::GetDialogPosition(
+    const gfx::Size& size) {
+  const gfx::Size& max_size = GetMaximumDialogSize();
+  return gfx::Point((max_size.width() - size.width()) / 2,
+                    (max_size.height() - size.height()) / 2);
+}
 
-  const gfx::Point& screen_pt =
-      GetScreenPoint(gfx::Point(mouse_event.x, mouse_event.y));
-  result.SetPositionInScreen(screen_pt.x(), screen_pt.y());
+gfx::Size CefBrowserPlatformDelegateNativeLinux::GetMaximumDialogSize() {
+  return GetWindowWidget()->GetWindowBoundsInScreen().size();
+}
 
-  // modifiers
-  result.SetModifiers(result.GetModifiers() |
-                      TranslateModifiers(mouse_event.modifiers));
+ui::KeyEvent CefBrowserPlatformDelegateNativeLinux::TranslateUiKeyEvent(
+    const CefKeyEvent& key_event) const {
+  int flags = TranslateUiEventModifiers(key_event.modifiers);
+  ui::KeyboardCode key_code =
+      static_cast<ui::KeyboardCode>(key_event.windows_key_code);
+  ui::DomCode dom_code =
+      ui::KeycodeConverter::NativeKeycodeToDomCode(key_event.native_key_code);
+  int keysym = ui::XKeysymForWindowsKeyCode(
+      key_code, !!(key_event.modifiers & EVENTFLAG_SHIFT_DOWN));
+  base::char16 character = ui::GetUnicodeCharacterFromXKeySym(keysym);
+  base::TimeTicks time_stamp = GetEventTimeStamp();
 
-  // timestamp
-  result.SetTimeStamp(base::TimeTicks() +
-                      base::TimeDelta::FromSeconds(GetSystemUptime()));
+  if (key_event.type == KEYEVENT_CHAR) {
+    return ui::KeyEvent(character, key_code, dom_code, flags, time_stamp);
+  }
 
-  result.pointer_type = blink::WebPointerProperties::PointerType::kMouse;
+  ui::EventType type = ui::ET_UNKNOWN;
+  switch (key_event.type) {
+    case KEYEVENT_RAWKEYDOWN:
+    case KEYEVENT_KEYDOWN:
+      type = ui::ET_KEY_PRESSED;
+      break;
+    case KEYEVENT_KEYUP:
+      type = ui::ET_KEY_RELEASED;
+      break;
+    default:
+      NOTREACHED();
+  }
+
+  ui::DomKey dom_key = ui::XKeySymToDomKey(keysym, character);
+  return ui::KeyEvent(type, key_code, dom_code, flags, dom_key, time_stamp);
+}
+
+content::NativeWebKeyboardEvent
+CefBrowserPlatformDelegateNativeLinux::TranslateWebKeyEvent(
+    const CefKeyEvent& key_event) const {
+  ui::KeyEvent ui_event = TranslateUiKeyEvent(key_event);
+  if (key_event.type == KEYEVENT_CHAR) {
+    return content::NativeWebKeyboardEvent(ui_event, key_event.character);
+  }
+  return content::NativeWebKeyboardEvent(ui_event);
+}
+
+base::TimeTicks CefBrowserPlatformDelegateNativeLinux::GetEventTimeStamp()
+    const {
+  return base::TimeTicks() + base::TimeDelta::FromSeconds(GetSystemUptime());
 }

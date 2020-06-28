@@ -3,6 +3,8 @@
 // can be found in the LICENSE file.
 
 #include "tests/ceftests/test_util.h"
+#include "include/cef_command_line.h"
+#include "include/cef_request_context_handler.h"
 #include "tests/gtest/include/gtest/gtest.h"
 
 void TestMapEqual(const CefRequest::HeaderMap& map1,
@@ -18,12 +20,19 @@ void TestMapEqual(const CefRequest::HeaderMap& map1,
   CefRequest::HeaderMap::const_iterator it1, it2;
 
   for (it1 = map1.begin(); it1 != map1.end(); ++it1) {
-    it2 = map2.find(it1->first);
-    EXPECT_TRUE(it2 != map2.end());
-    if (it2 != map2.end()) {
-      EXPECT_STREQ(it1->second.ToString().c_str(),
-                   it2->second.ToString().c_str());
+    bool found = false;
+    std::string name1 = it1->first;
+    std::transform(name1.begin(), name1.end(), name1.begin(), ::tolower);
+    for (it2 = map2.begin(); it2 != map2.end(); ++it2) {
+      std::string name2 = it2->first;
+      std::transform(name2.begin(), name2.end(), name2.begin(), ::tolower);
+      if (name1 == name2 && it1->second == it2->second) {
+        found = true;
+        break;
+      }
     }
+    EXPECT_TRUE(found) << "No entry for " << it1->first.ToString() << ": "
+                       << it1->second.ToString();
   }
 }
 
@@ -260,6 +269,16 @@ void TestStringVectorEqual(const std::vector<CefString>& val1,
 
   for (size_t i = 0; i < val1.size(); ++i)
     EXPECT_STREQ(val1[i].ToString().c_str(), val2[i].ToString().c_str());
+}
+
+bool TestOldResourceAPI() {
+  static int state = -1;
+  if (state == -1) {
+    CefRefPtr<CefCommandLine> command_line =
+        CefCommandLine::GetGlobalCommandLine();
+    state = command_line->HasSwitch("test-old-resource-api") ? 1 : 0;
+  }
+  return state ? true : false;
 }
 
 CefRefPtr<CefRequestContext> CreateTestRequestContext(

@@ -4,14 +4,14 @@
 
 #include "libcef/browser/extensions/extension_function_details.h"
 
-#include "libcef/browser/browser_context_impl.h"
+#include "libcef/browser/browser_context.h"
 #include "libcef/browser/extensions/browser_extensions_util.h"
 #include "libcef/browser/extensions/extension_system.h"
 #include "libcef/browser/navigate_params.h"
 #include "libcef/browser/thread_util.h"
 
 #include "base/strings/utf_string_conversions.h"
-#include "base/task_scheduler/post_task.h"
+#include "base/task/post_task.h"
 #include "chrome/browser/extensions/api/tabs/tabs_constants.h"
 #include "chrome/browser/extensions/extension_tab_util.h"
 #include "chrome/browser/profiles/profile.h"
@@ -21,8 +21,8 @@
 #include "extensions/browser/extension_function_dispatcher.h"
 #include "extensions/common/error_utils.h"
 
-using content::WebContents;
 using content::RenderViewHost;
+using content::WebContents;
 
 namespace extensions {
 
@@ -44,10 +44,9 @@ class CefGetExtensionLoadFileCallbackImpl
       if (CEF_CURRENTLY_ON_UIT()) {
         RunNow(file_, std::move(callback_), nullptr);
       } else {
-        CEF_POST_TASK(
-            CEF_UIT,
-            base::BindOnce(&CefGetExtensionLoadFileCallbackImpl::RunNow, file_,
-                           base::Passed(std::move(callback_)), nullptr));
+        CEF_POST_TASK(CEF_UIT, base::BindOnce(
+                                   &CefGetExtensionLoadFileCallbackImpl::RunNow,
+                                   file_, std::move(callback_), nullptr));
       }
     }
   }
@@ -56,10 +55,9 @@ class CefGetExtensionLoadFileCallbackImpl
     if (CEF_CURRENTLY_ON_UIT()) {
       if (!callback_.is_null()) {
         // Always continue asynchronously.
-        CEF_POST_TASK(
-            CEF_UIT,
-            base::BindOnce(&CefGetExtensionLoadFileCallbackImpl::RunNow, file_,
-                           base::Passed(std::move(callback_)), stream));
+        CEF_POST_TASK(CEF_UIT, base::BindOnce(
+                                   &CefGetExtensionLoadFileCallbackImpl::RunNow,
+                                   file_, std::move(callback_), stream));
       }
     } else {
       CEF_POST_TASK(CEF_UIT, base::BindOnce(
@@ -83,16 +81,17 @@ class CefGetExtensionLoadFileCallbackImpl
       return;
     }
 
-    base::PostTaskWithTraitsAndReplyWithResult(
+    base::PostTaskAndReplyWithResult(
         FROM_HERE,
-        {base::MayBlock(), base::TaskShutdownBehavior::SKIP_ON_SHUTDOWN},
+        {base::ThreadPool(), base::MayBlock(),
+         base::TaskShutdownBehavior::SKIP_ON_SHUTDOWN},
         base::BindOnce(LoadFileFromStream, file, stream), std::move(callback));
   }
 
   static std::unique_ptr<std::string> LoadFileFromStream(
       const std::string& file,
       CefRefPtr<CefStreamReader> stream) {
-    base::AssertBlockingAllowed();
+    CEF_REQUIRE_BLOCKING();
 
     // Move to the end of the stream.
     stream->Seek(0, SEEK_END);
@@ -135,7 +134,7 @@ class CefGetExtensionLoadFileCallbackImpl
 }  // namespace
 
 CefExtensionFunctionDetails::CefExtensionFunctionDetails(
-    UIThreadExtensionFunction* function)
+    ExtensionFunction* function)
     : function_(function) {}
 
 CefExtensionFunctionDetails::~CefExtensionFunctionDetails() {}
@@ -168,9 +167,8 @@ CefRefPtr<CefBrowserHostImpl> CefExtensionFunctionDetails::GetCurrentBrowser()
             static_cast<CefBrowserHostImpl*>(active_browser.get());
 
         // Make sure we're operating in the same BrowserContextImpl.
-        if (CefBrowserContextImpl::GetForContext(
-                browser->GetBrowserContext()) ==
-            CefBrowserContextImpl::GetForContext(
+        if (CefBrowserContext::GetForContext(browser->GetBrowserContext()) ==
+            CefBrowserContext::GetForContext(
                 active_browser_impl->GetBrowserContext())) {
           browser = active_browser_impl;
         } else {
@@ -226,7 +224,7 @@ CefExtensionFunctionDetails::GetBrowserForTabIdFirstTime(
     if (!browser || !browser->web_contents() || !CanAccessBrowser(browser)) {
       if (error_message) {
         *error_message = ErrorUtils::FormatErrorMessage(
-            keys::kTabNotFoundError, base::IntToString(tab_id));
+            keys::kTabNotFoundError, base::NumberToString(tab_id));
       }
       return nullptr;
     }
@@ -257,7 +255,7 @@ CefExtensionFunctionDetails::GetBrowserForTabIdAgain(
   if (!browser || !browser->web_contents()) {
     if (error_message) {
       *error_message = ErrorUtils::FormatErrorMessage(
-          keys::kTabNotFoundError, base::IntToString(tab_id));
+          keys::kTabNotFoundError, base::NumberToString(tab_id));
     }
   }
   return browser;
@@ -349,8 +347,8 @@ base::DictionaryValue* CefExtensionFunctionDetails::OpenTab(
   if (params.index.get())
     index = *params.index;
 
-  CefBrowserContextImpl* browser_context_impl =
-      CefBrowserContextImpl::GetForContext(active_browser->GetBrowserContext());
+  CefBrowserContext* browser_context_impl =
+      CefBrowserContext::GetForContext(active_browser->GetBrowserContext());
 
   // A CEF representation should always exist.
   CefRefPtr<CefExtension> cef_extension =
@@ -361,7 +359,6 @@ base::DictionaryValue* CefExtensionFunctionDetails::OpenTab(
     return nullptr;
 
   // Always use the same request context that the extension was registered with.
-  // May represent an *Impl or *Proxy BrowserContext.
   // GetLoaderContext() will return NULL for internal extensions.
   CefRefPtr<CefRequestContext> request_context =
       cef_extension->GetLoaderContext();
@@ -374,7 +371,7 @@ base::DictionaryValue* CefExtensionFunctionDetails::OpenTab(
   create_params.window_info.reset(new CefWindowInfo);
 
 #if defined(OS_WIN)
-  create_params.window_info->SetAsPopup(NULL, CefString());
+  create_params.window_info->SetAsPopup(nullptr, CefString());
 #endif
 
   // Start with the active browser's settings.
@@ -403,9 +400,14 @@ base::DictionaryValue* CefExtensionFunctionDetails::OpenTab(
     return nullptr;
 
   // Return data about the newly created tab.
+  auto extension = function()->extension();
+  auto web_contents = new_browser->web_contents();
   auto result = CreateTabObject(new_browser, opener_browser_id, active, index);
-  ExtensionTabUtil::ScrubTabForExtension(
-      function()->extension(), new_browser->web_contents(), result.get());
+  auto scrub_tab_behavior = ExtensionTabUtil::GetScrubTabBehavior(
+      extension, extensions::Feature::Context::UNSPECIFIED_CONTEXT,
+      web_contents);
+  ExtensionTabUtil::ScrubTabForExtension(extension, web_contents, result.get(),
+                                         scrub_tab_behavior);
   return result->ToValue().release();
 }
 
@@ -421,8 +423,8 @@ std::unique_ptr<api::tabs::Tab> CefExtensionFunctionDetails::CreateTabObject(
   tab_object->id = std::make_unique<int>(new_browser->GetIdentifier());
   tab_object->index = index;
   tab_object->window_id = *tab_object->id;
-  tab_object->status = std::make_unique<std::string>(
-      is_loading ? keys::kStatusValueLoading : keys::kStatusValueComplete);
+  tab_object->status = is_loading ? api::tabs::TAB_STATUS_LOADING
+                                  : api::tabs::TAB_STATUS_COMPLETE;
   tab_object->active = active;
   tab_object->selected = true;
   tab_object->highlighted = true;

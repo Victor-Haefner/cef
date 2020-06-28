@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,16 +9,19 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=f0f52c8d5d99c76811743ac3928122620e305f79$
+// $hash=43e882cb3dde29f9602b3feff5fe868a9f1245a9$
 //
 
 #include "libcef_dll/cpptoc/stream_writer_cpptoc.h"
 #include "libcef_dll/ctocpp/write_handler_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // GLOBAL FUNCTIONS - Body may be edited by hand.
 
 CEF_EXPORT cef_stream_writer_t* cef_stream_writer_create_for_file(
     const cef_string_t* fileName) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Verify param: fileName; type: string_byref_const
@@ -36,6 +39,8 @@ CEF_EXPORT cef_stream_writer_t* cef_stream_writer_create_for_file(
 
 CEF_EXPORT cef_stream_writer_t* cef_stream_writer_create_for_handler(
     cef_write_handler_t* handler) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Verify param: handler; type: refptr_diff
@@ -59,6 +64,8 @@ size_t CEF_CALLBACK stream_writer_write(struct _cef_stream_writer_t* self,
                                         const void* ptr,
                                         size_t size,
                                         size_t n) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -79,6 +86,8 @@ size_t CEF_CALLBACK stream_writer_write(struct _cef_stream_writer_t* self,
 int CEF_CALLBACK stream_writer_seek(struct _cef_stream_writer_t* self,
                                     int64 offset,
                                     int whence) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -93,6 +102,8 @@ int CEF_CALLBACK stream_writer_seek(struct _cef_stream_writer_t* self,
 }
 
 int64 CEF_CALLBACK stream_writer_tell(struct _cef_stream_writer_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -107,6 +118,8 @@ int64 CEF_CALLBACK stream_writer_tell(struct _cef_stream_writer_t* self) {
 }
 
 int CEF_CALLBACK stream_writer_flush(struct _cef_stream_writer_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -121,6 +134,8 @@ int CEF_CALLBACK stream_writer_flush(struct _cef_stream_writer_t* self) {
 }
 
 int CEF_CALLBACK stream_writer_may_block(struct _cef_stream_writer_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -146,6 +161,12 @@ CefStreamWriterCppToC::CefStreamWriterCppToC() {
   GetStruct()->may_block = stream_writer_may_block;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefStreamWriterCppToC::~CefStreamWriterCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefStreamWriter> CefCppToCRefCounted<
     CefStreamWriterCppToC,
@@ -153,16 +174,8 @@ CefRefPtr<CefStreamWriter> CefCppToCRefCounted<
     cef_stream_writer_t>::UnwrapDerived(CefWrapperType type,
                                         cef_stream_writer_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefStreamWriterCppToC,
-                                         CefStreamWriter,
-                                         cef_stream_writer_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefStreamWriterCppToC,

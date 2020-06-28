@@ -51,6 +51,7 @@
 #include "include/base/cef_atomic_ref_count.h"
 #include "include/base/cef_build.h"
 #include "include/base/cef_logging.h"
+#include "include/base/cef_macros.h"
 
 namespace base {
 
@@ -59,6 +60,7 @@ namespace cef_subtle {
 class RefCountedBase {
  public:
   bool HasOneRef() const { return ref_count_ == 1; }
+  bool HasAtLeastOneRef() const { return ref_count_ >= 1; }
 
  protected:
   RefCountedBase()
@@ -109,6 +111,7 @@ class RefCountedBase {
 class RefCountedThreadSafeBase {
  public:
   bool HasOneRef() const;
+  bool HasAtLeastOneRef() const;
 
  protected:
   RefCountedThreadSafeBase();

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,12 +9,13 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=fca4030784b594889ccb72eff1f6bfb390f050c1$
+// $hash=ad47bb8d870deaf5d51606f6c2bce0105eccdd4b$
 //
 
 #include "libcef_dll/ctocpp/dialog_handler_ctocpp.h"
 #include "libcef_dll/cpptoc/browser_cpptoc.h"
 #include "libcef_dll/cpptoc/file_dialog_callback_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 #include "libcef_dll/transfer_util.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
@@ -28,6 +29,8 @@ bool CefDialogHandlerCToCpp::OnFileDialog(
     const std::vector<CefString>& accept_filters,
     int selected_accept_filter,
     CefRefPtr<CefFileDialogCallback> callback) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_dialog_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_file_dialog))
     return false;
@@ -72,6 +75,12 @@ bool CefDialogHandlerCToCpp::OnFileDialog(
 
 CefDialogHandlerCToCpp::CefDialogHandlerCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefDialogHandlerCToCpp::~CefDialogHandlerCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_dialog_handler_t*
 CefCToCppRefCounted<CefDialogHandlerCToCpp,
@@ -79,16 +88,8 @@ CefCToCppRefCounted<CefDialogHandlerCToCpp,
                     cef_dialog_handler_t>::UnwrapDerived(CefWrapperType type,
                                                          CefDialogHandler* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefDialogHandlerCToCpp,
-                                         CefDialogHandler,
-                                         cef_dialog_handler_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefDialogHandlerCToCpp,

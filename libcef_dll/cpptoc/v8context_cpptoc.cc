@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=f9378db2c19c961446e9958231bef6ceceb83607$
+// $hash=982d6b3a8201bbd3d32070c3ca522d849bc2d1f0$
 //
 
 #include "libcef_dll/cpptoc/v8context_cpptoc.h"
@@ -225,7 +225,7 @@ int CEF_CALLBACK v8context_eval(struct _cef_v8context_t* self,
         *retval = CefV8ValueCppToC::Wrap(retvalPtr);
       }
     } else {
-      *retval = NULL;
+      *retval = nullptr;
     }
   }
   // Restore param: exception; type: refptr_same_byref
@@ -235,7 +235,7 @@ int CEF_CALLBACK v8context_eval(struct _cef_v8context_t* self,
         *exception = CefV8ExceptionCppToC::Wrap(exceptionPtr);
       }
     } else {
-      *exception = NULL;
+      *exception = nullptr;
     }
   }
 
@@ -259,20 +259,17 @@ CefV8ContextCppToC::CefV8ContextCppToC() {
   GetStruct()->eval = v8context_eval;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefV8ContextCppToC::~CefV8ContextCppToC() {}
+
 template <>
 CefRefPtr<CefV8Context>
 CefCppToCRefCounted<CefV8ContextCppToC, CefV8Context, cef_v8context_t>::
     UnwrapDerived(CefWrapperType type, cef_v8context_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefV8ContextCppToC, CefV8Context, cef_v8context_t>::
-        DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefV8ContextCppToC,

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,15 +9,18 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=f821e8d56f699e08879e123a0d5ae91a6c13dd58$
+// $hash=b4199e85d500f9c22ce48472b0dc14eb581f8d84$
 //
 
 #include "libcef_dll/ctocpp/string_visitor_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall")
 void CefStringVisitorCToCpp::Visit(const CefString& string) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_string_visitor_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, visit))
     return;
@@ -34,6 +37,12 @@ void CefStringVisitorCToCpp::Visit(const CefString& string) {
 
 CefStringVisitorCToCpp::CefStringVisitorCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefStringVisitorCToCpp::~CefStringVisitorCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_string_visitor_t*
 CefCToCppRefCounted<CefStringVisitorCToCpp,
@@ -41,16 +50,8 @@ CefCToCppRefCounted<CefStringVisitorCToCpp,
                     cef_string_visitor_t>::UnwrapDerived(CefWrapperType type,
                                                          CefStringVisitor* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefStringVisitorCToCpp,
-                                         CefStringVisitor,
-                                         cef_string_visitor_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefStringVisitorCToCpp,

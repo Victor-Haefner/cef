@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=f2a30e3a6cec28ed71ee718aff817daa4e99735b$
+// $hash=5c7f3edee8fa09ae414ccc7cacfaaa9713cdbf2c$
 //
 
 #include "libcef_dll/ctocpp/test/translator_test_scoped_client_ctocpp.h"
@@ -35,6 +35,10 @@ NO_SANITIZE("cfi-icall") int CefTranslatorTestScopedClientCToCpp::GetValue() {
 
 CefTranslatorTestScopedClientCToCpp::CefTranslatorTestScopedClientCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefTranslatorTestScopedClientCToCpp::~CefTranslatorTestScopedClientCToCpp() {}
+
 template <>
 cef_translator_test_scoped_client_t*
 CefCToCppScoped<CefTranslatorTestScopedClientCToCpp,
@@ -50,7 +54,7 @@ CefCToCppScoped<CefTranslatorTestScopedClientCToCpp,
                     c.release()))));
   }
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
 
 template <>
@@ -68,16 +72,8 @@ CefCToCppScoped<CefTranslatorTestScopedClientCToCpp,
                     CEF_RAW_PTR_GET(c)))));
   }
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppScoped<
-    CefTranslatorTestScopedClientCToCpp,
-    CefTranslatorTestScopedClient,
-    cef_translator_test_scoped_client_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

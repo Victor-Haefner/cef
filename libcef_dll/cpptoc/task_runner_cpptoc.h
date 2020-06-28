@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=a0bf6b57a8867b82850cffe69c7cc670e5ed7d52$
+// $hash=cca577fe44a13eff1a329d3c2525e02b49742fc8$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_TASK_RUNNER_CPPTOC_H_
@@ -31,6 +31,7 @@ class CefTaskRunnerCppToC : public CefCppToCRefCounted<CefTaskRunnerCppToC,
                                                        cef_task_runner_t> {
  public:
   CefTaskRunnerCppToC();
+  virtual ~CefTaskRunnerCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_TASK_RUNNER_CPPTOC_H_

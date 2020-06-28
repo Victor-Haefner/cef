@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=aae07bc9014c08d186a0ff8af668a4a36915865d$
+// $hash=ca547272f7d8af961ac13db6906ffee9c654f4df$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_FILE_DIALOG_CALLBACK_CPPTOC_H_
@@ -32,6 +32,7 @@ class CefFileDialogCallbackCppToC
                                  cef_file_dialog_callback_t> {
  public:
   CefFileDialogCallbackCppToC();
+  virtual ~CefFileDialogCallbackCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_FILE_DIALOG_CALLBACK_CPPTOC_H_

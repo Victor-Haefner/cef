@@ -21,17 +21,12 @@ void AppendArray(const std::vector<std::string>& source,
     return;
   target->insert(target->end(), source.begin(), source.end());
 }
-}
+}  // namespace
 
 CefSchemeRegistrarImpl::CefSchemeRegistrarImpl() {}
 
 bool CefSchemeRegistrarImpl::AddCustomScheme(const CefString& scheme_name,
-                                             bool is_standard,
-                                             bool is_local,
-                                             bool is_display_isolated,
-                                             bool is_secure,
-                                             bool is_cors_enabled,
-                                             bool is_csp_bypassing) {
+                                             int options) {
   const std::string& scheme = base::ToLowerASCII(scheme_name.ToString());
   if (scheme::IsInternalHandledScheme(scheme) ||
       registered_schemes_.find(scheme) != registered_schemes_.end()) {
@@ -39,6 +34,14 @@ bool CefSchemeRegistrarImpl::AddCustomScheme(const CefString& scheme_name,
   }
 
   registered_schemes_.insert(scheme);
+
+  const bool is_standard = options & CEF_SCHEME_OPTION_STANDARD;
+  const bool is_local = options & CEF_SCHEME_OPTION_LOCAL;
+  const bool is_display_isolated = options & CEF_SCHEME_OPTION_DISPLAY_ISOLATED;
+  const bool is_secure = options & CEF_SCHEME_OPTION_SECURE;
+  const bool is_cors_enabled = options & CEF_SCHEME_OPTION_CORS_ENABLED;
+  const bool is_csp_bypassing = options & CEF_SCHEME_OPTION_CSP_BYPASSING;
+  const bool is_fetch_enabled = options & CEF_SCHEME_OPTION_FETCH_ENABLED;
 
   // The |is_display_isolated| value is excluded here because it's registered
   // with Blink only.
@@ -54,8 +57,8 @@ bool CefSchemeRegistrarImpl::AddCustomScheme(const CefString& scheme_name,
     schemes_.csp_bypassing_schemes.push_back(scheme);
 
   CefContentClient::SchemeInfo scheme_info = {
-      scheme,    is_standard,     is_local,        is_display_isolated,
-      is_secure, is_cors_enabled, is_csp_bypassing};
+      scheme,    is_standard,     is_local,         is_display_isolated,
+      is_secure, is_cors_enabled, is_csp_bypassing, is_fetch_enabled};
   CefContentClient::Get()->AddCustomScheme(scheme_info);
 
   return true;

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,18 +9,21 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=8bd824c1cc8f13b46f267df32068debec46c87a6$
+// $hash=b08f8ba4d2ee2aaf4ee5f805d9cd6d0159a84969$
 //
 
 #include "libcef_dll/ctocpp/urlrequest_client_ctocpp.h"
 #include "libcef_dll/cpptoc/auth_callback_cpptoc.h"
 #include "libcef_dll/cpptoc/urlrequest_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall")
 void CefURLRequestClientCToCpp::OnRequestComplete(
     CefRefPtr<CefURLRequest> request) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_urlrequest_client_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_request_complete))
     return;
@@ -41,6 +44,8 @@ void CefURLRequestClientCToCpp::OnUploadProgress(
     CefRefPtr<CefURLRequest> request,
     int64 current,
     int64 total) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_urlrequest_client_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_upload_progress))
     return;
@@ -62,6 +67,8 @@ void CefURLRequestClientCToCpp::OnDownloadProgress(
     CefRefPtr<CefURLRequest> request,
     int64 current,
     int64 total) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_urlrequest_client_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_download_progress))
     return;
@@ -82,6 +89,8 @@ NO_SANITIZE("cfi-icall")
 void CefURLRequestClientCToCpp::OnDownloadData(CefRefPtr<CefURLRequest> request,
                                                const void* data,
                                                size_t data_length) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_urlrequest_client_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_download_data))
     return;
@@ -110,6 +119,8 @@ bool CefURLRequestClientCToCpp::GetAuthCredentials(
     const CefString& realm,
     const CefString& scheme,
     CefRefPtr<CefAuthCallback> callback) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_urlrequest_client_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_auth_credentials))
     return false;
@@ -143,6 +154,12 @@ bool CefURLRequestClientCToCpp::GetAuthCredentials(
 
 CefURLRequestClientCToCpp::CefURLRequestClientCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefURLRequestClientCToCpp::~CefURLRequestClientCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_urlrequest_client_t* CefCToCppRefCounted<
     CefURLRequestClientCToCpp,
@@ -150,16 +167,8 @@ cef_urlrequest_client_t* CefCToCppRefCounted<
     cef_urlrequest_client_t>::UnwrapDerived(CefWrapperType type,
                                             CefURLRequestClient* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefURLRequestClientCToCpp,
-                                         CefURLRequestClient,
-                                         cef_urlrequest_client_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefURLRequestClientCToCpp,

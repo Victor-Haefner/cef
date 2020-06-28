@@ -21,7 +21,7 @@ class WebContents;
 namespace extensions {
 namespace cef {
 
-class TabsGetFunction : public UIThreadExtensionFunction {
+class TabsGetFunction : public ExtensionFunction {
   ~TabsGetFunction() override {}
 
   ResponseAction Run() override;
@@ -29,7 +29,7 @@ class TabsGetFunction : public UIThreadExtensionFunction {
   DECLARE_EXTENSION_FUNCTION("tabs.get", TABS_GET)
 };
 
-class TabsCreateFunction : public UIThreadExtensionFunction {
+class TabsCreateFunction : public ExtensionFunction {
  public:
   TabsCreateFunction();
   ~TabsCreateFunction() override {}
@@ -49,9 +49,6 @@ class ExecuteCodeInTabFunction : public ExecuteCodeFunction {
 
  protected:
   ~ExecuteCodeInTabFunction() override;
-
-  // ExtensionFunction:
-  bool HasPermission() override;
 
   // Initializes |execute_tab_id_| and |details_|.
   InitResult Init() override;
@@ -91,7 +88,7 @@ class TabsInsertCSSFunction : public ExecuteCodeInTabFunction {
 };
 
 // Based on ChromeAsyncExtensionFunction.
-class ZoomAPIFunction : public UIThreadExtensionFunction {
+class ZoomAPIFunction : public ExtensionFunction {
  public:
   ZoomAPIFunction();
 

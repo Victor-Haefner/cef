@@ -10,6 +10,7 @@
 #include "base/base_switches.h"
 #include "base/command_line.h"
 #include "base/debug/crash_logging.h"
+#include "base/stl_util.h"
 #include "base/strings/string_piece.h"
 #include "base/strings/string_util.h"
 #include "chrome/common/crash_keys.h"
@@ -20,7 +21,7 @@
 
 #if defined(OS_MACOSX)
 #include "base/mac/foundation_util.h"
-#include "components/crash/content/app/crashpad.h"
+#include "components/crash/core/app/crashpad.h"
 #include "components/crash/core/common/crash_keys.h"
 #include "content/public/common/content_paths.h"
 #endif
@@ -31,8 +32,8 @@
 #endif
 
 #if defined(OS_POSIX) && !defined(OS_MACOSX)
-#include "components/crash/content/app/breakpad_linux.h"
-#include "v8/include/v8.h"
+#include "components/crash/core/app/breakpad_linux.h"
+#include "v8/include/v8-wasm-trap-handler-posix.h"
 #endif
 
 namespace crash_reporting {
@@ -129,7 +130,6 @@ void InitCrashReporter(const base::CommandLine& command_line,
 
   g_crash_reporting_enabled = true;
 #else   // !defined(OS_MACOSX)
-  breakpad::SetCrashServerURL(crash_client->GetCrashServerURL());
 
   if (process_type != service_manager::switches::kZygoteProcess) {
     // Crash reporting for subprocesses created using the zygote will be
@@ -152,8 +152,10 @@ bool IsBoringCEFSwitch(const std::string& flag) {
       switches::kLogFile,
 
       // Chromium internals.
-      "content-image-texture-target", "mojo-platform-channel-handle",
-      "primordial-pipe-token", "service-pipe-token",
+      "content-image-texture-target",
+      "mojo-platform-channel-handle",
+      "primordial-pipe-token",
+      "service-pipe-token",
       "service-request-channel-token",
   };
 
@@ -162,7 +164,7 @@ bool IsBoringCEFSwitch(const std::string& flag) {
 
   size_t end = flag.find("=");
   size_t len = (end == std::string::npos) ? flag.length() - 2 : end - 2;
-  for (size_t i = 0; i < arraysize(kIgnoreSwitches); ++i) {
+  for (size_t i = 0; i < base::size(kIgnoreSwitches); ++i) {
     if (flag.compare(2, len, kIgnoreSwitches[i]) == 0)
       return true;
   }
@@ -196,7 +198,7 @@ void BasicStartupComplete(base::CommandLine* command_line) {
     // Breakpad requires this switch.
     command_line->AppendSwitch(switches::kEnableCrashReporter);
 
-    breakpad::SetFirstChanceExceptionHandler(v8::V8::TryHandleSignal);
+    breakpad::SetFirstChanceExceptionHandler(v8::TryHandleWebAssemblyTrapPosix);
 #endif
   }
 }

@@ -5,13 +5,11 @@
 
 #include "libcef/renderer/blink_glue.h"
 
-#include "base/compiler_specific.h"
-
-MSVC_PUSH_WARNING_LEVEL(0);
 #include "third_party/blink/public/platform/web_string.h"
 #include "third_party/blink/public/platform/web_url_response.h"
 #include "third_party/blink/public/web/web_document.h"
 #include "third_party/blink/public/web/web_element.h"
+#include "third_party/blink/public/web/web_local_frame_client.h"
 #include "third_party/blink/public/web/web_node.h"
 #include "third_party/blink/public/web/web_view_client.h"
 
@@ -25,6 +23,7 @@ MSVC_PUSH_WARNING_LEVEL(0);
 #include "third_party/blink/renderer/core/dom/node.h"
 #include "third_party/blink/renderer/core/editing/serializers/serialization.h"
 #include "third_party/blink/renderer/core/exported/web_view_impl.h"
+#include "third_party/blink/renderer/core/frame/frame_owner.h"
 #include "third_party/blink/renderer/core/frame/local_frame.h"
 #include "third_party/blink/renderer/core/frame/settings.h"
 #include "third_party/blink/renderer/core/frame/web_local_frame_impl.h"
@@ -32,7 +31,6 @@ MSVC_PUSH_WARNING_LEVEL(0);
 #include "third_party/blink/renderer/platform/bindings/v8_binding.h"
 #include "third_party/blink/renderer/platform/loader/fetch/resource_response.h"
 #include "third_party/blink/renderer/platform/weborigin/scheme_registry.h"
-MSVC_POP_WARNING();
 #undef LOG
 
 #include "base/logging.h"
@@ -58,17 +56,33 @@ bool CanGoForward(blink::WebView* view) {
 void GoBack(blink::WebView* view) {
   if (!view)
     return;
-  blink::WebViewImpl* impl = reinterpret_cast<blink::WebViewImpl*>(view);
-  if (impl->Client()->HistoryBackListCount() > 0)
-    impl->Client()->NavigateBackForwardSoon(-1);
+
+  blink::WebFrame* main_frame = view->MainFrame();
+  if (main_frame && main_frame->IsWebLocalFrame()) {
+    blink::WebViewImpl* view_impl = reinterpret_cast<blink::WebViewImpl*>(view);
+    if (view_impl->Client()->HistoryBackListCount() > 0) {
+      blink::Frame* core_frame = blink::WebFrame::ToCoreFrame(*main_frame);
+      blink::To<blink::LocalFrame>(core_frame)
+          ->GetLocalFrameHostRemote()
+          .GoToEntryAtOffset(-1, true /* has_user_gesture */);
+    }
+  }
 }
 
 void GoForward(blink::WebView* view) {
   if (!view)
     return;
-  blink::WebViewImpl* impl = reinterpret_cast<blink::WebViewImpl*>(view);
-  if (impl->Client()->HistoryForwardListCount() > 0)
-    impl->Client()->NavigateBackForwardSoon(1);
+
+  blink::WebFrame* main_frame = view->MainFrame();
+  if (main_frame && main_frame->IsWebLocalFrame()) {
+    blink::WebViewImpl* view_impl = reinterpret_cast<blink::WebViewImpl*>(view);
+    if (view_impl->Client()->HistoryForwardListCount() > 0) {
+      blink::Frame* core_frame = blink::WebFrame::ToCoreFrame(*main_frame);
+      blink::To<blink::LocalFrame>(core_frame)
+          ->GetLocalFrameHostRemote()
+          .GoToEntryAtOffset(1, true /* has_user_gesture */);
+    }
+  }
 }
 
 std::string DumpDocumentText(blink::WebLocalFrame* frame) {
@@ -138,7 +152,8 @@ v8::MaybeLocal<v8::Value> CallV8Function(v8::Local<v8::Context> context,
   if (frame &&
       frame->GetDocument()->CanExecuteScripts(blink::kAboutToExecuteScript)) {
     func_rv = blink::V8ScriptRunner::CallFunction(
-        function, frame->GetDocument(), receiver, argc, args, isolate);
+        function, frame->GetDocument()->GetExecutionContext(), receiver, argc,
+        args, isolate);
   }
 
   return func_rv;
@@ -156,7 +171,7 @@ v8::MaybeLocal<v8::Value> ExecuteV8ScriptAndReturnValue(
     v8::Local<v8::Context> context,
     v8::Isolate* isolate,
     v8::TryCatch& tryCatch,
-    blink::AccessControlStatus accessControlStatus) {
+    blink::SanitizeScriptErrors sanitizeScriptErrors) {
   // Based on ScriptController::executeScriptAndReturnValue
   DCHECK(isolate);
 
@@ -197,7 +212,7 @@ v8::MaybeLocal<v8::Value> ExecuteV8ScriptAndReturnValue(
   // - nonce: empty for internal script, and
   // - parser_state: always "not parser inserted" for internal scripts.
   if (!blink::V8ScriptRunner::CompileScript(
-           blink::ScriptState::From(context), ssc, accessControlStatus,
+           blink::ScriptState::From(context), ssc, sanitizeScriptErrors,
            compile_options, no_cache_reason, blink::ReferrerScriptInfo())
            .ToLocal(&script)) {
     DCHECK(tryCatch.HasCaught());
@@ -220,6 +235,10 @@ void RegisterURLSchemeAsSecure(const blink::WebString& scheme) {
   blink::SchemeRegistry::RegisterURLSchemeAsSecure(scheme);
 }
 
+void RegisterURLSchemeAsSupportingFetchAPI(const blink::WebString& scheme) {
+  blink::SchemeRegistry::RegisterURLSchemeAsSupportingFetchAPI(scheme);
+}
+
 struct CefScriptForbiddenScope::Impl {
   blink::ScriptForbiddenScope scope_;
 };
@@ -230,6 +249,11 @@ CefScriptForbiddenScope::~CefScriptForbiddenScope() {}
 
 bool ResponseWasCached(const blink::WebURLResponse& response) {
   return response.ToResourceResponse().WasCached();
+}
+
+bool HasPluginFrameOwner(blink::WebLocalFrame* frame) {
+  blink::Frame* core_frame = blink::WebFrame::ToCoreFrame(*frame);
+  return core_frame->Owner() && core_frame->Owner()->IsPlugin();
 }
 
 }  // namespace blink_glue

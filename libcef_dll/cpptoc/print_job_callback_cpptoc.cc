@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,10 +9,11 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=183c273b25c15520613c45374eb9a9c869255aa2$
+// $hash=f79bd331e5b7091c916778dd4d850da4b9bbbc4d$
 //
 
 #include "libcef_dll/cpptoc/print_job_callback_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -20,6 +21,8 @@ namespace {
 
 void CEF_CALLBACK
 print_job_callback_cont(struct _cef_print_job_callback_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -38,6 +41,12 @@ CefPrintJobCallbackCppToC::CefPrintJobCallbackCppToC() {
   GetStruct()->cont = print_job_callback_cont;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefPrintJobCallbackCppToC::~CefPrintJobCallbackCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefPrintJobCallback> CefCppToCRefCounted<
     CefPrintJobCallbackCppToC,
@@ -45,16 +54,8 @@ CefRefPtr<CefPrintJobCallback> CefCppToCRefCounted<
     cef_print_job_callback_t>::UnwrapDerived(CefWrapperType type,
                                              cef_print_job_callback_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefPrintJobCallbackCppToC,
-                                         CefPrintJobCallback,
-                                         cef_print_job_callback_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefPrintJobCallbackCppToC,

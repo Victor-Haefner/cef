@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,11 +9,12 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=d0fde91992db53d8648b66d696aa37a804c01145$
+// $hash=41288fac368c771f9c673f231f6f632f6c6ec255$
 //
 
 #include "libcef_dll/cpptoc/views/browser_view_cpptoc.h"
 #include "libcef_dll/cpptoc/browser_cpptoc.h"
+#include "libcef_dll/cpptoc/dictionary_value_cpptoc.h"
 #include "libcef_dll/cpptoc/request_context_cpptoc.h"
 #include "libcef_dll/cpptoc/views/button_cpptoc.h"
 #include "libcef_dll/cpptoc/views/panel_cpptoc.h"
@@ -24,6 +25,7 @@
 #include "libcef_dll/ctocpp/client_ctocpp.h"
 #include "libcef_dll/ctocpp/views/browser_view_delegate_ctocpp.h"
 #include "libcef_dll/ctocpp/views/view_delegate_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // GLOBAL FUNCTIONS - Body may be edited by hand.
 
@@ -31,15 +33,18 @@ CEF_EXPORT cef_browser_view_t* cef_browser_view_create(
     cef_client_t* client,
     const cef_string_t* url,
     const struct _cef_browser_settings_t* settings,
+    cef_dictionary_value_t* extra_info,
     cef_request_context_t* request_context,
     cef_browser_view_delegate_t* delegate) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Verify param: settings; type: struct_byref_const
   DCHECK(settings);
   if (!settings)
     return NULL;
-  // Unverified params: client, url, request_context, delegate
+  // Unverified params: client, url, extra_info, request_context, delegate
 
   // Translate param: settings; type: struct_byref_const
   CefBrowserSettings settingsObj;
@@ -49,6 +54,7 @@ CEF_EXPORT cef_browser_view_t* cef_browser_view_create(
   // Execute
   CefRefPtr<CefBrowserView> _retval = CefBrowserView::CreateBrowserView(
       CefClientCToCpp::Wrap(client), CefString(url), settingsObj,
+      CefDictionaryValueCppToC::Unwrap(extra_info),
       CefRequestContextCppToC::Unwrap(request_context),
       CefBrowserViewDelegateCToCpp::Wrap(delegate));
 
@@ -58,6 +64,8 @@ CEF_EXPORT cef_browser_view_t* cef_browser_view_create(
 
 CEF_EXPORT cef_browser_view_t* cef_browser_view_get_for_browser(
     cef_browser_t* browser) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Verify param: browser; type: refptr_same
@@ -79,6 +87,8 @@ namespace {
 
 cef_browser_t* CEF_CALLBACK
 browser_view_get_browser(struct _cef_browser_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -95,6 +105,8 @@ browser_view_get_browser(struct _cef_browser_view_t* self) {
 void CEF_CALLBACK
 browser_view_set_prefer_accelerators(struct _cef_browser_view_t* self,
                                      int prefer_accelerators) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -108,6 +120,8 @@ browser_view_set_prefer_accelerators(struct _cef_browser_view_t* self,
 
 cef_browser_view_t* CEF_CALLBACK
 browser_view_as_browser_view(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -124,6 +138,8 @@ browser_view_as_browser_view(struct _cef_view_t* self) {
 }
 
 cef_button_t* CEF_CALLBACK browser_view_as_button(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -140,6 +156,8 @@ cef_button_t* CEF_CALLBACK browser_view_as_button(struct _cef_view_t* self) {
 }
 
 cef_panel_t* CEF_CALLBACK browser_view_as_panel(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -157,6 +175,8 @@ cef_panel_t* CEF_CALLBACK browser_view_as_panel(struct _cef_view_t* self) {
 
 cef_scroll_view_t* CEF_CALLBACK
 browser_view_as_scroll_view(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -174,6 +194,8 @@ browser_view_as_scroll_view(struct _cef_view_t* self) {
 
 cef_textfield_t* CEF_CALLBACK
 browser_view_as_textfield(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -191,6 +213,8 @@ browser_view_as_textfield(struct _cef_view_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 browser_view_get_type_string(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -208,6 +232,8 @@ browser_view_get_type_string(struct _cef_view_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 browser_view_to_string(struct _cef_view_t* self, int include_children) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -224,6 +250,8 @@ browser_view_to_string(struct _cef_view_t* self, int include_children) {
 }
 
 int CEF_CALLBACK browser_view_is_valid(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -240,6 +268,8 @@ int CEF_CALLBACK browser_view_is_valid(struct _cef_view_t* self) {
 }
 
 int CEF_CALLBACK browser_view_is_attached(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -257,6 +287,8 @@ int CEF_CALLBACK browser_view_is_attached(struct _cef_view_t* self) {
 
 int CEF_CALLBACK browser_view_is_same(struct _cef_view_t* self,
                                       struct _cef_view_t* that) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -278,6 +310,8 @@ int CEF_CALLBACK browser_view_is_same(struct _cef_view_t* self,
 
 struct _cef_view_delegate_t* CEF_CALLBACK
 browser_view_get_delegate(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -295,6 +329,8 @@ browser_view_get_delegate(struct _cef_view_t* self) {
 
 struct _cef_window_t* CEF_CALLBACK
 browser_view_get_window(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -311,6 +347,8 @@ browser_view_get_window(struct _cef_view_t* self) {
 }
 
 int CEF_CALLBACK browser_view_get_id(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -327,6 +365,8 @@ int CEF_CALLBACK browser_view_get_id(struct _cef_view_t* self) {
 }
 
 void CEF_CALLBACK browser_view_set_id(struct _cef_view_t* self, int id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -339,6 +379,8 @@ void CEF_CALLBACK browser_view_set_id(struct _cef_view_t* self, int id) {
 }
 
 int CEF_CALLBACK browser_view_get_group_id(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -356,6 +398,8 @@ int CEF_CALLBACK browser_view_get_group_id(struct _cef_view_t* self) {
 
 void CEF_CALLBACK browser_view_set_group_id(struct _cef_view_t* self,
                                             int group_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -369,6 +413,8 @@ void CEF_CALLBACK browser_view_set_group_id(struct _cef_view_t* self,
 
 struct _cef_view_t* CEF_CALLBACK
 browser_view_get_parent_view(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -386,6 +432,8 @@ browser_view_get_parent_view(struct _cef_view_t* self) {
 
 struct _cef_view_t* CEF_CALLBACK
 browser_view_get_view_for_id(struct _cef_view_t* self, int id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -403,6 +451,8 @@ browser_view_get_view_for_id(struct _cef_view_t* self, int id) {
 
 void CEF_CALLBACK browser_view_set_bounds(struct _cef_view_t* self,
                                           const cef_rect_t* bounds) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -422,6 +472,8 @@ void CEF_CALLBACK browser_view_set_bounds(struct _cef_view_t* self,
 }
 
 cef_rect_t CEF_CALLBACK browser_view_get_bounds(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -439,6 +491,8 @@ cef_rect_t CEF_CALLBACK browser_view_get_bounds(struct _cef_view_t* self) {
 
 cef_rect_t CEF_CALLBACK
 browser_view_get_bounds_in_screen(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -456,6 +510,8 @@ browser_view_get_bounds_in_screen(struct _cef_view_t* self) {
 
 void CEF_CALLBACK browser_view_set_size(struct _cef_view_t* self,
                                         const cef_size_t* size) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -475,6 +531,8 @@ void CEF_CALLBACK browser_view_set_size(struct _cef_view_t* self,
 }
 
 cef_size_t CEF_CALLBACK browser_view_get_size(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -492,6 +550,8 @@ cef_size_t CEF_CALLBACK browser_view_get_size(struct _cef_view_t* self) {
 
 void CEF_CALLBACK browser_view_set_position(struct _cef_view_t* self,
                                             const cef_point_t* position) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -511,6 +571,8 @@ void CEF_CALLBACK browser_view_set_position(struct _cef_view_t* self,
 }
 
 cef_point_t CEF_CALLBACK browser_view_get_position(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -528,6 +590,8 @@ cef_point_t CEF_CALLBACK browser_view_get_position(struct _cef_view_t* self) {
 
 cef_size_t CEF_CALLBACK
 browser_view_get_preferred_size(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -545,6 +609,8 @@ browser_view_get_preferred_size(struct _cef_view_t* self) {
 
 void CEF_CALLBACK
 browser_view_size_to_preferred_size(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -558,6 +624,8 @@ browser_view_size_to_preferred_size(struct _cef_view_t* self) {
 
 cef_size_t CEF_CALLBACK
 browser_view_get_minimum_size(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -575,6 +643,8 @@ browser_view_get_minimum_size(struct _cef_view_t* self) {
 
 cef_size_t CEF_CALLBACK
 browser_view_get_maximum_size(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -592,6 +662,8 @@ browser_view_get_maximum_size(struct _cef_view_t* self) {
 
 int CEF_CALLBACK browser_view_get_height_for_width(struct _cef_view_t* self,
                                                    int width) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -608,6 +680,8 @@ int CEF_CALLBACK browser_view_get_height_for_width(struct _cef_view_t* self,
 }
 
 void CEF_CALLBACK browser_view_invalidate_layout(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -621,6 +695,8 @@ void CEF_CALLBACK browser_view_invalidate_layout(struct _cef_view_t* self) {
 
 void CEF_CALLBACK browser_view_set_visible(struct _cef_view_t* self,
                                            int visible) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -633,6 +709,8 @@ void CEF_CALLBACK browser_view_set_visible(struct _cef_view_t* self,
 }
 
 int CEF_CALLBACK browser_view_is_visible(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -649,6 +727,8 @@ int CEF_CALLBACK browser_view_is_visible(struct _cef_view_t* self) {
 }
 
 int CEF_CALLBACK browser_view_is_drawn(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -666,6 +746,8 @@ int CEF_CALLBACK browser_view_is_drawn(struct _cef_view_t* self) {
 
 void CEF_CALLBACK browser_view_set_enabled(struct _cef_view_t* self,
                                            int enabled) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -678,6 +760,8 @@ void CEF_CALLBACK browser_view_set_enabled(struct _cef_view_t* self,
 }
 
 int CEF_CALLBACK browser_view_is_enabled(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -695,6 +779,8 @@ int CEF_CALLBACK browser_view_is_enabled(struct _cef_view_t* self) {
 
 void CEF_CALLBACK browser_view_set_focusable(struct _cef_view_t* self,
                                              int focusable) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -707,6 +793,8 @@ void CEF_CALLBACK browser_view_set_focusable(struct _cef_view_t* self,
 }
 
 int CEF_CALLBACK browser_view_is_focusable(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -724,6 +812,8 @@ int CEF_CALLBACK browser_view_is_focusable(struct _cef_view_t* self) {
 
 int CEF_CALLBACK
 browser_view_is_accessibility_focusable(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -740,6 +830,8 @@ browser_view_is_accessibility_focusable(struct _cef_view_t* self) {
 }
 
 void CEF_CALLBACK browser_view_request_focus(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -753,6 +845,8 @@ void CEF_CALLBACK browser_view_request_focus(struct _cef_view_t* self) {
 
 void CEF_CALLBACK browser_view_set_background_color(struct _cef_view_t* self,
                                                     cef_color_t color) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -766,6 +860,8 @@ void CEF_CALLBACK browser_view_set_background_color(struct _cef_view_t* self,
 
 cef_color_t CEF_CALLBACK
 browser_view_get_background_color(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -783,6 +879,8 @@ browser_view_get_background_color(struct _cef_view_t* self) {
 
 int CEF_CALLBACK browser_view_convert_point_to_screen(struct _cef_view_t* self,
                                                       cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -812,6 +910,8 @@ int CEF_CALLBACK browser_view_convert_point_to_screen(struct _cef_view_t* self,
 int CEF_CALLBACK
 browser_view_convert_point_from_screen(struct _cef_view_t* self,
                                        cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -840,6 +940,8 @@ browser_view_convert_point_from_screen(struct _cef_view_t* self,
 
 int CEF_CALLBACK browser_view_convert_point_to_window(struct _cef_view_t* self,
                                                       cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -869,6 +971,8 @@ int CEF_CALLBACK browser_view_convert_point_to_window(struct _cef_view_t* self,
 int CEF_CALLBACK
 browser_view_convert_point_from_window(struct _cef_view_t* self,
                                        cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -898,6 +1002,8 @@ browser_view_convert_point_from_window(struct _cef_view_t* self,
 int CEF_CALLBACK browser_view_convert_point_to_view(struct _cef_view_t* self,
                                                     struct _cef_view_t* view,
                                                     cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -931,6 +1037,8 @@ int CEF_CALLBACK browser_view_convert_point_to_view(struct _cef_view_t* self,
 int CEF_CALLBACK browser_view_convert_point_from_view(struct _cef_view_t* self,
                                                       struct _cef_view_t* view,
                                                       cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1025,21 +1133,19 @@ CefBrowserViewCppToC::CefBrowserViewCppToC() {
       browser_view_convert_point_from_view;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefBrowserViewCppToC::~CefBrowserViewCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefBrowserView>
 CefCppToCRefCounted<CefBrowserViewCppToC, CefBrowserView, cef_browser_view_t>::
     UnwrapDerived(CefWrapperType type, cef_browser_view_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefBrowserViewCppToC,
-                                         CefBrowserView,
-                                         cef_browser_view_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefBrowserViewCppToC,

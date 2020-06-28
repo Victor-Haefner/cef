@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,16 +9,19 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=9a2e23de88740e3d325745c2c1965c8fae6a527b$
+// $hash=9a3a21ab271832d967d4212b1fa9362691eb3bdc$
 //
 
 #include "libcef_dll/ctocpp/end_tracing_callback_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall")
 void CefEndTracingCallbackCToCpp::OnEndTracingComplete(
     const CefString& tracing_file) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_end_tracing_callback_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_end_tracing_complete))
     return;
@@ -38,6 +41,12 @@ void CefEndTracingCallbackCToCpp::OnEndTracingComplete(
 
 CefEndTracingCallbackCToCpp::CefEndTracingCallbackCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefEndTracingCallbackCToCpp::~CefEndTracingCallbackCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_end_tracing_callback_t* CefCToCppRefCounted<
     CefEndTracingCallbackCToCpp,
@@ -45,16 +54,8 @@ cef_end_tracing_callback_t* CefCToCppRefCounted<
     cef_end_tracing_callback_t>::UnwrapDerived(CefWrapperType type,
                                                CefEndTracingCallback* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefEndTracingCallbackCToCpp,
-                                         CefEndTracingCallback,
-                                         cef_end_tracing_callback_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefEndTracingCallbackCToCpp,

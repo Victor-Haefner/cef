@@ -2,15 +2,20 @@
 # reserved. Use of this source code is governed by a BSD-style license that
 # can be found in the LICENSE file.
 
+from __future__ import absolute_import
+from __future__ import print_function
+from cef_version import VersionFormatter
 from date_util import *
+from exec_util import exec_cmd
 from file_util import *
+import git_util as git
+from io import open
 from make_cmake import process_cmake_template
 from optparse import OptionParser
 import os
 import re
 import shlex
 import subprocess
-import git_util as git
 import sys
 import tarfile
 import zipfile
@@ -39,6 +44,10 @@ def create_tar_archive(input_dir, format):
   # Supported formats include "gz" and "bz2".
   tar_file = input_dir + '.tar.' + format
   tf = tarfile.open(tar_file, "w:" + format)
+  # The default tar format changed from GNU_FORMAT to PAX_FORMAT in Python 3.8.
+  # However, PAX_FORMAT generates additional @PaxHeader entries and truncates file
+  # names on Windows, so we'll stick with the previous default.
+  tf.format = tarfile.GNU_FORMAT
   tf.add(input_dir, arcname=os.path.basename(input_dir))
   tf.close()
 
@@ -244,14 +253,20 @@ def eval_transfer_file(cef_dir, script_dir, transfer_cfg, output_dir, quiet):
       if not path_exists(readme):
         copy_file(
             os.path.join(script_dir, 'distrib/README-TRANSFER.txt'), readme)
-      open(readme, 'ab').write(cfg['source'] + "\n")
+
+      str = cfg['source'] + "\n"
+      with open(readme, 'a', encoding='utf-8') as fp:
+        if sys.version_info.major == 2:
+          fp.write(str.decode('utf-8'))
+        else:
+          fp.write(str)
 
     # perform any required post-processing
     if 'post-process' in cfg:
       post = cfg['post-process']
       if post == 'normalize_headers':
         new_path = ''
-        if cfg.has_key('new_header_path'):
+        if 'new_header_path' in cfg:
           new_path = cfg['new_header_path']
         normalize_headers(dst, new_path)
 
@@ -301,17 +316,107 @@ def copy_files_list(build_dir, dst_dir, paths):
         raise Exception('Missing required path: %s' % source_path)
 
 
-def combine_libs(build_dir, libs, dest_lib):
+def get_exported_symbols(file):
+  """ Returns the global symbols exported by |file|. """
+  symbols = []
+
+  # Each symbol line has a value like:
+  # 0000000000000000 T _cef_sandbox_initialize
+  cmdline = 'nm -g -U %s' % file
+  result = exec_cmd(cmdline, os.path.join(cef_dir, 'tools'))
+  if len(result['err']) > 0:
+    raise Exception('ERROR: nm failed: %s' % result['err'])
+  for line in result['out'].split('\n'):
+    if line.find(' T ') < 0:
+      continue
+    symbol = line[line.rfind(' ') + 1:]
+    symbols.append(symbol)
+
+  return symbols
+
+
+def get_undefined_symbols(file):
+  """ Returns the undefined symbols imported by |file|. """
+  symbols = []
+
+  # Each symbol line has a value like:
+  # cef_sandbox.a:cef_sandbox.o: _memcpy
+  cmdline = 'nm -u -A %s' % file
+  result = exec_cmd(cmdline, os.path.join(cef_dir, 'tools'))
+  if len(result['err']) > 0:
+    raise Exception('ERROR: nm failed: %s' % result['err'])
+  for line in result['out'].split('\n'):
+    if line.find(': ') < 0:
+      continue
+    symbol = line[line.rfind(': ') + 2:]
+    symbols.append(symbol)
+
+  return symbols
+
+
+def combine_libs(platform, build_dir, libs, dest_lib):
   """ Combine multiple static libraries into a single static library. """
-  cmdline = 'msvs_env.bat win%s python combine_libs.py -o "%s"' % (
-      platform_arch, dest_lib)
+  intermediate_obj = None
+  if platform == 'windows':
+    cmdline = 'msvs_env.bat win%s "%s" combine_libs.py -o "%s"' % (
+        platform_arch, sys.executable, dest_lib)
+  elif platform == 'macosx':
+    # Find CEF_EXPORT symbols from libcef_sandbox.a (include/cef_sandbox_mac.h)
+    # Export only symbols that include these strings.
+    symbol_match = [
+        '_cef_',  # C symbols
+        'Cef',  # C++ symbols
+    ]
+
+    print('Finding exported symbols...')
+    assert 'libcef_sandbox.a' in libs[0], libs[0]
+    symbols = []
+    for symbol in get_exported_symbols(os.path.join(build_dir, libs[0])):
+      for match in symbol_match:
+        if symbol.find(match) >= 0:
+          symbols.append(symbol)
+          break
+    assert len(symbols) > 0
+
+    # Create an intermediate object file that combines all other object files.
+    # Symbols not identified above will be made private (local).
+    intermediate_obj = os.path.splitext(dest_lib)[0] + '.o'
+    cmdline = 'ld -arch x86_64 -r -o "%s"' % intermediate_obj
+    for symbol in symbols:
+      cmdline += ' -exported_symbol %s' % symbol
+
   for lib in libs:
     lib_path = os.path.join(build_dir, lib)
     for path in get_files(lib_path):  # Expand wildcards in |lib_path|.
       if not path_exists(path):
         raise Exception('File not found: ' + path)
-      cmdline = cmdline + ' "%s"' % path
+      cmdline += ' "%s"' % path
   run(cmdline, os.path.join(cef_dir, 'tools'))
+
+  if not intermediate_obj is None:
+    # Create an archive file containing the new object file.
+    cmdline = 'libtool -static -o "%s" "%s"' % (dest_lib, intermediate_obj)
+    run(cmdline, os.path.join(cef_dir, 'tools'))
+    remove_file(intermediate_obj)
+
+    # Verify that only the expected symbols are exported from the archive file.
+    print('Verifying exported symbols...')
+    result_symbols = get_exported_symbols(dest_lib)
+    if set(symbols) != set(result_symbols):
+      print('Expected', symbols)
+      print('Got', result_symbols)
+      raise Exception('Failure verifying exported symbols')
+
+    # Verify that no C++ symbols are imported by the archive file. If the
+    # archive imports C++ symbols and the client app links an incompatible C++
+    # library, the result will be undefined behavior.
+    print('Verifying imported (undefined) symbols...')
+    undefined_symbols = get_undefined_symbols(dest_lib)
+    cpp_symbols = list(
+        filter(lambda symbol: symbol.startswith('__Z'), undefined_symbols))
+    if cpp_symbols:
+      print('Found C++ symbols:', cpp_symbols)
+      raise Exception('Failure verifying imported (undefined) symbols')
 
 
 def run(command_line, working_dir):
@@ -321,6 +426,10 @@ def run(command_line, working_dir):
   args = shlex.split(command_line.replace('\\', '\\\\'))
   return subprocess.check_call(
       args, cwd=working_dir, env=os.environ, shell=(sys.platform == 'win32'))
+
+
+def print_error(msg):
+  print('Error: %s\nSee --help for usage.' % msg)
 
 
 # cannot be loaded as a module
@@ -387,6 +496,12 @@ parser.add_option(
     default=False,
     help='create an ARM binary distribution (Linux only)')
 parser.add_option(
+    '--arm64-build',
+    action='store_true',
+    dest='arm64build',
+    default=False,
+    help='create an ARM64 binary distribution (Linux only)')
+parser.add_option(
     '--minimal',
     action='store_true',
     dest='minimal',
@@ -403,7 +518,13 @@ parser.add_option(
     action='store_true',
     dest='sandbox',
     default=False,
-    help='include only the cef_sandbox static library (Windows only)')
+    help='include only the cef_sandbox static library (macOS and Windows only)')
+parser.add_option(
+    '--ozone',
+    action='store_true',
+    dest='ozone',
+    default=False,
+    help='include ozone build related files (Linux only)')
 parser.add_option(
     '-q',
     '--quiet',
@@ -424,29 +545,35 @@ elif sys.platform.startswith('linux'):
 
 # the outputdir option is required
 if options.outputdir is None:
-  parser.print_help(sys.stderr)
+  print_error('--output-dir is required.')
   sys.exit()
 
 if options.minimal and options.client:
-  print 'Cannot specify both --minimal and --client'
-  parser.print_help(sys.stderr)
+  print_error('Cannot specify both --minimal and --client.')
   sys.exit()
 
-if options.x64build and options.armbuild:
-  print 'Cannot specify both --x64-build and --arm-build'
-  parser.print_help(sys.stderr)
+if options.x64build + options.armbuild + options.arm64build > 1:
+  print_error('Invalid combination of build options.')
   sys.exit()
 
 if options.armbuild and platform != 'linux':
-  print '--arm-build is only supported on Linux.'
+  print_error('--arm-build is only supported on Linux.')
   sys.exit()
 
-if options.sandbox and platform != 'windows':
-  print '--sandbox is only supported on Windows.'
+if options.arm64build and not platform in ('linux', 'windows'):
+  print_error('--arm64-build is only supported on Linux and Windows.')
+  sys.exit()
+
+if options.sandbox and not platform in ('macosx', 'windows'):
+  print_error('--sandbox is only supported on macOS and Windows.')
   sys.exit()
 
 if not options.ninjabuild:
-  print 'Ninja build is required on all platforms'
+  print_error('--ninja-build is required.')
+  sys.exit()
+
+if options.ozone and platform != 'linux':
+  print_error('--ozone is only supported on Linux.')
   sys.exit()
 
 # script directory
@@ -475,24 +602,26 @@ chromium_rev = git.get_hash(src_dir)
 
 date = get_date()
 
-# Read and parse the version file (key=value pairs, one per line)
-args = {}
-read_version_file(os.path.join(cef_dir, 'VERSION'), args)
-read_version_file(os.path.join(cef_dir, '../chrome/VERSION'), args)
-
-cef_ver = '%s.%s.%s.g%s' % (args['CEF_MAJOR'], args['BUILD'], cef_commit_number,
-                            cef_rev[:7])
-chromium_ver = args['MAJOR'] + '.' + args['MINOR'] + '.' + args['BUILD'] + '.' + args['PATCH']
+# format version strings
+formatter = VersionFormatter()
+cef_ver = formatter.get_version_string()
+chromium_ver = formatter.get_chromium_version_string()
 
 # list of output directories to be archived
 archive_dirs = []
 
 if options.x64build:
   platform_arch = '64'
+  binary_arch = 'x64'
 elif options.armbuild:
   platform_arch = 'arm'
+  binary_arch = 'arm'
+elif options.arm64build:
+  platform_arch = 'arm64'
+  binary_arch = 'arm64'
 else:
   platform_arch = '32'
+  binary_arch = 'x86'
 
 # output directory
 output_dir_base = 'cef_binary_' + cef_ver
@@ -513,6 +642,9 @@ elif options.sandbox:
   output_dir_name = output_dir_name + '_sandbox'
 else:
   mode = 'standard'
+
+if options.ozone:
+  output_dir_name = output_dir_name + '_ozone'
 
 output_dir = create_output_dir(output_dir_name, options.outputdir)
 
@@ -536,6 +668,8 @@ if options.x64build:
   build_dir_suffix = '_GN_x64'
 elif options.armbuild:
   build_dir_suffix = '_GN_arm'
+elif options.arm64build:
+  build_dir_suffix = '_GN_arm64'
 else:
   build_dir_suffix = '_GN_x86'
 
@@ -559,6 +693,8 @@ if mode == 'standard' or mode == 'minimal':
 
   # transfer common include files
   transfer_gypi_files(cef_dir, cef_paths2['includes_common'], \
+                      'include/', include_dir, options.quiet)
+  transfer_gypi_files(cef_dir, cef_paths2['includes_common_capi'], \
                       'include/', include_dir, options.quiet)
   transfer_gypi_files(cef_dir, cef_paths2['includes_capi'], \
                       'include/', include_dir, options.quiet)
@@ -591,12 +727,14 @@ if mode == 'standard' or mode == 'minimal':
   transfer_gypi_files(cef_dir, cef_paths['autogen_client_side'], \
                       'libcef_dll/', libcef_dll_dir, options.quiet)
 
-  # transfer additional files
-  transfer_files(cef_dir, script_dir, os.path.join(script_dir, 'distrib'), \
-                 mode, output_dir, options.quiet)
+  if mode == 'standard' or mode == 'minimal':
+    # transfer additional files
+    transfer_files(cef_dir, script_dir, os.path.join(script_dir, 'distrib'), \
+                   mode, output_dir, options.quiet)
 
   # process cmake templates
-  variables = dict(cef_paths.items() + cef_paths2.items())
+  variables = cef_paths.copy()
+  variables.update(cef_paths2)
   process_cmake_template(os.path.join(cef_dir, 'CMakeLists.txt.in'), \
                          os.path.join(output_dir, 'CMakeLists.txt'), \
                          variables, options.quiet)
@@ -622,9 +760,10 @@ if mode == 'standard':
   shared_dir = os.path.join(tests_dir, 'shared')
   make_dir(shared_dir, options.quiet)
 
-  # create the tests/cefclient directory
-  cefclient_dir = os.path.join(tests_dir, 'cefclient')
-  make_dir(cefclient_dir, options.quiet)
+  if not options.ozone:
+    # create the tests/cefclient directory
+    cefclient_dir = os.path.join(tests_dir, 'cefclient')
+    make_dir(cefclient_dir, options.quiet)
 
   # create the tests/cefsimple directory
   cefsimple_dir = os.path.join(tests_dir, 'cefsimple')
@@ -644,17 +783,18 @@ if mode == 'standard':
   transfer_gypi_files(cef_dir, cef_paths2['shared_sources_resources'], \
                       'tests/shared/', shared_dir, options.quiet)
 
-  # transfer common cefclient files
-  transfer_gypi_files(cef_dir, cef_paths2['cefclient_sources_browser'], \
-                      'tests/cefclient/', cefclient_dir, options.quiet)
-  transfer_gypi_files(cef_dir, cef_paths2['cefclient_sources_common'], \
-                      'tests/cefclient/', cefclient_dir, options.quiet)
-  transfer_gypi_files(cef_dir, cef_paths2['cefclient_sources_renderer'], \
-                      'tests/cefclient/', cefclient_dir, options.quiet)
-  transfer_gypi_files(cef_dir, cef_paths2['cefclient_sources_resources'], \
-                      'tests/cefclient/', cefclient_dir, options.quiet)
-  transfer_gypi_files(cef_dir, cef_paths2['cefclient_sources_resources_extensions_set_page_color'], \
-                      'tests/cefclient/', cefclient_dir, options.quiet)
+  if not options.ozone:
+    # transfer common cefclient files
+    transfer_gypi_files(cef_dir, cef_paths2['cefclient_sources_browser'], \
+                        'tests/cefclient/', cefclient_dir, options.quiet)
+    transfer_gypi_files(cef_dir, cef_paths2['cefclient_sources_common'], \
+                        'tests/cefclient/', cefclient_dir, options.quiet)
+    transfer_gypi_files(cef_dir, cef_paths2['cefclient_sources_renderer'], \
+                        'tests/cefclient/', cefclient_dir, options.quiet)
+    transfer_gypi_files(cef_dir, cef_paths2['cefclient_sources_resources'], \
+                        'tests/cefclient/', cefclient_dir, options.quiet)
+    transfer_gypi_files(cef_dir, cef_paths2['cefclient_sources_resources_extensions_set_page_color'], \
+                        'tests/cefclient/', cefclient_dir, options.quiet)
 
   # transfer common cefsimple files
   transfer_gypi_files(cef_dir, cef_paths2['cefsimple_sources_common'], \
@@ -668,9 +808,10 @@ if mode == 'standard':
   create_fuzed_gtest(tests_dir)
 
   # process cmake templates
-  process_cmake_template(os.path.join(cef_dir, 'tests', 'cefclient', 'CMakeLists.txt.in'), \
-                         os.path.join(cefclient_dir, 'CMakeLists.txt'), \
-                         variables, options.quiet)
+  if not options.ozone:
+    process_cmake_template(os.path.join(cef_dir, 'tests', 'cefclient', 'CMakeLists.txt.in'), \
+                           os.path.join(cefclient_dir, 'CMakeLists.txt'), \
+                           variables, options.quiet)
   process_cmake_template(os.path.join(cef_dir, 'tests', 'cefsimple', 'CMakeLists.txt.in'), \
                          os.path.join(cefsimple_dir, 'CMakeLists.txt'), \
                          variables, options.quiet)
@@ -694,11 +835,9 @@ if platform == 'windows':
   # yapf: disable
   binaries = [
       {'path': 'chrome_elf.dll'},
-      {'path': 'd3dcompiler_47.dll'},
       {'path': libcef_dll},
       {'path': 'libEGL.dll'},
       {'path': 'libGLESv2.dll'},
-      {'path': 'natives_blob.bin'},
       {'path': 'snapshot_blob.bin', 'conditional': True},
       {'path': 'v8_context_snapshot.bin', 'conditional': True},
       {'path': 'swiftshader\\libEGL.dll'},
@@ -727,6 +866,7 @@ if platform == 'windows':
   sandbox_libs = [
       'obj\\base\\base.lib',
       'obj\\base\\base_static.lib',
+      'obj\\base\\third_party\\double_conversion\\double_conversion.lib',
       'obj\\base\\third_party\\dynamic_annotations\\dynamic_annotations.lib',
       'obj\\base\\win\\pe_image.lib',
       cef_sandbox_lib,
@@ -745,7 +885,7 @@ if platform == 'windows':
         if path_exists(os.path.join(src_dir, cef_sandbox_lib)):
           dst_dir = os.path.join(output_dir, dir_name)
           make_dir(dst_dir, options.quiet)
-          combine_libs(src_dir, sandbox_libs,
+          combine_libs(platform, src_dir, sandbox_libs,
                        os.path.join(dst_dir, 'cef_sandbox.lib'))
           break
 
@@ -760,7 +900,8 @@ if platform == 'windows':
       dst_dir = os.path.join(output_dir, 'Debug')
       copy_files_list(build_dir, dst_dir, binaries)
       copy_files(
-          os.path.join(script_dir, 'distrib/win/*.dll'), dst_dir, options.quiet)
+          os.path.join(script_dir, 'distrib/win/%s/*.dll' % binary_arch),
+          dst_dir, options.quiet)
 
       if not options.nosymbols:
         # create the symbol output directory
@@ -782,7 +923,8 @@ if platform == 'windows':
       dst_dir = os.path.join(output_dir, 'Release')
       copy_files_list(build_dir, dst_dir, binaries)
       copy_files(
-          os.path.join(script_dir, 'distrib/win/*.dll'), dst_dir, options.quiet)
+          os.path.join(script_dir, 'distrib/win/%s/*.dll' % binary_arch),
+          dst_dir, options.quiet)
 
       if not options.nosymbols:
         # create the symbol output directory
@@ -808,6 +950,8 @@ if platform == 'windows':
     # transfer include files
     transfer_gypi_files(cef_dir, cef_paths2['includes_win'], \
                         'include/', include_dir, options.quiet)
+    transfer_gypi_files(cef_dir, cef_paths2['includes_win_capi'], \
+                        'include/', include_dir, options.quiet)
 
     # transfer additional files, if any
     transfer_files(cef_dir, script_dir, os.path.join(script_dir, 'distrib', 'win'), \
@@ -821,13 +965,19 @@ if platform == 'windows':
     # transfer cefclient files
     transfer_gypi_files(cef_dir, cef_paths2['cefclient_sources_win'], \
                         'tests/cefclient/', cefclient_dir, options.quiet)
+    transfer_gypi_files(cef_dir, cef_paths2['cefclient_sources_resources_win'], \
+                        'tests/cefclient/', cefclient_dir, options.quiet)
 
     # transfer cefsimple files
     transfer_gypi_files(cef_dir, cef_paths2['cefsimple_sources_win'], \
                         'tests/cefsimple/', cefsimple_dir, options.quiet)
+    transfer_gypi_files(cef_dir, cef_paths2['cefsimple_sources_resources_win'], \
+                        'tests/cefsimple/', cefsimple_dir, options.quiet)
 
     # transfer ceftests files
     transfer_gypi_files(cef_dir, cef_paths2['ceftests_sources_win'], \
+                        'tests/ceftests/', ceftests_dir, options.quiet)
+    transfer_gypi_files(cef_dir, cef_paths2['ceftests_sources_resources_win'], \
                         'tests/ceftests/', ceftests_dir, options.quiet)
     transfer_gypi_files(cef_dir, cef_paths2['ceftests_sources_views'], \
                         'tests/ceftests/', ceftests_dir, options.quiet)
@@ -848,6 +998,32 @@ elif platform == 'macosx':
   framework_name = 'Chromium Embedded Framework'
   framework_dsym = '%s.dSYM' % framework_name
   cefclient_app = 'cefclient.app'
+
+  cef_sandbox_lib = 'obj/cef/libcef_sandbox.a'
+  sandbox_libs = [
+      cef_sandbox_lib,
+      'obj/sandbox/mac/libseatbelt.a',
+      'obj/sandbox/mac/libseatbelt_proto.a',
+      'obj/third_party/protobuf/libprotobuf_lite.a',
+      'obj/buildtools/third_party/libc++/libc++/*.o',
+      'obj/buildtools/third_party/libc++abi/libc++abi/*.o',
+  ]
+
+  # Generate the cef_sandbox.a merged library. A separate *_sandbox build
+  # should exist when GN is_official_build=true.
+  if mode in ('standard', 'minimal', 'sandbox'):
+    dirs = {
+        'Debug': (build_dir_debug + '_sandbox', build_dir_debug),
+        'Release': (build_dir_release + '_sandbox', build_dir_release)
+    }
+    for dir_name in dirs.keys():
+      for src_dir in dirs[dir_name]:
+        if path_exists(os.path.join(src_dir, cef_sandbox_lib)):
+          dst_dir = os.path.join(output_dir, dir_name)
+          make_dir(dst_dir, options.quiet)
+          combine_libs(platform, src_dir, sandbox_libs,
+                       os.path.join(dst_dir, 'cef_sandbox.a'))
+          break
 
   valid_build_dir = None
 
@@ -879,47 +1055,57 @@ elif platform == 'macosx':
     else:
       sys.stdout.write("No Debug build files.\n")
 
-  # transfer Release files
-  build_dir = build_dir_release
-  if not options.allowpartial or path_exists(
-      os.path.join(build_dir, cefclient_app)):
-    valid_build_dir = build_dir
-    dst_dir = os.path.join(output_dir, 'Release')
-    make_dir(dst_dir, options.quiet)
-    framework_src_dir = os.path.join(
-        build_dir, '%s/Contents/Frameworks/%s.framework/Versions/A' %
-        (cefclient_app, framework_name))
-    if mode != 'client':
-      framework_dst_dir = os.path.join(dst_dir, '%s.framework' % framework_name)
+  if mode != 'sandbox':
+    # transfer Release files
+    build_dir = build_dir_release
+    if not options.allowpartial or path_exists(
+        os.path.join(build_dir, cefclient_app)):
+      valid_build_dir = build_dir
+      dst_dir = os.path.join(output_dir, 'Release')
+      make_dir(dst_dir, options.quiet)
+      framework_src_dir = os.path.join(
+          build_dir, '%s/Contents/Frameworks/%s.framework/Versions/A' %
+          (cefclient_app, framework_name))
+      if mode != 'client':
+        framework_dst_dir = os.path.join(dst_dir,
+                                         '%s.framework' % framework_name)
+      else:
+        copy_dir(
+            os.path.join(build_dir, cefclient_app),
+            os.path.join(dst_dir, cefclient_app), options.quiet)
+        # Replace the versioned framework with an unversioned framework in the sample app.
+        framework_dst_dir = os.path.join(
+            dst_dir, '%s/Contents/Frameworks/%s.framework' % (cefclient_app,
+                                                              framework_name))
+        remove_dir(framework_dst_dir, options.quiet)
+      copy_dir(framework_src_dir, framework_dst_dir, options.quiet)
+
+      if not options.nosymbols:
+        # create the symbol output directory
+        symbol_output_dir = create_output_dir(
+            output_dir_name + '_release_symbols', options.outputdir)
+
+        # The real dSYM already exists, just copy it to the output directory.
+        # dSYMs are only generated when is_official_build=true or enable_dsyms=true.
+        # See //build/config/mac/symbols.gni.
+        copy_dir(
+            os.path.join(build_dir, framework_dsym),
+            os.path.join(symbol_output_dir, framework_dsym), options.quiet)
     else:
-      copy_dir(
-          os.path.join(build_dir, cefclient_app),
-          os.path.join(dst_dir, cefclient_app), options.quiet)
-      # Replace the versioned framework with an unversioned framework in the sample app.
-      framework_dst_dir = os.path.join(
-          dst_dir, '%s/Contents/Frameworks/%s.framework' % (cefclient_app,
-                                                            framework_name))
-      remove_dir(framework_dst_dir, options.quiet)
-    copy_dir(framework_src_dir, framework_dst_dir, options.quiet)
-
-    if not options.nosymbols:
-      # create the symbol output directory
-      symbol_output_dir = create_output_dir(
-          output_dir_name + '_release_symbols', options.outputdir)
-
-      # The real dSYM already exists, just copy it to the output directory.
-      # dSYMs are only generated when is_official_build=true or enable_dsyms=true.
-      # See //build/config/mac/symbols.gni.
-      copy_dir(
-          os.path.join(build_dir, framework_dsym),
-          os.path.join(symbol_output_dir, framework_dsym), options.quiet)
-  else:
-    sys.stdout.write("No Release build files.\n")
+      sys.stdout.write("No Release build files.\n")
 
   if mode == 'standard' or mode == 'minimal':
     # transfer include files
     transfer_gypi_files(cef_dir, cef_paths2['includes_mac'], \
                         'include/', include_dir, options.quiet)
+    transfer_gypi_files(cef_dir, cef_paths2['includes_mac_capi'], \
+                        'include/', include_dir, options.quiet)
+    transfer_gypi_files(cef_dir, cef_paths2['includes_wrapper_mac'], \
+                        'include/', include_dir, options.quiet)
+
+    # transfer libcef_dll_wrapper files
+    transfer_gypi_files(cef_dir, cef_paths2['libcef_dll_wrapper_sources_mac'], \
+                      'libcef_dll/', libcef_dll_dir, options.quiet)
 
     # transfer additional files, if any
     transfer_files(cef_dir, script_dir, os.path.join(script_dir, 'distrib', 'mac'), \
@@ -971,13 +1157,14 @@ elif platform == 'linux':
       {'path': libcef_so},
       {'path': 'libEGL.so'},
       {'path': 'libGLESv2.so'},
-      {'path': 'natives_blob.bin'},
       {'path': 'snapshot_blob.bin', 'conditional': True},
       {'path': 'v8_context_snapshot.bin', 'conditional': True},
       {'path': 'swiftshader/libEGL.so'},
       {'path': 'swiftshader/libGLESv2.so'},
   ]
   # yapf: enable
+  if options.ozone:
+    binaries.append({'path': 'libminigbm.so', 'conditional': True})
 
   if mode == 'client':
     binaries.append({'path': 'cefsimple'})
@@ -1030,6 +1217,8 @@ elif platform == 'linux':
     # transfer include files
     transfer_gypi_files(cef_dir, cef_paths2['includes_linux'], \
                         'include/', include_dir, options.quiet)
+    transfer_gypi_files(cef_dir, cef_paths2['includes_linux_capi'], \
+                        'include/', include_dir, options.quiet)
 
     # transfer additional files, if any
     transfer_files(cef_dir, script_dir, os.path.join(script_dir, 'distrib', 'linux'), \
@@ -1040,9 +1229,10 @@ elif platform == 'linux':
     transfer_gypi_files(cef_dir, cef_paths2['shared_sources_linux'], \
                         'tests/shared/', shared_dir, options.quiet)
 
-    # transfer cefclient files
-    transfer_gypi_files(cef_dir, cef_paths2['cefclient_sources_linux'], \
-                        'tests/cefclient/', cefclient_dir, options.quiet)
+    if not options.ozone:
+      # transfer cefclient files
+      transfer_gypi_files(cef_dir, cef_paths2['cefclient_sources_linux'], \
+                          'tests/cefclient/', cefclient_dir, options.quiet)
 
     # transfer cefsimple files
     transfer_gypi_files(cef_dir, cef_paths2['cefsimple_sources_linux'], \

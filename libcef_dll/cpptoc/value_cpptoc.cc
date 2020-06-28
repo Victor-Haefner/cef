@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,17 +9,20 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=24f0d44c25fc3700e54ed2bdd692b0077e555c78$
+// $hash=4acbaa4608fbac62442f6f6cf921e7c51c930539$
 //
 
 #include "libcef_dll/cpptoc/value_cpptoc.h"
 #include "libcef_dll/cpptoc/binary_value_cpptoc.h"
 #include "libcef_dll/cpptoc/dictionary_value_cpptoc.h"
 #include "libcef_dll/cpptoc/list_value_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // GLOBAL FUNCTIONS - Body may be edited by hand.
 
 CEF_EXPORT cef_value_t* cef_value_create() {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Execute
@@ -34,6 +37,8 @@ namespace {
 // MEMBER FUNCTIONS - Body may be edited by hand.
 
 int CEF_CALLBACK value_is_valid(struct _cef_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -48,6 +53,8 @@ int CEF_CALLBACK value_is_valid(struct _cef_value_t* self) {
 }
 
 int CEF_CALLBACK value_is_owned(struct _cef_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -62,6 +69,8 @@ int CEF_CALLBACK value_is_owned(struct _cef_value_t* self) {
 }
 
 int CEF_CALLBACK value_is_read_only(struct _cef_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -77,6 +86,8 @@ int CEF_CALLBACK value_is_read_only(struct _cef_value_t* self) {
 
 int CEF_CALLBACK value_is_same(struct _cef_value_t* self,
                                struct _cef_value_t* that) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -97,6 +108,8 @@ int CEF_CALLBACK value_is_same(struct _cef_value_t* self,
 
 int CEF_CALLBACK value_is_equal(struct _cef_value_t* self,
                                 struct _cef_value_t* that) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -116,6 +129,8 @@ int CEF_CALLBACK value_is_equal(struct _cef_value_t* self,
 }
 
 struct _cef_value_t* CEF_CALLBACK value_copy(struct _cef_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -130,6 +145,8 @@ struct _cef_value_t* CEF_CALLBACK value_copy(struct _cef_value_t* self) {
 }
 
 cef_value_type_t CEF_CALLBACK value_get_type(struct _cef_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -144,6 +161,8 @@ cef_value_type_t CEF_CALLBACK value_get_type(struct _cef_value_t* self) {
 }
 
 int CEF_CALLBACK value_get_bool(struct _cef_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -158,6 +177,8 @@ int CEF_CALLBACK value_get_bool(struct _cef_value_t* self) {
 }
 
 int CEF_CALLBACK value_get_int(struct _cef_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -172,6 +193,8 @@ int CEF_CALLBACK value_get_int(struct _cef_value_t* self) {
 }
 
 double CEF_CALLBACK value_get_double(struct _cef_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -186,6 +209,8 @@ double CEF_CALLBACK value_get_double(struct _cef_value_t* self) {
 }
 
 cef_string_userfree_t CEF_CALLBACK value_get_string(struct _cef_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -201,6 +226,8 @@ cef_string_userfree_t CEF_CALLBACK value_get_string(struct _cef_value_t* self) {
 
 struct _cef_binary_value_t* CEF_CALLBACK
 value_get_binary(struct _cef_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -216,6 +243,8 @@ value_get_binary(struct _cef_value_t* self) {
 
 struct _cef_dictionary_value_t* CEF_CALLBACK
 value_get_dictionary(struct _cef_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -232,6 +261,8 @@ value_get_dictionary(struct _cef_value_t* self) {
 
 struct _cef_list_value_t* CEF_CALLBACK
 value_get_list(struct _cef_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -246,6 +277,8 @@ value_get_list(struct _cef_value_t* self) {
 }
 
 int CEF_CALLBACK value_set_null(struct _cef_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -260,6 +293,8 @@ int CEF_CALLBACK value_set_null(struct _cef_value_t* self) {
 }
 
 int CEF_CALLBACK value_set_bool(struct _cef_value_t* self, int value) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -274,6 +309,8 @@ int CEF_CALLBACK value_set_bool(struct _cef_value_t* self, int value) {
 }
 
 int CEF_CALLBACK value_set_int(struct _cef_value_t* self, int value) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -288,6 +325,8 @@ int CEF_CALLBACK value_set_int(struct _cef_value_t* self, int value) {
 }
 
 int CEF_CALLBACK value_set_double(struct _cef_value_t* self, double value) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -303,6 +342,8 @@ int CEF_CALLBACK value_set_double(struct _cef_value_t* self, double value) {
 
 int CEF_CALLBACK value_set_string(struct _cef_value_t* self,
                                   const cef_string_t* value) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -319,6 +360,8 @@ int CEF_CALLBACK value_set_string(struct _cef_value_t* self,
 
 int CEF_CALLBACK value_set_binary(struct _cef_value_t* self,
                                   struct _cef_binary_value_t* value) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -339,6 +382,8 @@ int CEF_CALLBACK value_set_binary(struct _cef_value_t* self,
 
 int CEF_CALLBACK value_set_dictionary(struct _cef_value_t* self,
                                       struct _cef_dictionary_value_t* value) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -359,6 +404,8 @@ int CEF_CALLBACK value_set_dictionary(struct _cef_value_t* self,
 
 int CEF_CALLBACK value_set_list(struct _cef_value_t* self,
                                 struct _cef_list_value_t* value) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -406,21 +453,20 @@ CefValueCppToC::CefValueCppToC() {
   GetStruct()->set_list = value_set_list;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefValueCppToC::~CefValueCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefValue>
 CefCppToCRefCounted<CefValueCppToC, CefValue, cef_value_t>::UnwrapDerived(
     CefWrapperType type,
     cef_value_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefValueCppToC, CefValue, cef_value_t>::DebugObjCt
-        ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

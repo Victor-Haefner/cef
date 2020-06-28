@@ -52,7 +52,7 @@ bool CefPrefStore::IsInitializationComplete() const {
 void CefPrefStore::SetValue(const std::string& key,
                             std::unique_ptr<base::Value> value,
                             uint32_t flags) {
-  if (prefs_.SetValue(key, std::move(value))) {
+  if (prefs_.SetValue(key, base::Value::FromUniquePtrValue(std::move(value)))) {
     committed_ = false;
     NotifyPrefValueChanged(key);
   }
@@ -61,8 +61,13 @@ void CefPrefStore::SetValue(const std::string& key,
 void CefPrefStore::SetValueSilently(const std::string& key,
                                     std::unique_ptr<base::Value> value,
                                     uint32_t flags) {
-  if (prefs_.SetValue(key, std::move(value)))
+  if (prefs_.SetValue(key, base::Value::FromUniquePtrValue(std::move(value))))
     committed_ = false;
+}
+
+void CefPrefStore::RemoveValuesByPrefixSilently(const std::string& prefix) {
+  prefs_.ClearWithPrefix(prefix);
+  committed_ = false;
 }
 
 void CefPrefStore::RemoveValue(const std::string& key, uint32_t flags) {
@@ -94,9 +99,12 @@ void CefPrefStore::ReadPrefsAsync(ReadErrorDelegate* error_delegate) {
     NotifyInitializationCompleted();
 }
 
-void CefPrefStore::CommitPendingWrite(base::OnceClosure done_callback) {
+void CefPrefStore::CommitPendingWrite(
+    base::OnceClosure done_callback,
+    base::OnceClosure synchronous_done_callback) {
   committed_ = true;
-  PersistentPrefStore::CommitPendingWrite(std::move(done_callback));
+  PersistentPrefStore::CommitPendingWrite(std::move(done_callback),
+                                          std::move(synchronous_done_callback));
 }
 
 void CefPrefStore::SchedulePendingLossyWrites() {}

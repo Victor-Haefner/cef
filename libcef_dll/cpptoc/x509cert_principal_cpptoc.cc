@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,10 +9,11 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=0c5d2977c06977cd94205a5913f073b0867efe57$
+// $hash=8780097b60810a7f952f0a2169ebc925cb63b5e1$
 //
 
 #include "libcef_dll/cpptoc/x509cert_principal_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 #include "libcef_dll/transfer_util.h"
 
 namespace {
@@ -21,6 +22,8 @@ namespace {
 
 cef_string_userfree_t CEF_CALLBACK
 x509cert_principal_get_display_name(struct _cef_x509cert_principal_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -36,6 +39,8 @@ x509cert_principal_get_display_name(struct _cef_x509cert_principal_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 x509cert_principal_get_common_name(struct _cef_x509cert_principal_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -51,6 +56,8 @@ x509cert_principal_get_common_name(struct _cef_x509cert_principal_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 x509cert_principal_get_locality_name(struct _cef_x509cert_principal_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -67,6 +74,8 @@ x509cert_principal_get_locality_name(struct _cef_x509cert_principal_t* self) {
 cef_string_userfree_t CEF_CALLBACK
 x509cert_principal_get_state_or_province_name(
     struct _cef_x509cert_principal_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -83,6 +92,8 @@ x509cert_principal_get_state_or_province_name(
 
 cef_string_userfree_t CEF_CALLBACK
 x509cert_principal_get_country_name(struct _cef_x509cert_principal_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -99,6 +110,8 @@ x509cert_principal_get_country_name(struct _cef_x509cert_principal_t* self) {
 void CEF_CALLBACK
 x509cert_principal_get_street_addresses(struct _cef_x509cert_principal_t* self,
                                         cef_string_list_t addresses) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -124,6 +137,8 @@ x509cert_principal_get_street_addresses(struct _cef_x509cert_principal_t* self,
 void CEF_CALLBACK x509cert_principal_get_organization_names(
     struct _cef_x509cert_principal_t* self,
     cef_string_list_t names) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -149,6 +164,8 @@ void CEF_CALLBACK x509cert_principal_get_organization_names(
 void CEF_CALLBACK x509cert_principal_get_organization_unit_names(
     struct _cef_x509cert_principal_t* self,
     cef_string_list_t names) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -174,6 +191,8 @@ void CEF_CALLBACK x509cert_principal_get_organization_unit_names(
 void CEF_CALLBACK
 x509cert_principal_get_domain_components(struct _cef_x509cert_principal_t* self,
                                          cef_string_list_t components) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -215,6 +234,12 @@ CefX509CertPrincipalCppToC::CefX509CertPrincipalCppToC() {
   GetStruct()->get_domain_components = x509cert_principal_get_domain_components;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefX509CertPrincipalCppToC::~CefX509CertPrincipalCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefX509CertPrincipal> CefCppToCRefCounted<
     CefX509CertPrincipalCppToC,
@@ -222,16 +247,8 @@ CefRefPtr<CefX509CertPrincipal> CefCppToCRefCounted<
     cef_x509cert_principal_t>::UnwrapDerived(CefWrapperType type,
                                              cef_x509cert_principal_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefX509CertPrincipalCppToC,
-                                         CefX509CertPrincipal,
-                                         cef_x509cert_principal_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefX509CertPrincipalCppToC,

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=498d2e99a8b8047387c9a131a7e38c6659ab7cd5$
+// $hash=ba596df840e36426b87e0744fcf55e179a915c5e$
 //
 
 #include "libcef_dll/ctocpp/scheme_handler_factory_ctocpp.h"
@@ -28,18 +28,18 @@ CefRefPtr<CefResourceHandler> CefSchemeHandlerFactoryCToCpp::Create(
     CefRefPtr<CefRequest> request) {
   cef_scheme_handler_factory_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, create))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Verify param: scheme_name; type: string_byref_const
   DCHECK(!scheme_name.empty());
   if (scheme_name.empty())
-    return NULL;
+    return nullptr;
   // Verify param: request; type: refptr_diff
   DCHECK(request.get());
   if (!request.get())
-    return NULL;
+    return nullptr;
   // Unverified params: browser, frame
 
   // Execute
@@ -55,6 +55,10 @@ CefRefPtr<CefResourceHandler> CefSchemeHandlerFactoryCToCpp::Create(
 
 CefSchemeHandlerFactoryCToCpp::CefSchemeHandlerFactoryCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefSchemeHandlerFactoryCToCpp::~CefSchemeHandlerFactoryCToCpp() {}
+
 template <>
 cef_scheme_handler_factory_t* CefCToCppRefCounted<
     CefSchemeHandlerFactoryCToCpp,
@@ -62,16 +66,8 @@ cef_scheme_handler_factory_t* CefCToCppRefCounted<
     cef_scheme_handler_factory_t>::UnwrapDerived(CefWrapperType type,
                                                  CefSchemeHandlerFactory* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<
-    CefSchemeHandlerFactoryCToCpp,
-    CefSchemeHandlerFactory,
-    cef_scheme_handler_factory_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefSchemeHandlerFactoryCToCpp,

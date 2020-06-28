@@ -7,7 +7,7 @@
 #include <string>
 
 #include "libcef/browser/net/internal_scheme_handler.h"
-#include "libcef/browser/net/url_request_manager.h"
+#include "libcef/browser/resource_context.h"
 
 #include "base/memory/ptr_util.h"
 #include "base/strings/string_util.h"
@@ -32,16 +32,16 @@ class Delegate : public InternalHandlerDelegate {
     if (path.length() > 0)
       path = path.substr(1);
 
-    action->string_piece =
-        content::DevToolsFrontendHost::GetFrontendResource(path);
-    return !action->string_piece.empty();
+    action->bytes =
+        content::DevToolsFrontendHost::GetFrontendResourceBytes(path);
+    return !!action->bytes;
   }
 };
 
 }  // namespace
 
-void RegisterChromeDevToolsHandler(CefURLRequestManager* request_manager) {
-  request_manager->AddFactory(
+void RegisterChromeDevToolsHandler(CefResourceContext* resource_context) {
+  resource_context->RegisterSchemeHandlerFactory(
       content::kChromeDevToolsScheme, kChromeDevToolsHost,
       CreateInternalHandlerFactory(base::WrapUnique(new Delegate())));
 }

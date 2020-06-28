@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=9cf199db470205062b0c4d39f7daa739db2a95a2$
+// $hash=becfb6e4e0d47746f10295fa4843c9baebc786b5$
 //
 
 #include "libcef_dll/cpptoc/response_cpptoc.h"
@@ -119,10 +119,7 @@ void CEF_CALLBACK response_set_status_text(struct _cef_response_t* self,
   DCHECK(self);
   if (!self)
     return;
-  // Verify param: statusText; type: string_byref_const
-  DCHECK(statusText);
-  if (!statusText)
-    return;
+  // Unverified params: statusText
 
   // Execute
   CefResponseCppToC::Get(self)->SetStatusText(CefString(statusText));
@@ -150,17 +147,43 @@ void CEF_CALLBACK response_set_mime_type(struct _cef_response_t* self,
   DCHECK(self);
   if (!self)
     return;
-  // Verify param: mimeType; type: string_byref_const
-  DCHECK(mimeType);
-  if (!mimeType)
-    return;
+  // Unverified params: mimeType
 
   // Execute
   CefResponseCppToC::Get(self)->SetMimeType(CefString(mimeType));
 }
 
 cef_string_userfree_t CEF_CALLBACK
-response_get_header(struct _cef_response_t* self, const cef_string_t* name) {
+response_get_charset(struct _cef_response_t* self) {
+  // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
+
+  DCHECK(self);
+  if (!self)
+    return NULL;
+
+  // Execute
+  CefString _retval = CefResponseCppToC::Get(self)->GetCharset();
+
+  // Return type: string
+  return _retval.DetachToUserFree();
+}
+
+void CEF_CALLBACK response_set_charset(struct _cef_response_t* self,
+                                       const cef_string_t* charset) {
+  // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
+
+  DCHECK(self);
+  if (!self)
+    return;
+  // Unverified params: charset
+
+  // Execute
+  CefResponseCppToC::Get(self)->SetCharset(CefString(charset));
+}
+
+cef_string_userfree_t CEF_CALLBACK
+response_get_header_by_name(struct _cef_response_t* self,
+                            const cef_string_t* name) {
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -172,10 +195,31 @@ response_get_header(struct _cef_response_t* self, const cef_string_t* name) {
     return NULL;
 
   // Execute
-  CefString _retval = CefResponseCppToC::Get(self)->GetHeader(CefString(name));
+  CefString _retval =
+      CefResponseCppToC::Get(self)->GetHeaderByName(CefString(name));
 
   // Return type: string
   return _retval.DetachToUserFree();
+}
+
+void CEF_CALLBACK response_set_header_by_name(struct _cef_response_t* self,
+                                              const cef_string_t* name,
+                                              const cef_string_t* value,
+                                              int overwrite) {
+  // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
+
+  DCHECK(self);
+  if (!self)
+    return;
+  // Verify param: name; type: string_byref_const
+  DCHECK(name);
+  if (!name)
+    return;
+  // Unverified params: value
+
+  // Execute
+  CefResponseCppToC::Get(self)->SetHeaderByName(
+      CefString(name), CefString(value), overwrite ? true : false);
 }
 
 void CEF_CALLBACK response_get_header_map(struct _cef_response_t* self,
@@ -244,10 +288,7 @@ void CEF_CALLBACK response_set_url(struct _cef_response_t* self,
   DCHECK(self);
   if (!self)
     return;
-  // Verify param: url; type: string_byref_const
-  DCHECK(url);
-  if (!url)
-    return;
+  // Unverified params: url
 
   // Execute
   CefResponseCppToC::Get(self)->SetURL(CefString(url));
@@ -267,27 +308,27 @@ CefResponseCppToC::CefResponseCppToC() {
   GetStruct()->set_status_text = response_set_status_text;
   GetStruct()->get_mime_type = response_get_mime_type;
   GetStruct()->set_mime_type = response_set_mime_type;
-  GetStruct()->get_header = response_get_header;
+  GetStruct()->get_charset = response_get_charset;
+  GetStruct()->set_charset = response_set_charset;
+  GetStruct()->get_header_by_name = response_get_header_by_name;
+  GetStruct()->set_header_by_name = response_set_header_by_name;
   GetStruct()->get_header_map = response_get_header_map;
   GetStruct()->set_header_map = response_set_header_map;
   GetStruct()->get_url = response_get_url;
   GetStruct()->set_url = response_set_url;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefResponseCppToC::~CefResponseCppToC() {}
+
 template <>
 CefRefPtr<CefResponse>
 CefCppToCRefCounted<CefResponseCppToC, CefResponse, cef_response_t>::
     UnwrapDerived(CefWrapperType type, cef_response_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefResponseCppToC, CefResponse, cef_response_t>::
-        DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefResponseCppToC,

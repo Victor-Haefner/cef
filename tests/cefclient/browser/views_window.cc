@@ -86,6 +86,8 @@ void AddTestMenuItems(CefRefPtr<CefMenuModel> test_menu) {
   test_menu->AddItem(ID_TESTS_TRACING_END, "End Tracing");
   test_menu->AddItem(ID_TESTS_PRINT, "Print");
   test_menu->AddItem(ID_TESTS_PRINT_TO_PDF, "Print to PDF");
+  test_menu->AddItem(ID_TESTS_MUTE_AUDIO, "Mute Audio");
+  test_menu->AddItem(ID_TESTS_UNMUTE_AUDIO, "Unmute Audio");
   test_menu->AddItem(ID_TESTS_OTHER_TESTS, "Other Tests");
 }
 
@@ -110,11 +112,11 @@ CefRefPtr<ViewsWindow> ViewsWindow::Create(
   DCHECK(delegate);
 
   // Create a new ViewsWindow.
-  CefRefPtr<ViewsWindow> views_window = new ViewsWindow(delegate, NULL);
+  CefRefPtr<ViewsWindow> views_window = new ViewsWindow(delegate, nullptr);
 
   // Create a new BrowserView.
   CefRefPtr<CefBrowserView> browser_view = CefBrowserView::CreateBrowserView(
-      client, url, settings, request_context, views_window);
+      client, url, settings, nullptr, request_context, views_window);
 
   // Associate the BrowserView with the ViewsWindow.
   views_window->SetBrowserView(browser_view);
@@ -222,6 +224,13 @@ void ViewsWindow::SetFullscreen(bool fullscreen) {
   }
 }
 
+void ViewsWindow::SetAlwaysOnTop(bool on_top) {
+  CEF_REQUIRE_UI_THREAD();
+  if (window_) {
+    window_->SetAlwaysOnTop(on_top);
+  }
+}
+
 void ViewsWindow::SetLoadingState(bool isLoading,
                                   bool canGoBack,
                                   bool canGoForward) {
@@ -325,7 +334,7 @@ CefRefPtr<CefBrowserViewDelegate> ViewsWindow::GetDelegateForPopupBrowserView(
   DCHECK(popup_delegate && popup_delegate != delegate_);
 
   // Create a new ViewsWindow for the popup BrowserView.
-  return new ViewsWindow(popup_delegate, NULL);
+  return new ViewsWindow(popup_delegate, nullptr);
 }
 
 bool ViewsWindow::OnPopupBrowserViewCreated(
@@ -516,14 +525,14 @@ void ViewsWindow::OnWindowDestroyed(CefRefPtr<CefWindow> window) {
 
   delegate_->OnViewsWindowDestroyed(this);
 
-  browser_view_ = NULL;
-  button_menu_model_ = NULL;
+  browser_view_ = nullptr;
+  button_menu_model_ = nullptr;
   if (top_menu_bar_) {
     top_menu_bar_->Reset();
-    top_menu_bar_ = NULL;
+    top_menu_bar_ = nullptr;
   }
-  extensions_panel_ = NULL;
-  window_ = NULL;
+  extensions_panel_ = nullptr;
+  window_ = nullptr;
 }
 
 bool ViewsWindow::CanClose(CefRefPtr<CefWindow> window) {
@@ -702,30 +711,19 @@ void ViewsWindow::CreateMenuModel() {
 
   if (top_menu_bar_) {
     // Add the menus to the top menu bar.
-    AddFileMenuItems(top_menu_bar_->CreateMenuModel("&File", NULL));
-    AddTestMenuItems(top_menu_bar_->CreateMenuModel("&Tests", NULL));
+    AddFileMenuItems(top_menu_bar_->CreateMenuModel("&File", nullptr));
+    AddTestMenuItems(top_menu_bar_->CreateMenuModel("&Tests", nullptr));
   }
 }
 
 CefRefPtr<CefLabelButton> ViewsWindow::CreateBrowseButton(
     const std::string& label,
     int id) {
-  // The default framed button image resources (IDR_BUTTON_*) look pretty bad
-  // with non-default background colors, so we'll use frameless buttons with
-  // ink drop when a background color is specified.
-  const bool with_frame = !views_style::IsSet();
-
   CefRefPtr<CefLabelButton> button =
-      CefLabelButton::CreateLabelButton(this, label, with_frame);
+      CefLabelButton::CreateLabelButton(this, label);
   button->SetID(id);
   button->SetEnabled(false);    // Disabled by default.
   button->SetFocusable(false);  // Don't give focus to the button.
-
-  if (!with_frame) {
-    views_style::ApplyTo(button);
-    button->SetInkDropEnabled(true);
-    button->SetHorizontalAlignment(CEF_HORIZONTAL_ALIGNMENT_CENTER);
-  }
 
   return button;
 }
@@ -753,7 +751,7 @@ void ViewsWindow::AddControls() {
 
   // Create the menu button.
   CefRefPtr<CefMenuButton> menu_button =
-      CefMenuButton::CreateMenuButton(this, CefString(), false, false);
+      CefMenuButton::CreateMenuButton(this, CefString());
   menu_button->SetID(ID_MENU_BUTTON);
   menu_button->SetImage(
       CEF_BUTTON_STATE_NORMAL,
@@ -764,7 +762,7 @@ void ViewsWindow::AddControls() {
   menu_button->SetMinimumSize(CefSize(0, 0));
 
   // Create the top panel.
-  CefRefPtr<CefPanel> top_panel = CefPanel::CreatePanel(NULL);
+  CefRefPtr<CefPanel> top_panel = CefPanel::CreatePanel(nullptr);
 
   // Use a horizontal box layout for |top_panel|.
   CefBoxLayoutSettings top_panel_layout_settings;
@@ -878,7 +876,7 @@ void ViewsWindow::UpdateExtensionControls() {
     return;
 
   if (!extensions_panel_) {
-    extensions_panel_ = CefPanel::CreatePanel(NULL);
+    extensions_panel_ = CefPanel::CreatePanel(nullptr);
 
     // Use a horizontal box layout for |top_panel|.
     CefBoxLayoutSettings top_panel_layout_settings;
@@ -898,7 +896,7 @@ void ViewsWindow::UpdateExtensionControls() {
   for (int id = ID_EXTENSION_BUTTON_FIRST;
        it != extensions_.end() && id <= ID_EXTENSION_BUTTON_LAST; ++id, ++it) {
     CefRefPtr<CefMenuButton> button =
-        CefMenuButton::CreateMenuButton(this, CefString(), false, false);
+        CefMenuButton::CreateMenuButton(this, CefString());
     button->SetID(id);
     button->SetImage(CEF_BUTTON_STATE_NORMAL, (*it).image_);
     views_style::ApplyTo(button.get());
@@ -948,7 +946,7 @@ void ViewsWindow::OnExtensionWindowClosed() {
   }
 
   // Restore the button state.
-  extension_button_pressed_lock_ = NULL;
+  extension_button_pressed_lock_ = nullptr;
 }
 
 }  // namespace client

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=b7f9c9d096bcbb535a0fec45e29febb837af8b12$
+// $hash=fab935d5efc290c7dd7d663609ba152df6e1be81$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_EXTENSION_HANDLER_CTOCPP_H_
@@ -34,6 +34,7 @@ class CefExtensionHandlerCToCpp
                                  cef_extension_handler_t> {
  public:
   CefExtensionHandlerCToCpp();
+  virtual ~CefExtensionHandlerCToCpp();
 
   // CefExtensionHandler methods.
   void OnExtensionLoadFailed(cef_errorcode_t result) override;

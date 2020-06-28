@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=0540f400b017d5f648b4375e8cbad5d4a2e2f642$
+// $hash=5d0c0d1982ef193450f5b331f6ad378ddbd8dbcc$
 //
 
 #include "libcef_dll/cpptoc/views/label_button_cpptoc.h"
@@ -24,13 +24,15 @@
 #include "libcef_dll/cpptoc/views/window_cpptoc.h"
 #include "libcef_dll/ctocpp/views/button_delegate_ctocpp.h"
 #include "libcef_dll/ctocpp/views/view_delegate_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // GLOBAL FUNCTIONS - Body may be edited by hand.
 
 CEF_EXPORT cef_label_button_t* cef_label_button_create(
     cef_button_delegate_t* delegate,
-    const cef_string_t* text,
-    int with_frame) {
+    const cef_string_t* text) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Verify param: delegate; type: refptr_diff
@@ -41,8 +43,7 @@ CEF_EXPORT cef_label_button_t* cef_label_button_create(
 
   // Execute
   CefRefPtr<CefLabelButton> _retval = CefLabelButton::CreateLabelButton(
-      CefButtonDelegateCToCpp::Wrap(delegate), CefString(text),
-      with_frame ? true : false);
+      CefButtonDelegateCToCpp::Wrap(delegate), CefString(text));
 
   // Return type: refptr_same
   return CefLabelButtonCppToC::Wrap(_retval);
@@ -54,6 +55,8 @@ namespace {
 
 cef_menu_button_t* CEF_CALLBACK
 label_button_as_menu_button(struct _cef_label_button_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -70,6 +73,8 @@ label_button_as_menu_button(struct _cef_label_button_t* self) {
 
 void CEF_CALLBACK label_button_set_text(struct _cef_label_button_t* self,
                                         const cef_string_t* text) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -86,6 +91,8 @@ void CEF_CALLBACK label_button_set_text(struct _cef_label_button_t* self,
 
 cef_string_userfree_t CEF_CALLBACK
 label_button_get_text(struct _cef_label_button_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -102,6 +109,8 @@ label_button_get_text(struct _cef_label_button_t* self) {
 void CEF_CALLBACK label_button_set_image(struct _cef_label_button_t* self,
                                          cef_button_state_t button_state,
                                          cef_image_t* image) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -117,6 +126,8 @@ void CEF_CALLBACK label_button_set_image(struct _cef_label_button_t* self,
 cef_image_t* CEF_CALLBACK
 label_button_get_image(struct _cef_label_button_t* self,
                        cef_button_state_t button_state) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -134,6 +145,8 @@ label_button_get_image(struct _cef_label_button_t* self,
 void CEF_CALLBACK label_button_set_text_color(struct _cef_label_button_t* self,
                                               cef_button_state_t for_state,
                                               cef_color_t color) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -147,6 +160,8 @@ void CEF_CALLBACK label_button_set_text_color(struct _cef_label_button_t* self,
 void CEF_CALLBACK
 label_button_set_enabled_text_colors(struct _cef_label_button_t* self,
                                      cef_color_t color) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -159,6 +174,8 @@ label_button_set_enabled_text_colors(struct _cef_label_button_t* self,
 
 void CEF_CALLBACK label_button_set_font_list(struct _cef_label_button_t* self,
                                              const cef_string_t* font_list) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -176,6 +193,8 @@ void CEF_CALLBACK label_button_set_font_list(struct _cef_label_button_t* self,
 void CEF_CALLBACK
 label_button_set_horizontal_alignment(struct _cef_label_button_t* self,
                                       cef_horizontal_alignment_t alignment) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -189,6 +208,8 @@ label_button_set_horizontal_alignment(struct _cef_label_button_t* self,
 void CEF_CALLBACK
 label_button_set_minimum_size(struct _cef_label_button_t* self,
                               const cef_size_t* size) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -209,6 +230,8 @@ label_button_set_minimum_size(struct _cef_label_button_t* self,
 void CEF_CALLBACK
 label_button_set_maximum_size(struct _cef_label_button_t* self,
                               const cef_size_t* size) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -228,6 +251,8 @@ label_button_set_maximum_size(struct _cef_label_button_t* self,
 
 cef_label_button_t* CEF_CALLBACK
 label_button_as_label_button(struct _cef_button_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -245,6 +270,8 @@ label_button_as_label_button(struct _cef_button_t* self) {
 
 void CEF_CALLBACK label_button_set_state(struct _cef_button_t* self,
                                          cef_button_state_t state) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -258,6 +285,8 @@ void CEF_CALLBACK label_button_set_state(struct _cef_button_t* self,
 
 cef_button_state_t CEF_CALLBACK
 label_button_get_state(struct _cef_button_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -275,6 +304,8 @@ label_button_get_state(struct _cef_button_t* self) {
 
 void CEF_CALLBACK label_button_set_ink_drop_enabled(struct _cef_button_t* self,
                                                     int enabled) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -289,6 +320,8 @@ void CEF_CALLBACK label_button_set_ink_drop_enabled(struct _cef_button_t* self,
 void CEF_CALLBACK
 label_button_set_tooltip_text(struct _cef_button_t* self,
                               const cef_string_t* tooltip_text) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -306,6 +339,8 @@ label_button_set_tooltip_text(struct _cef_button_t* self,
 
 void CEF_CALLBACK label_button_set_accessible_name(struct _cef_button_t* self,
                                                    const cef_string_t* name) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -323,6 +358,8 @@ void CEF_CALLBACK label_button_set_accessible_name(struct _cef_button_t* self,
 
 cef_browser_view_t* CEF_CALLBACK
 label_button_as_browser_view(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -339,6 +376,8 @@ label_button_as_browser_view(struct _cef_view_t* self) {
 }
 
 cef_button_t* CEF_CALLBACK label_button_as_button(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -355,6 +394,8 @@ cef_button_t* CEF_CALLBACK label_button_as_button(struct _cef_view_t* self) {
 }
 
 cef_panel_t* CEF_CALLBACK label_button_as_panel(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -372,6 +413,8 @@ cef_panel_t* CEF_CALLBACK label_button_as_panel(struct _cef_view_t* self) {
 
 cef_scroll_view_t* CEF_CALLBACK
 label_button_as_scroll_view(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -389,6 +432,8 @@ label_button_as_scroll_view(struct _cef_view_t* self) {
 
 cef_textfield_t* CEF_CALLBACK
 label_button_as_textfield(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -406,6 +451,8 @@ label_button_as_textfield(struct _cef_view_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 label_button_get_type_string(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -423,6 +470,8 @@ label_button_get_type_string(struct _cef_view_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 label_button_to_string(struct _cef_view_t* self, int include_children) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -439,6 +488,8 @@ label_button_to_string(struct _cef_view_t* self, int include_children) {
 }
 
 int CEF_CALLBACK label_button_is_valid(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -455,6 +506,8 @@ int CEF_CALLBACK label_button_is_valid(struct _cef_view_t* self) {
 }
 
 int CEF_CALLBACK label_button_is_attached(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -472,6 +525,8 @@ int CEF_CALLBACK label_button_is_attached(struct _cef_view_t* self) {
 
 int CEF_CALLBACK label_button_is_same(struct _cef_view_t* self,
                                       struct _cef_view_t* that) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -493,6 +548,8 @@ int CEF_CALLBACK label_button_is_same(struct _cef_view_t* self,
 
 struct _cef_view_delegate_t* CEF_CALLBACK
 label_button_get_delegate(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -510,6 +567,8 @@ label_button_get_delegate(struct _cef_view_t* self) {
 
 struct _cef_window_t* CEF_CALLBACK
 label_button_get_window(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -526,6 +585,8 @@ label_button_get_window(struct _cef_view_t* self) {
 }
 
 int CEF_CALLBACK label_button_get_id(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -542,6 +603,8 @@ int CEF_CALLBACK label_button_get_id(struct _cef_view_t* self) {
 }
 
 void CEF_CALLBACK label_button_set_id(struct _cef_view_t* self, int id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -554,6 +617,8 @@ void CEF_CALLBACK label_button_set_id(struct _cef_view_t* self, int id) {
 }
 
 int CEF_CALLBACK label_button_get_group_id(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -571,6 +636,8 @@ int CEF_CALLBACK label_button_get_group_id(struct _cef_view_t* self) {
 
 void CEF_CALLBACK label_button_set_group_id(struct _cef_view_t* self,
                                             int group_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -584,6 +651,8 @@ void CEF_CALLBACK label_button_set_group_id(struct _cef_view_t* self,
 
 struct _cef_view_t* CEF_CALLBACK
 label_button_get_parent_view(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -601,6 +670,8 @@ label_button_get_parent_view(struct _cef_view_t* self) {
 
 struct _cef_view_t* CEF_CALLBACK
 label_button_get_view_for_id(struct _cef_view_t* self, int id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -618,6 +689,8 @@ label_button_get_view_for_id(struct _cef_view_t* self, int id) {
 
 void CEF_CALLBACK label_button_set_bounds(struct _cef_view_t* self,
                                           const cef_rect_t* bounds) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -637,6 +710,8 @@ void CEF_CALLBACK label_button_set_bounds(struct _cef_view_t* self,
 }
 
 cef_rect_t CEF_CALLBACK label_button_get_bounds(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -654,6 +729,8 @@ cef_rect_t CEF_CALLBACK label_button_get_bounds(struct _cef_view_t* self) {
 
 cef_rect_t CEF_CALLBACK
 label_button_get_bounds_in_screen(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -671,6 +748,8 @@ label_button_get_bounds_in_screen(struct _cef_view_t* self) {
 
 void CEF_CALLBACK label_button_set_size(struct _cef_view_t* self,
                                         const cef_size_t* size) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -690,6 +769,8 @@ void CEF_CALLBACK label_button_set_size(struct _cef_view_t* self,
 }
 
 cef_size_t CEF_CALLBACK label_button_get_size(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -707,6 +788,8 @@ cef_size_t CEF_CALLBACK label_button_get_size(struct _cef_view_t* self) {
 
 void CEF_CALLBACK label_button_set_position(struct _cef_view_t* self,
                                             const cef_point_t* position) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -726,6 +809,8 @@ void CEF_CALLBACK label_button_set_position(struct _cef_view_t* self,
 }
 
 cef_point_t CEF_CALLBACK label_button_get_position(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -743,6 +828,8 @@ cef_point_t CEF_CALLBACK label_button_get_position(struct _cef_view_t* self) {
 
 cef_size_t CEF_CALLBACK
 label_button_get_preferred_size(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -760,6 +847,8 @@ label_button_get_preferred_size(struct _cef_view_t* self) {
 
 void CEF_CALLBACK
 label_button_size_to_preferred_size(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -773,6 +862,8 @@ label_button_size_to_preferred_size(struct _cef_view_t* self) {
 
 cef_size_t CEF_CALLBACK
 label_button_get_minimum_size(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -790,6 +881,8 @@ label_button_get_minimum_size(struct _cef_view_t* self) {
 
 cef_size_t CEF_CALLBACK
 label_button_get_maximum_size(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -807,6 +900,8 @@ label_button_get_maximum_size(struct _cef_view_t* self) {
 
 int CEF_CALLBACK label_button_get_height_for_width(struct _cef_view_t* self,
                                                    int width) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -823,6 +918,8 @@ int CEF_CALLBACK label_button_get_height_for_width(struct _cef_view_t* self,
 }
 
 void CEF_CALLBACK label_button_invalidate_layout(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -836,6 +933,8 @@ void CEF_CALLBACK label_button_invalidate_layout(struct _cef_view_t* self) {
 
 void CEF_CALLBACK label_button_set_visible(struct _cef_view_t* self,
                                            int visible) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -848,6 +947,8 @@ void CEF_CALLBACK label_button_set_visible(struct _cef_view_t* self,
 }
 
 int CEF_CALLBACK label_button_is_visible(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -864,6 +965,8 @@ int CEF_CALLBACK label_button_is_visible(struct _cef_view_t* self) {
 }
 
 int CEF_CALLBACK label_button_is_drawn(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -881,6 +984,8 @@ int CEF_CALLBACK label_button_is_drawn(struct _cef_view_t* self) {
 
 void CEF_CALLBACK label_button_set_enabled(struct _cef_view_t* self,
                                            int enabled) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -893,6 +998,8 @@ void CEF_CALLBACK label_button_set_enabled(struct _cef_view_t* self,
 }
 
 int CEF_CALLBACK label_button_is_enabled(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -910,6 +1017,8 @@ int CEF_CALLBACK label_button_is_enabled(struct _cef_view_t* self) {
 
 void CEF_CALLBACK label_button_set_focusable(struct _cef_view_t* self,
                                              int focusable) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -922,6 +1031,8 @@ void CEF_CALLBACK label_button_set_focusable(struct _cef_view_t* self,
 }
 
 int CEF_CALLBACK label_button_is_focusable(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -939,6 +1050,8 @@ int CEF_CALLBACK label_button_is_focusable(struct _cef_view_t* self) {
 
 int CEF_CALLBACK
 label_button_is_accessibility_focusable(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -955,6 +1068,8 @@ label_button_is_accessibility_focusable(struct _cef_view_t* self) {
 }
 
 void CEF_CALLBACK label_button_request_focus(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -968,6 +1083,8 @@ void CEF_CALLBACK label_button_request_focus(struct _cef_view_t* self) {
 
 void CEF_CALLBACK label_button_set_background_color(struct _cef_view_t* self,
                                                     cef_color_t color) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -981,6 +1098,8 @@ void CEF_CALLBACK label_button_set_background_color(struct _cef_view_t* self,
 
 cef_color_t CEF_CALLBACK
 label_button_get_background_color(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -998,6 +1117,8 @@ label_button_get_background_color(struct _cef_view_t* self) {
 
 int CEF_CALLBACK label_button_convert_point_to_screen(struct _cef_view_t* self,
                                                       cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1027,6 +1148,8 @@ int CEF_CALLBACK label_button_convert_point_to_screen(struct _cef_view_t* self,
 int CEF_CALLBACK
 label_button_convert_point_from_screen(struct _cef_view_t* self,
                                        cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1055,6 +1178,8 @@ label_button_convert_point_from_screen(struct _cef_view_t* self,
 
 int CEF_CALLBACK label_button_convert_point_to_window(struct _cef_view_t* self,
                                                       cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1084,6 +1209,8 @@ int CEF_CALLBACK label_button_convert_point_to_window(struct _cef_view_t* self,
 int CEF_CALLBACK
 label_button_convert_point_from_window(struct _cef_view_t* self,
                                        cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1113,6 +1240,8 @@ label_button_convert_point_from_window(struct _cef_view_t* self,
 int CEF_CALLBACK label_button_convert_point_to_view(struct _cef_view_t* self,
                                                     struct _cef_view_t* view,
                                                     cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1146,6 +1275,8 @@ int CEF_CALLBACK label_button_convert_point_to_view(struct _cef_view_t* self,
 int CEF_CALLBACK label_button_convert_point_from_view(struct _cef_view_t* self,
                                                       struct _cef_view_t* view,
                                                       cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1260,6 +1391,12 @@ CefLabelButtonCppToC::CefLabelButtonCppToC() {
       label_button_convert_point_from_view;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefLabelButtonCppToC::~CefLabelButtonCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefLabelButton>
 CefCppToCRefCounted<CefLabelButtonCppToC, CefLabelButton, cef_label_button_t>::
@@ -1268,16 +1405,8 @@ CefCppToCRefCounted<CefLabelButtonCppToC, CefLabelButton, cef_label_button_t>::
     return CefMenuButtonCppToC::Unwrap(reinterpret_cast<cef_menu_button_t*>(s));
   }
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefLabelButtonCppToC,
-                                         CefLabelButton,
-                                         cef_label_button_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefLabelButtonCppToC,

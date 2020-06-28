@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=6360a2f68292797a97a51eff8aab74b6f6daef92$
+// $hash=7313546898a9aecdbaf6eeda54f792c10803eb84$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_XML_READER_CTOCPP_H_
@@ -31,6 +31,7 @@ class CefXmlReaderCToCpp : public CefCToCppRefCounted<CefXmlReaderCToCpp,
                                                       cef_xml_reader_t> {
  public:
   CefXmlReaderCToCpp();
+  virtual ~CefXmlReaderCToCpp();
 
   // CefXmlReader methods.
   bool MoveToNextNode() OVERRIDE;

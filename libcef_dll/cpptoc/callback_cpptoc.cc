@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,16 +9,19 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=646ae0dd35f980cfab684456dc09a41d701532b8$
+// $hash=23c54bbef1c4d4e13b46f746df1d4123d2378548$
 //
 
 #include "libcef_dll/cpptoc/callback_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
 // MEMBER FUNCTIONS - Body may be edited by hand.
 
 void CEF_CALLBACK callback_cont(struct _cef_callback_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -30,6 +33,8 @@ void CEF_CALLBACK callback_cont(struct _cef_callback_t* self) {
 }
 
 void CEF_CALLBACK callback_cancel(struct _cef_callback_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -49,20 +54,19 @@ CefCallbackCppToC::CefCallbackCppToC() {
   GetStruct()->cancel = callback_cancel;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefCallbackCppToC::~CefCallbackCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefCallback>
 CefCppToCRefCounted<CefCallbackCppToC, CefCallback, cef_callback_t>::
     UnwrapDerived(CefWrapperType type, cef_callback_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefCallbackCppToC, CefCallback, cef_callback_t>::
-        DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefCallbackCppToC,

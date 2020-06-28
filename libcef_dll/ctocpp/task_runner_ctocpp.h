@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=d5d36c899eb2d1b19039294b11cd8e913da555cb$
+// $hash=cfd8f2fd4562fa69006b6983bf495e48b19cc4f5$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_TASK_RUNNER_CTOCPP_H_
@@ -31,6 +31,7 @@ class CefTaskRunnerCToCpp : public CefCToCppRefCounted<CefTaskRunnerCToCpp,
                                                        cef_task_runner_t> {
  public:
   CefTaskRunnerCToCpp();
+  virtual ~CefTaskRunnerCToCpp();
 
   // CefTaskRunner methods.
   bool IsSame(CefRefPtr<CefTaskRunner> that) OVERRIDE;

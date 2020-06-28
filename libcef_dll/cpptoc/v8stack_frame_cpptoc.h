@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=d87f70fe2f18e6e7eac6a703e9f5b5645cbd07e5$
+// $hash=928142686ea53b977fe4b1f4447d249e38cf913b$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_V8STACK_FRAME_CPPTOC_H_
@@ -31,6 +31,7 @@ class CefV8StackFrameCppToC : public CefCppToCRefCounted<CefV8StackFrameCppToC,
                                                          cef_v8stack_frame_t> {
  public:
   CefV8StackFrameCppToC();
+  virtual ~CefV8StackFrameCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_V8STACK_FRAME_CPPTOC_H_

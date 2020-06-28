@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=025622ebd9d7b9a4982e8fc9d2952d6273856056$
+// $hash=0783d7d71c2e1a69fdaf9a76e72a2c12d49e8363$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_RUN_FILE_DIALOG_CALLBACK_CTOCPP_H_
@@ -35,6 +35,7 @@ class CefRunFileDialogCallbackCToCpp
                                  cef_run_file_dialog_callback_t> {
  public:
   CefRunFileDialogCallbackCToCpp();
+  virtual ~CefRunFileDialogCallbackCToCpp();
 
   // CefRunFileDialogCallback methods.
   void OnFileDialogDismissed(int selected_accept_filter,

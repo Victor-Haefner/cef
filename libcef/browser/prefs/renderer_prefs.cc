@@ -32,11 +32,11 @@
 #include "content/public/browser/site_instance.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/common/web_preferences.h"
-#include "content/public/common/webrtc_ip_handling_policy.h"
 #include "extensions/browser/extension_registry.h"
 #include "extensions/browser/view_type_utils.h"
 #include "extensions/common/constants.h"
 #include "media/media_buildflags.h"
+#include "third_party/blink/public/common/peerconnection/webrtc_ip_handling_policy.h"
 
 namespace renderer_prefs {
 
@@ -49,6 +49,8 @@ void SetDefaultPrefs(content::WebPreferences& web) {
   const base::CommandLine* command_line =
       base::CommandLine::ForCurrentProcess();
 
+  web.javascript_enabled =
+      !command_line->HasSwitch(switches::kDisableJavascript);
   web.allow_scripts_to_close_windows =
       !command_line->HasSwitch(switches::kDisableJavascriptCloseWindows);
   web.javascript_can_access_clipboard =
@@ -292,8 +294,9 @@ void SetCommandLinePrefDefaults(CommandLinePrefStore* prefs) {
     SetBool(prefs, prefs::kWebKitPluginsEnabled, false);
 }
 
-void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry) {
-  PrefsTabHelper::RegisterProfilePrefs(registry);
+void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry,
+                          const std::string& locale) {
+  PrefsTabHelper::RegisterProfilePrefs(registry, locale);
   RegisterAnimationPolicyPrefs(registry);
 
   // From chrome::RegisterBrowserUserPrefs.
@@ -305,7 +308,7 @@ void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry) {
   registry->RegisterBooleanPref(prefs::kWebRTCMultipleRoutesEnabled, true);
   registry->RegisterBooleanPref(prefs::kWebRTCNonProxiedUdpEnabled, true);
   registry->RegisterStringPref(prefs::kWebRTCIPHandlingPolicy,
-                               content::kWebRTCIPHandlingDefault);
+                               blink::kWebRTCIPHandlingDefault);
   registry->RegisterStringPref(prefs::kWebRTCUDPPortRange, std::string());
 
 #if !defined(OS_MACOSX)
@@ -324,7 +327,7 @@ void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry) {
 void PopulateWebPreferences(content::RenderViewHost* rvh,
                             content::WebPreferences& web) {
   CefRefPtr<CefBrowserHostImpl> browser =
-      extensions::GetOwnerBrowserForHost(rvh, NULL);
+      extensions::GetOwnerBrowserForHost(rvh, nullptr);
 
   // Set defaults for preferences that are not handled by PrefService.
   SetDefaultPrefs(web);
@@ -339,12 +342,13 @@ void PopulateWebPreferences(content::RenderViewHost* rvh,
   // Set preferences based on the extension.
   SetExtensionPrefs(rvh, web);
 
-  // Set preferences based on CefBrowserSettings.
-  if (browser)
+  if (browser) {
+    // Set preferences based on CefBrowserSettings.
     SetCefPrefs(browser->settings(), web);
 
-  // Set the background color for the WebView.
-  if (browser) {
+    web.picture_in_picture_enabled = browser->IsPictureInPictureSupported();
+
+    // Set the background color for the WebView.
     web.base_background_color = browser->GetBackgroundColor();
   } else {
     // We don't know for sure that the browser will be windowless but assume

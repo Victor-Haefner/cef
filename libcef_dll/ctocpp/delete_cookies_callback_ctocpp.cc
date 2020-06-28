@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,15 +9,18 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=5d51641c43321a8b97de0b344bebc18f94ef8350$
+// $hash=c9c0bf488733d065951d9c989e622fedb67536a0$
 //
 
 #include "libcef_dll/ctocpp/delete_cookies_callback_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall")
 void CefDeleteCookiesCallbackCToCpp::OnComplete(int num_deleted) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_delete_cookies_callback_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_complete))
     return;
@@ -32,6 +35,12 @@ void CefDeleteCookiesCallbackCToCpp::OnComplete(int num_deleted) {
 
 CefDeleteCookiesCallbackCToCpp::CefDeleteCookiesCallbackCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefDeleteCookiesCallbackCToCpp::~CefDeleteCookiesCallbackCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_delete_cookies_callback_t* CefCToCppRefCounted<
     CefDeleteCookiesCallbackCToCpp,
@@ -39,16 +48,8 @@ cef_delete_cookies_callback_t* CefCToCppRefCounted<
     cef_delete_cookies_callback_t>::UnwrapDerived(CefWrapperType type,
                                                   CefDeleteCookiesCallback* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<
-    CefDeleteCookiesCallbackCToCpp,
-    CefDeleteCookiesCallback,
-    cef_delete_cookies_callback_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

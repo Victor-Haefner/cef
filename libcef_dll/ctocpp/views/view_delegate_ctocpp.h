@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=5f30c3c76ba0f4296872b4c017c192a0b115ef82$
+// $hash=50285c0d5d83ec0de6bb0542a2c2b32517217b4e$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_VIEWS_VIEW_DELEGATE_CTOCPP_H_
@@ -33,6 +33,7 @@ class CefViewDelegateCToCpp : public CefCToCppRefCounted<CefViewDelegateCToCpp,
                                                          cef_view_delegate_t> {
  public:
   CefViewDelegateCToCpp();
+  virtual ~CefViewDelegateCToCpp();
 
   // CefViewDelegate methods.
   CefSize GetPreferredSize(CefRefPtr<CefView> view) override;

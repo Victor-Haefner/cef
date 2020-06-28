@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=b4d791b85c10c8b8295b01c54226ebde008caba8$
+// $hash=69a583ccea07a3e2b3bd5f61446a22b3fdcac125$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_STRING_VISITOR_CTOCPP_H_
@@ -32,6 +32,7 @@ class CefStringVisitorCToCpp
                                  cef_string_visitor_t> {
  public:
   CefStringVisitorCToCpp();
+  virtual ~CefStringVisitorCToCpp();
 
   // CefStringVisitor methods.
   void Visit(const CefString& string) override;

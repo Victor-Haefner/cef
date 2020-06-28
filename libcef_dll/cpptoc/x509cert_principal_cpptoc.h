@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=f253514bdcb1a5299947f0c195e62972832734ec$
+// $hash=1479667eef11356f361b39fb04156231adcb551d$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_X509CERT_PRINCIPAL_CPPTOC_H_
@@ -32,6 +32,7 @@ class CefX509CertPrincipalCppToC
                                  cef_x509cert_principal_t> {
  public:
   CefX509CertPrincipalCppToC();
+  virtual ~CefX509CertPrincipalCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_X509CERT_PRINCIPAL_CPPTOC_H_

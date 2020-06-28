@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,15 +9,18 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=53e323eefc6f9158f5f86a9c611aaab5d427a2ac$
+// $hash=de27cf9a29354fb3f0fd37141f1a4fe45ff73c88$
 //
 
 #include "libcef_dll/ctocpp/write_handler_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall")
 size_t CefWriteHandlerCToCpp::Write(const void* ptr, size_t size, size_t n) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_write_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, write))
     return 0;
@@ -38,6 +41,8 @@ size_t CefWriteHandlerCToCpp::Write(const void* ptr, size_t size, size_t n) {
 
 NO_SANITIZE("cfi-icall")
 int CefWriteHandlerCToCpp::Seek(int64 offset, int whence) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_write_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, seek))
     return 0;
@@ -52,6 +57,8 @@ int CefWriteHandlerCToCpp::Seek(int64 offset, int whence) {
 }
 
 NO_SANITIZE("cfi-icall") int64 CefWriteHandlerCToCpp::Tell() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_write_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, tell))
     return 0;
@@ -66,6 +73,8 @@ NO_SANITIZE("cfi-icall") int64 CefWriteHandlerCToCpp::Tell() {
 }
 
 NO_SANITIZE("cfi-icall") int CefWriteHandlerCToCpp::Flush() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_write_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, flush))
     return 0;
@@ -80,6 +89,8 @@ NO_SANITIZE("cfi-icall") int CefWriteHandlerCToCpp::Flush() {
 }
 
 NO_SANITIZE("cfi-icall") bool CefWriteHandlerCToCpp::MayBlock() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_write_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, may_block))
     return false;
@@ -97,6 +108,12 @@ NO_SANITIZE("cfi-icall") bool CefWriteHandlerCToCpp::MayBlock() {
 
 CefWriteHandlerCToCpp::CefWriteHandlerCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefWriteHandlerCToCpp::~CefWriteHandlerCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_write_handler_t*
 CefCToCppRefCounted<CefWriteHandlerCToCpp,
@@ -104,16 +121,8 @@ CefCToCppRefCounted<CefWriteHandlerCToCpp,
                     cef_write_handler_t>::UnwrapDerived(CefWrapperType type,
                                                         CefWriteHandler* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefWriteHandlerCToCpp,
-                                         CefWriteHandler,
-                                         cef_write_handler_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefWriteHandlerCToCpp,

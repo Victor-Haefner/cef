@@ -2,6 +2,7 @@
 # reserved. Use of this source code is governed by a BSD-style license that
 # can be found in the LICENSE file.
 
+from __future__ import absolute_import
 from cef_parser import *
 
 
@@ -11,7 +12,7 @@ def make_cpptoc_impl_proto(name, func, parts):
   else:
     proto = 'CEF_EXPORT ' + parts['retval']
 
-  proto += ' ' + name + '(' + string.join(parts['args'], ', ') + ')'
+  proto += ' ' + name + '(' + ', '.join(parts['args']) + ')'
   return proto
 
 
@@ -29,10 +30,19 @@ def make_cpptoc_function_impl_existing(cls, name, func, impl, defined_names):
       name, func, parts) + '{' + changes + impl['body'] + '\n}\n\n'
 
 
-def make_cpptoc_function_impl_new(cls, name, func, defined_names):
+def make_cpptoc_function_impl_new(cls, name, func, defined_names, base_scoped):
+  # Special handling for the cef_shutdown global function.
+  is_cef_shutdown = name == 'cef_shutdown' and isinstance(
+      func.parent, obj_header)
+
   # retrieve the C API prototype parts
   parts = func.get_capi_parts(defined_names)
   result = make_cpptoc_impl_proto(name, func, parts) + ' {'
+
+  if isinstance(func.parent, obj_class) and \
+      not func.parent.has_attrib('no_debugct_check') and \
+      not base_scoped:
+    result += '\n  shutdown_checker::AssertNotShutdown();\n'
 
   invalid = []
 
@@ -60,7 +70,7 @@ def make_cpptoc_function_impl_new(cls, name, func, defined_names):
     # code could not be auto-generated
     result += '\n  // BEGIN DELETE BEFORE MODIFYING'
     result += '\n  // AUTO-GENERATED CONTENT'
-    result += '\n  // COULD NOT IMPLEMENT DUE TO: ' + string.join(invalid, ', ')
+    result += '\n  // COULD NOT IMPLEMENT DUE TO: ' + ', '.join(invalid)
     result += '\n  #pragma message("Warning: "__FILE__": ' + name + ' is not implemented")'
     result += '\n  // END DELETE BEFORE MODIFYING'
     result += '\n}\n\n'
@@ -296,6 +306,11 @@ def make_cpptoc_function_impl_new(cls, name, func, defined_names):
     result += '\n'
   result_len = len(result)
 
+  if is_cef_shutdown:
+    result += '\n\n#if DCHECK_IS_ON()'\
+              '\n  shutdown_checker::SetIsShutdown();'\
+              '\n#endif\n'
+
   # execution
   result += '\n  // Execute\n  '
 
@@ -322,7 +337,7 @@ def make_cpptoc_function_impl_new(cls, name, func, defined_names):
   result += func.get_name() + '('
 
   if len(params) > 0:
-    result += '\n      ' + string.join(params, ',\n      ')
+    result += '\n      ' + ',\n      '.join(params)
 
   result += ');\n'
 
@@ -360,7 +375,7 @@ def make_cpptoc_function_impl_new(cls, name, func, defined_names):
                 '\n        *'+arg_name+' = '+assign+';'\
                 '\n      }'\
                 '\n    } else {'\
-                '\n      *'+arg_name+' = NULL;'\
+                '\n      *'+arg_name+' = nullptr;'\
                 '\n    }'\
                 '\n  }'
     elif arg_type == 'string_vec_byref':
@@ -406,28 +421,6 @@ def make_cpptoc_function_impl_new(cls, name, func, defined_names):
     result += '\n'
   result_len = len(result)
 
-  # special handling for the global cef_shutdown function
-  if name == 'cef_shutdown' and isinstance(func.parent, obj_header):
-    classes = func.parent.get_classes()
-
-    names = []
-    for tmpcls in classes:
-      if tmpcls.has_attrib('no_debugct_check'):
-        continue
-
-      if tmpcls.is_library_side():
-        names.append(tmpcls.get_name() + 'CppToC')
-      else:
-        names.append(tmpcls.get_name() + 'CToCpp')
-
-    if len(names) > 0:
-      names = sorted(names)
-      result += '\n#if DCHECK_IS_ON()'\
-                '\n  // Check that all wrapper objects have been destroyed'
-      for name in names:
-        result += '\n  DCHECK(base::AtomicRefCountIsZero(&' + name + '::DebugObjCt));'
-      result += '\n#endif  // DCHECK_IS_ON()'
-
   if len(result) != result_len:
     result += '\n'
   result_len = len(result)
@@ -462,7 +455,8 @@ def make_cpptoc_function_impl_new(cls, name, func, defined_names):
   return result
 
 
-def make_cpptoc_function_impl(cls, funcs, existing, prefixname, defined_names):
+def make_cpptoc_function_impl(cls, funcs, existing, prefixname, defined_names,
+                              base_scoped):
   impl = ''
 
   for func in funcs:
@@ -477,13 +471,14 @@ def make_cpptoc_function_impl(cls, funcs, existing, prefixname, defined_names):
       impl += make_cpptoc_function_impl_existing(cls, name, func, value,
                                                  defined_names)
     else:
-      impl += make_cpptoc_function_impl_new(cls, name, func, defined_names)
+      impl += make_cpptoc_function_impl_new(cls, name, func, defined_names,
+                                            base_scoped)
 
   return impl
 
 
 def make_cpptoc_virtual_function_impl(header, cls, existing, prefixname,
-                                      defined_names):
+                                      defined_names, base_scoped):
   funcs = []
   funcs.extend(cls.get_virtual_funcs())
   cur_cls = cls
@@ -499,7 +494,7 @@ def make_cpptoc_virtual_function_impl(header, cls, existing, prefixname,
     cur_cls = header.get_class(parent_name, defined_names)
 
   return make_cpptoc_function_impl(cls, funcs, existing, prefixname,
-                                   defined_names)
+                                   defined_names, base_scoped)
 
 
 def make_cpptoc_virtual_function_assignment_block(funcs, offset, prefixname):
@@ -590,8 +585,8 @@ def make_cpptoc_class_impl(header, clsname, impl):
     template_class = 'CefCppToCRefCounted'
 
   # generate virtual functions
-  virtualimpl = make_cpptoc_virtual_function_impl(header, cls, existing,
-                                                  prefixname, defined_names)
+  virtualimpl = make_cpptoc_virtual_function_impl(
+      header, cls, existing, prefixname, defined_names, base_scoped)
   if len(virtualimpl) > 0:
     virtualimpl = '\nnamespace {\n\n// MEMBER FUNCTIONS - Body may be edited by hand.\n\n' + virtualimpl + '}  // namespace'
 
@@ -604,7 +599,7 @@ def make_cpptoc_class_impl(header, clsname, impl):
   # generate static functions
   staticimpl = make_cpptoc_function_impl(cls,
                                          cls.get_static_funcs(), existing, None,
-                                         defined_names)
+                                         defined_names, base_scoped)
   if len(staticimpl) > 0:
     staticimpl = '\n// GLOBAL FUNCTIONS - Body may be edited by hand.\n\n' + staticimpl
 
@@ -617,6 +612,13 @@ def make_cpptoc_class_impl(header, clsname, impl):
            clsname+'CppToC::'+clsname+'CppToC() {\n'
   const += make_cpptoc_virtual_function_assignment(header, cls, prefixname,
                                                    defined_names)
+  const += '}\n\n'+ \
+           '// DESTRUCTOR - Do not edit by hand.\n\n'+ \
+           clsname+'CppToC::~'+clsname+'CppToC() {\n'
+
+  if not cls.has_attrib('no_debugct_check') and not base_scoped:
+    const += '  shutdown_checker::AssertNotShutdown();\n'
+
   const += '}\n\n'
 
   # determine what includes are required by identifying what translation
@@ -641,19 +643,17 @@ def make_cpptoc_class_impl(header, clsname, impl):
              'template<> CefRawPtr<'+clsname+'> '+parent_sig+'::UnwrapDerivedRaw(CefWrapperType type, '+capiname+'* s) {\n' + \
              unwrapderived[1] + \
              '  NOTREACHED() << "Unexpected class type: " << type;\n'+ \
-             '  return NULL;\n'+ \
+             '  return nullptr;\n'+ \
              '}\n\n'
   else:
     const += 'template<> CefRefPtr<'+clsname+'> '+parent_sig+'::UnwrapDerived(CefWrapperType type, '+capiname+'* s) {\n' + \
              unwrapderived + \
              '  NOTREACHED() << "Unexpected class type: " << type;\n'+ \
-             '  return NULL;\n'+ \
+             '  return nullptr;\n'+ \
              '}\n\n'
 
-  const += '#if DCHECK_IS_ON()\n'+ \
-           'template<> base::AtomicRefCount '+parent_sig+'::DebugObjCt ATOMIC_DECLARATION;\n'+ \
-           '#endif\n\n'+ \
-           'template<> CefWrapperType '+parent_sig+'::kWrapperType = '+get_wrapper_type_enum(clsname)+';'
+  const += 'template<> CefWrapperType ' + parent_sig + '::kWrapperType = ' + get_wrapper_type_enum(
+      clsname) + ';'
 
   result += '\n\n' + const
 
@@ -670,7 +670,7 @@ def make_cpptoc_global_impl(header, impl):
   # generate global functions
   impl = make_cpptoc_function_impl(None,
                                    header.get_funcs(), existing, None,
-                                   defined_names)
+                                   defined_names, False)
   if len(impl) > 0:
     impl = '\n// GLOBAL FUNCTIONS - Body may be edited by hand.\n\n' + impl
 
@@ -736,9 +736,10 @@ if __name__ == "__main__":
 
   # read the existing implementation file into memory
   try:
-    f = open(sys.argv[3], 'r')
-    data = f.read()
-  except IOError, (errno, strerror):
+    with open(sys.argv[3], 'r') as f:
+      data = f.read()
+  except IOError as e:
+    (errno, strerror) = e.args
     raise Exception('Failed to read file ' + sys.argv[3] + ': ' + strerror)
   else:
     f.close()

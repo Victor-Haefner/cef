@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,16 +9,19 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=0ba4734078309a39cd518df906c2fc7d361932e7$
+// $hash=e34ff7db1264daf93af8cb95913daa3750ada3b0$
 //
 
 #include "libcef_dll/ctocpp/domvisitor_ctocpp.h"
 #include "libcef_dll/cpptoc/domdocument_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall")
 void CefDOMVisitorCToCpp::Visit(CefRefPtr<CefDOMDocument> document) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_domvisitor_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, visit))
     return;
@@ -38,20 +41,19 @@ void CefDOMVisitorCToCpp::Visit(CefRefPtr<CefDOMDocument> document) {
 
 CefDOMVisitorCToCpp::CefDOMVisitorCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefDOMVisitorCToCpp::~CefDOMVisitorCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_domvisitor_t*
 CefCToCppRefCounted<CefDOMVisitorCToCpp, CefDOMVisitor, cef_domvisitor_t>::
     UnwrapDerived(CefWrapperType type, CefDOMVisitor* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCToCppRefCounted<CefDOMVisitorCToCpp, CefDOMVisitor, cef_domvisitor_t>::
-        DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefDOMVisitorCToCpp,

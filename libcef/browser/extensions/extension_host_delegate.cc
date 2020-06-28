@@ -8,6 +8,7 @@
 
 #include "base/logging.h"
 #include "content/public/browser/web_contents.h"
+#include "content/public/browser/web_contents_delegate.h"
 
 namespace extensions {
 
@@ -26,7 +27,7 @@ content::JavaScriptDialogManager*
 CefExtensionHostDelegate::GetJavaScriptDialogManager() {
   // Never routed here from CefBrowserHostImpl.
   NOTREACHED();
-  return NULL;
+  return nullptr;
 }
 
 void CefExtensionHostDelegate::CreateTab(
@@ -51,15 +52,23 @@ void CefExtensionHostDelegate::ProcessMediaAccessRequest(
 bool CefExtensionHostDelegate::CheckMediaAccessPermission(
     content::RenderFrameHost* render_frame_host,
     const GURL& security_origin,
-    content::MediaStreamType type,
+    blink::mojom::MediaStreamType type,
     const Extension* extension) {
   // Never routed here from CefBrowserHostImpl.
   NOTREACHED();
   return false;
 }
 
-ExtensionHostQueue* CefExtensionHostDelegate::GetExtensionHostQueue() const {
-  return CefExtensionsBrowserClient::Get()->GetExtensionHostQueue();
+content::PictureInPictureResult CefExtensionHostDelegate::EnterPictureInPicture(
+    content::WebContents* web_contents,
+    const viz::SurfaceId& surface_id,
+    const gfx::Size& natural_size) {
+  NOTREACHED();
+  return content::PictureInPictureResult::kNotSupported;
+}
+
+void CefExtensionHostDelegate::ExitPictureInPicture() {
+  NOTREACHED();
 }
 
 }  // namespace extensions

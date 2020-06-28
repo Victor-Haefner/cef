@@ -10,6 +10,7 @@
 
 #include "base/bind.h"
 #include "base/lazy_instance.h"
+#include "base/task/post_task.h"
 #include "build/build_config.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/printing/print_job_manager.h"
@@ -19,6 +20,7 @@
 #include "components/keyed_service/content/browser_context_keyed_service_shutdown_notifier_factory.h"
 #include "components/printing/browser/print_manager_utils.h"
 #include "components/printing/common/print_messages.h"
+#include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/web_contents.h"
@@ -77,8 +79,8 @@ CefPrintingMessageFilter::CefPrintingMessageFilter(int render_process_id,
           ->Subscribe(base::Bind(&CefPrintingMessageFilter::ShutdownOnUIThread,
                                  base::Unretained(this)));
   is_printing_enabled_.Init(prefs::kPrintingEnabled, profile->GetPrefs());
-  is_printing_enabled_.MoveToThread(
-      content::BrowserThread::GetTaskRunnerForThread(BrowserThread::IO));
+  is_printing_enabled_.MoveToSequence(
+      base::CreateSingleThreadTaskRunner({BrowserThread::IO}));
 }
 
 void CefPrintingMessageFilter::EnsureShutdownNotifierFactoryBuilt() {
@@ -93,17 +95,6 @@ void CefPrintingMessageFilter::ShutdownOnUIThread() {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
   is_printing_enabled_.Destroy();
   printing_shutdown_notifier_.reset();
-}
-
-void CefPrintingMessageFilter::OverrideThreadForMessage(
-    const IPC::Message& message,
-    BrowserThread::ID* thread) {
-#if defined(OS_ANDROID)
-  if (message.type() == PrintHostMsg_AllocateTempFileForPrinting::ID ||
-      message.type() == PrintHostMsg_TempFileForPrintingWritten::ID) {
-    *thread = BrowserThread::UI;
-  }
-#endif
 }
 
 void CefPrintingMessageFilter::OnDestruct() const {
@@ -133,10 +124,10 @@ void CefPrintingMessageFilter::OnGetDefaultPrintSettings(
                                     reply_msg->routing_id());
 #endif
 
-  scoped_refptr<PrinterQuery> printer_query;
+  std::unique_ptr<PrinterQuery> printer_query;
   if (!is_printing_enabled_.GetValue()) {
     // Reply with NULL query.
-    OnGetDefaultPrintSettingsReply(printer_query, reply_msg);
+    OnGetDefaultPrintSettingsReply(std::move(printer_query), reply_msg);
     return;
   }
   printer_query = queue_->PopPrinterQuery(0);
@@ -147,15 +138,16 @@ void CefPrintingMessageFilter::OnGetDefaultPrintSettings(
 
   // Loads default settings. This is asynchronous, only the IPC message sender
   // will hang until the settings are retrieved.
-  printer_query->GetSettings(
+  auto* printer_query_ptr = printer_query.get();
+  printer_query_ptr->GetSettings(
       PrinterQuery::GetSettingsAskParam::DEFAULTS, 0, false, DEFAULT_MARGINS,
       false, false,
-      base::Bind(&CefPrintingMessageFilter::OnGetDefaultPrintSettingsReply,
-                 this, printer_query, reply_msg));
+      base::BindOnce(&CefPrintingMessageFilter::OnGetDefaultPrintSettingsReply,
+                     this, std::move(printer_query), reply_msg));
 }
 
 void CefPrintingMessageFilter::OnGetDefaultPrintSettingsReply(
-    scoped_refptr<PrinterQuery> printer_query,
+    std::unique_ptr<PrinterQuery> printer_query,
     IPC::Message* reply_msg) {
   PrintMsg_Print_Params params;
   if (!printer_query.get() ||
@@ -171,7 +163,7 @@ void CefPrintingMessageFilter::OnGetDefaultPrintSettingsReply(
   if (printer_query.get()) {
     // If user hasn't cancelled.
     if (printer_query->cookie() && printer_query->settings().dpi()) {
-      queue_->QueuePrinterQuery(printer_query.get());
+      queue_->QueuePrinterQuery(std::move(printer_query));
     } else {
       printer_query->StopWorker();
     }
@@ -181,7 +173,7 @@ void CefPrintingMessageFilter::OnGetDefaultPrintSettingsReply(
 void CefPrintingMessageFilter::OnScriptedPrint(
     const PrintHostMsg_ScriptedPrint_Params& params,
     IPC::Message* reply_msg) {
-  scoped_refptr<PrinterQuery> printer_query =
+  std::unique_ptr<PrinterQuery> printer_query =
       queue_->PopPrinterQuery(params.cookie);
   if (!printer_query.get()) {
     printer_query =
@@ -191,19 +183,14 @@ void CefPrintingMessageFilter::OnScriptedPrint(
       PrinterQuery::GetSettingsAskParam::ASK_USER, params.expected_pages_count,
       params.has_selection, params.margin_type, params.is_scripted,
       params.is_modifiable,
-      base::Bind(&CefPrintingMessageFilter::OnScriptedPrintReply, this,
-                 printer_query, reply_msg));
+      base::BindOnce(&CefPrintingMessageFilter::OnScriptedPrintReply, this,
+                     std::move(printer_query), reply_msg));
 }
 
 void CefPrintingMessageFilter::OnScriptedPrintReply(
-    scoped_refptr<PrinterQuery> printer_query,
+    std::unique_ptr<PrinterQuery> printer_query,
     IPC::Message* reply_msg) {
   PrintMsg_PrintPages_Params params;
-#if defined(OS_ANDROID)
-  // We need to save the routing ID here because Send method below deletes the
-  // |reply_msg| before we can get the routing ID for the Android code.
-  int routing_id = reply_msg->routing_id();
-#endif
   if (printer_query->last_status() != PrintingContext::OK ||
       !printer_query->settings().dpi()) {
     params.Reset();
@@ -215,32 +202,19 @@ void CefPrintingMessageFilter::OnScriptedPrintReply(
   PrintHostMsg_ScriptedPrint::WriteReplyParams(reply_msg, params);
   Send(reply_msg);
   if (!params.params.dpi.IsEmpty() && params.params.document_cookie) {
-#if defined(OS_ANDROID)
-    int file_descriptor;
-    const base::string16& device_name = printer_query->settings().device_name();
-    if (base::StringToInt(device_name, &file_descriptor)) {
-      BrowserThread::PostTask(
-          BrowserThread::UI, FROM_HERE,
-          base::Bind(&CefPrintingMessageFilter::UpdateFileDescriptor, this,
-                     routing_id, file_descriptor));
-    }
-#endif
-    queue_->QueuePrinterQuery(printer_query.get());
+    queue_->QueuePrinterQuery(std::move(printer_query));
   } else {
     printer_query->StopWorker();
   }
 }
 
-void CefPrintingMessageFilter::OnUpdatePrintSettings(
-    int document_cookie,
-    const base::DictionaryValue& job_settings,
-    IPC::Message* reply_msg) {
-  std::unique_ptr<base::DictionaryValue> new_settings(job_settings.DeepCopy());
-
-  scoped_refptr<PrinterQuery> printer_query;
+void CefPrintingMessageFilter::OnUpdatePrintSettings(int document_cookie,
+                                                     base::Value job_settings,
+                                                     IPC::Message* reply_msg) {
+  std::unique_ptr<PrinterQuery> printer_query;
   if (!is_printing_enabled_.GetValue()) {
     // Reply with NULL query.
-    OnUpdatePrintSettingsReply(printer_query, reply_msg);
+    OnUpdatePrintSettingsReply(std::move(printer_query), reply_msg);
     return;
   }
   printer_query = queue_->PopPrinterQuery(document_cookie);
@@ -249,13 +223,13 @@ void CefPrintingMessageFilter::OnUpdatePrintSettings(
         content::ChildProcessHost::kInvalidUniqueID, MSG_ROUTING_NONE);
   }
   printer_query->SetSettings(
-      std::move(new_settings),
-      base::Bind(&CefPrintingMessageFilter::OnUpdatePrintSettingsReply, this,
-                 printer_query, reply_msg));
+      std::move(job_settings),
+      base::BindOnce(&CefPrintingMessageFilter::OnUpdatePrintSettingsReply,
+                     this, std::move(printer_query), reply_msg));
 }
 
 void CefPrintingMessageFilter::OnUpdatePrintSettingsReply(
-    scoped_refptr<PrinterQuery> printer_query,
+    std::unique_ptr<PrinterQuery> printer_query,
     IPC::Message* reply_msg) {
   PrintMsg_PrintPages_Params params;
   if (!printer_query.get() ||
@@ -274,7 +248,7 @@ void CefPrintingMessageFilter::OnUpdatePrintSettingsReply(
   // If user hasn't cancelled.
   if (printer_query.get()) {
     if (printer_query->cookie() && printer_query->settings().dpi()) {
-      queue_->QueuePrinterQuery(printer_query.get());
+      queue_->QueuePrinterQuery(std::move(printer_query));
     } else {
       printer_query->StopWorker();
     }

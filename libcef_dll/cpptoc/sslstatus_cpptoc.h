@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=0642f7c3dbcf13d133f806853d31edd4102d7d84$
+// $hash=1cbc6274827a813be840e38be550b538fe2c2eee$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_SSLSTATUS_CPPTOC_H_
@@ -31,6 +31,7 @@ class CefSSLStatusCppToC : public CefCppToCRefCounted<CefSSLStatusCppToC,
                                                       cef_sslstatus_t> {
  public:
   CefSSLStatusCppToC();
+  virtual ~CefSSLStatusCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_SSLSTATUS_CPPTOC_H_

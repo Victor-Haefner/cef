@@ -2,6 +2,7 @@
 # reserved. Use of this source code is governed by a BSD-style license that
 # can be found in the LICENSE file
 
+from __future__ import absolute_import
 from exec_util import exec_cmd
 import os
 import sys
@@ -18,12 +19,40 @@ def is_checkout(path):
   return os.path.isdir(os.path.join(path, '.git'))
 
 
+def is_ancestor(path='.', commit1='HEAD', commit2='master'):
+  """ Returns whether |commit1| is an ancestor of |commit2|. """
+  cmd = "%s merge-base --is-ancestor %s %s" % (git_exe, commit1, commit2)
+  result = exec_cmd(cmd, path)
+  return result['ret'] == 0
+
+
 def get_hash(path='.', branch='HEAD'):
   """ Returns the git hash for the specified branch/tag/hash. """
   cmd = "%s rev-parse %s" % (git_exe, branch)
   result = exec_cmd(cmd, path)
   if result['out'] != '':
     return result['out'].strip()
+  return 'Unknown'
+
+
+def get_branch_name(path='.', branch='HEAD'):
+  """ Returns the branch name for the specified branch/tag/hash. """
+  # Returns the branch name if not in detached HEAD state, else an empty string
+  # or "HEAD".
+  cmd = "%s rev-parse --abbrev-ref %s" % (git_exe, branch)
+  result = exec_cmd(cmd, path)
+  if result['out'] != '':
+    name = result['out'].strip()
+    if len(name) > 0 and name != 'HEAD':
+      return name
+
+    # Returns a value like "(HEAD, origin/3729, 3729)".
+    # Ubuntu 14.04 uses Git version 1.9.1 which does not support %D (which
+    # provides the same output but without the parentheses).
+    cmd = "%s log -n 1 --pretty=%%d %s" % (git_exe, branch)
+    result = exec_cmd(cmd, path)
+    if result['out'] != '':
+      return result['out'].strip()[1:-1].split(', ')[-1]
   return 'Unknown'
 
 
@@ -63,6 +92,21 @@ def get_changed_files(path, hash):
   return []
 
 
+def get_branch_hashes(path='.', branch='HEAD', ref='origin/master'):
+  """ Returns an ordered list of hashes for commits that have been applied since
+      branching from ref. """
+  cmd = "%s cherry %s %s" % (git_exe, ref, branch)
+  result = exec_cmd(cmd, path)
+  if result['out'] != '':
+    hashes = result['out']
+    if sys.platform == 'win32':
+      # Convert to Unix line endings.
+      hashes = hashes.replace('\r\n', '\n')
+    # Remove the "+ " or "- " prefix.
+    return [line[2:] for line in hashes.strip().split('\n')]
+  return []
+
+
 def write_indented_output(output):
   """ Apply a fixed amount of intent to lines before printing. """
   if output == '':
@@ -87,7 +131,7 @@ def git_apply_patch_file(patch_path, patch_dir):
   if sys.platform == 'win32':
     # Convert the patch to Unix line endings. This is necessary to avoid
     # whitespace errors with git apply.
-    patch_string = patch_string.replace('\r\n', '\n')
+    patch_string = patch_string.replace(b'\r\n', b'\n')
 
   # Git apply fails silently if not run relative to a respository root.
   if not is_checkout(patch_dir):

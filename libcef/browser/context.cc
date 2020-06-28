@@ -22,6 +22,7 @@
 #include "base/files/file_util.h"
 #include "base/run_loop.h"
 #include "base/synchronization/waitable_event.h"
+#include "base/threading/thread_restrictions.h"
 #include "components/network_session_configurator/common/network_switches.h"
 #include "content/app/content_service_manager_main_delegate.h"
 #include "content/public/browser/notification_service.h"
@@ -29,24 +30,26 @@
 #include "content/public/browser/render_process_host.h"
 #include "content/public/common/content_switches.h"
 #include "services/service_manager/embedder/main.h"
+#include "ui/base/resource/resource_bundle.h"
 #include "ui/base/ui_base_switches.h"
 
 #if defined(OS_WIN)
 #include "base/strings/utf_string_conversions.h"
-#include "chrome_elf/chrome_elf_main.h"
-#include "components/crash/content/app/crashpad.h"
+#include "chrome/chrome_elf/chrome_elf_main.h"
+#include "chrome/install_static/initialize_from_primary_module.h"
+#include "components/crash/core/app/crashpad.h"
 #include "content/public/app/sandbox_helper_win.h"
 #include "sandbox/win/src/sandbox_types.h"
 #endif
 
 #if defined(OS_MACOSX) || defined(OS_WIN)
-#include "components/crash/content/app/crash_switches.h"
+#include "components/crash/core/app/crash_switches.h"
 #include "third_party/crashpad/crashpad/handler/handler_main.h"
 #endif
 
 namespace {
 
-CefContext* g_context = NULL;
+CefContext* g_context = nullptr;
 
 #if DCHECK_IS_ON()
 // When the process terminates check if CefShutdown() has been called.
@@ -71,6 +74,16 @@ void DisableFMA3() {
 }
 #endif  // defined(ARCH_CPU_X86_64)
 
+// Transfer state from chrome_elf.dll to the libcef.dll. Accessed when
+// loading chrome://system.
+void InitInstallDetails() {
+  static bool initialized = false;
+  if (initialized)
+    return;
+  initialized = true;
+  install_static::InitializeFromPrimaryModule();
+}
+
 // Signal chrome_elf to initialize crash reporting, rather than doing it in
 // DllMain. See https://crbug.com/656800 for details.
 void InitCrashReporter() {
@@ -84,12 +97,12 @@ void InitCrashReporter() {
 
 #if defined(OS_MACOSX) || defined(OS_WIN)
 
-// Based on components/crash/content/app/run_as_crashpad_handler_win.cc
+// Based on components/crash/core/app/run_as_crashpad_handler_win.cc
 // Remove the "--type=crashpad-handler" command-line flag that will otherwise
 // confuse the crashpad handler.
 // Chrome uses an embedded crashpad handler on Windows only and imports this
 // function via the existing "run_as_crashpad_handler" target defined in
-// components/crash/content/app/BUILD.gn. CEF uses an embedded handler on both
+// components/crash/core/app/BUILD.gn. CEF uses an embedded handler on both
 // Windows and macOS so we define the function here instead of using the
 // existing target (because we can't use that target on macOS).
 int RunAsCrashpadHandler(const base::CommandLine& command_line) {
@@ -111,7 +124,7 @@ int RunAsCrashpadHandler(const base::CommandLine& command_line) {
   argv.insert(argv.begin(), command_line.GetProgram().value());
 #endif
 
-  std::unique_ptr<char* []> argv_as_utf8(new char*[argv.size() + 1]);
+  std::unique_ptr<char*[]> argv_as_utf8(new char*[argv.size() + 1]);
   std::vector<std::string> storage;
   storage.reserve(argv.size());
   for (size_t i = 0; i < argv.size(); ++i) {
@@ -147,6 +160,85 @@ bool GetColor(const cef_color_t cef_in, bool is_windowless, SkColor* sk_out) {
   return true;
 }
 
+// Convert |path_str| to a normalized FilePath.
+base::FilePath NormalizePath(const cef_string_t& path_str,
+                             const char* name,
+                             bool* has_error = nullptr) {
+  if (has_error)
+    *has_error = false;
+
+  base::FilePath path = base::FilePath(CefString(&path_str));
+  if (path.EndsWithSeparator()) {
+    // Remove the trailing separator because it will interfere with future
+    // equality checks.
+    path = path.StripTrailingSeparators();
+  }
+
+  if (!path.empty() && !path.IsAbsolute()) {
+    LOG(ERROR) << "The " << name << " directory (" << path.value()
+               << ") is not an absolute path. Defaulting to empty.";
+    if (has_error)
+      *has_error = true;
+    path = base::FilePath();
+  }
+
+  return path;
+}
+
+void SetPath(cef_string_t& path_str, const base::FilePath& path) {
+#if defined(OS_WIN)
+  CefString(&path_str).FromWString(path.value());
+#else
+  CefString(&path_str).FromString(path.value());
+#endif
+}
+
+// Convert |path_str| to a normalized FilePath and update the |path_str| value.
+base::FilePath NormalizePathAndSet(cef_string_t& path_str, const char* name) {
+  const base::FilePath& path = NormalizePath(path_str, name);
+  SetPath(path_str, path);
+  return path;
+}
+
+// Verify that |cache_path| is valid and create it if necessary.
+bool ValidateCachePath(const base::FilePath& cache_path,
+                       const base::FilePath& root_cache_path) {
+  if (cache_path.empty())
+    return true;
+
+  if (!root_cache_path.empty() && root_cache_path != cache_path &&
+      !root_cache_path.IsParent(cache_path)) {
+    LOG(ERROR) << "The cache_path directory (" << cache_path.value()
+               << ") is not a child of the root_cache_path directory ("
+               << root_cache_path.value() << ")";
+    return false;
+  }
+
+  base::ThreadRestrictions::ScopedAllowIO allow_io;
+  if (!base::DirectoryExists(cache_path) &&
+      !base::CreateDirectory(cache_path)) {
+    LOG(ERROR) << "The cache_path directory (" << cache_path.value()
+               << ") could not be created.";
+    return false;
+  }
+
+  return true;
+}
+
+// Like NormalizePathAndSet but with additional checks specific to the
+// cache_path value.
+base::FilePath NormalizeCachePathAndSet(cef_string_t& path_str,
+                                        const base::FilePath& root_cache_path) {
+  bool has_error = false;
+  base::FilePath path = NormalizePath(path_str, "cache_path", &has_error);
+  if (has_error || !ValidateCachePath(path, root_cache_path)) {
+    LOG(ERROR) << "The cache_path is invalid. Defaulting to in-memory storage.";
+    path = base::FilePath();
+  }
+  SetPath(path_str, path);
+  return path;
+}
+
 }  // namespace
 
 int CefExecuteProcess(const CefMainArgs& args,
@@ -156,6 +248,7 @@ int CefExecuteProcess(const CefMainArgs& args,
 #if defined(ARCH_CPU_X86_64)
   DisableFMA3();
 #endif
+  InitInstallDetails();
   InitCrashReporter();
 #endif
 
@@ -187,7 +280,7 @@ int CefExecuteProcess(const CefMainArgs& args,
 // Execute the secondary process.
 #if defined(OS_WIN)
   sandbox::SandboxInterfaceInfo sandbox_info = {0};
-  if (windows_sandbox_info == NULL) {
+  if (windows_sandbox_info == nullptr) {
     content::InitializeSandboxInfo(&sandbox_info);
     windows_sandbox_info = &sandbox_info;
   }
@@ -215,6 +308,7 @@ bool CefInitialize(const CefMainArgs& args,
 #if defined(ARCH_CPU_X86_64)
   DisableFMA3();
 #endif
+  InitInstallDetails();
   InitCrashReporter();
 #endif
 
@@ -255,7 +349,7 @@ void CefShutdown() {
 
   // Delete the global context object.
   delete g_context;
-  g_context = NULL;
+  g_context = nullptr;
 }
 
 void CefDoMessageLoopWork() {
@@ -318,7 +412,7 @@ void CefSetOSModalLoop(bool osModalLoop) {
   }
 
   if (CEF_CURRENTLY_ON_UIT())
-    base::MessageLoop::current()->set_os_modal_loop(osModalLoop);
+    base::MessageLoopCurrent::Get()->set_os_modal_loop(osModalLoop);
   else
     CEF_POST_TASK(CEF_UIT, base::Bind(CefSetOSModalLoop, osModalLoop));
 #endif  // defined(OS_WIN)
@@ -343,7 +437,7 @@ bool CefContext::Initialize(const CefMainArgs& args,
   init_thread_id_ = base::PlatformThread::CurrentId();
   settings_ = settings;
 
-#if !defined(OS_WIN)
+#if !(defined(OS_WIN) || defined(OS_LINUX))
   if (settings.multi_threaded_message_loop) {
     NOTIMPLEMENTED() << "multi_threaded_message_loop is not supported.";
     return false;
@@ -355,6 +449,23 @@ bool CefContext::Initialize(const CefMainArgs& args,
   SignalChromeElf();
 #endif
 
+  const base::FilePath& root_cache_path =
+      NormalizePathAndSet(settings_.root_cache_path, "root_cache_path");
+  const base::FilePath& cache_path =
+      NormalizeCachePathAndSet(settings_.cache_path, root_cache_path);
+  if (root_cache_path.empty() && !cache_path.empty()) {
+    CefString(&settings_.root_cache_path) = cache_path.value();
+  }
+
+  // All other paths that need to be normalized.
+  NormalizePathAndSet(settings_.browser_subprocess_path,
+                      "browser_subprocess_path");
+  NormalizePathAndSet(settings_.framework_dir_path, "framework_dir_path");
+  NormalizePathAndSet(settings_.main_bundle_path, "main_bundle_path");
+  NormalizePathAndSet(settings_.user_data_path, "user_data_path");
+  NormalizePathAndSet(settings_.resources_dir_path, "resources_dir_path");
+  NormalizePathAndSet(settings_.locales_dir_path, "locales_dir_path");
+
   main_delegate_.reset(new CefMainDelegate(application));
   browser_info_manager_.reset(new CefBrowserInfoManager);
 
@@ -364,8 +475,7 @@ bool CefContext::Initialize(const CefMainArgs& args,
   content::ContentMainParams params(main_delegate_.get());
 #if defined(OS_WIN)
   sandbox::SandboxInterfaceInfo sandbox_info = {0};
-  if (windows_sandbox_info == NULL) {
-    content::InitializeSandboxInfo(&sandbox_info);
+  if (windows_sandbox_info == nullptr) {
     windows_sandbox_info = &sandbox_info;
     settings_.no_sandbox = true;
   }
@@ -395,11 +505,29 @@ bool CefContext::Initialize(const CefMainArgs& args,
 
   static_cast<ChromeBrowserProcessStub*>(g_browser_process)->Initialize();
 
-  // Run the process. Results in a call to CefMainDelegate::RunProcess() which
-  // will create the browser runner and message loop without blocking.
-  exit_code = service_manager::MainRun(*sm_main_params_);
+  if (settings.multi_threaded_message_loop) {
+    base::WaitableEvent uithread_startup_event(
+        base::WaitableEvent::ResetPolicy::AUTOMATIC,
+        base::WaitableEvent::InitialState::NOT_SIGNALED);
 
-  initialized_ = true;
+    if (!main_delegate_->CreateUIThread(base::BindOnce(
+            [](CefContext* context, base::WaitableEvent* event) {
+              service_manager::MainRun(*context->sm_main_params_);
+              event->Signal();
+            },
+            base::Unretained(this),
+            base::Unretained(&uithread_startup_event)))) {
+      return false;
+    }
+
+    initialized_ = true;
+
+    // We need to wait until service_manager::MainRun has finished.
+    uithread_startup_event.Wait();
+  } else {
+    initialized_ = true;
+    service_manager::MainRun(*sm_main_params_);
+  }
 
   if (CEF_CURRENTLY_ON_UIT()) {
     OnContextInitialized();
@@ -436,7 +564,7 @@ void CefContext::Shutdown() {
     FinalizeShutdown();
   } else {
     // Finish shutdown on the current thread, which should be the UI thread.
-    FinishShutdownOnUIThread(NULL);
+    FinishShutdownOnUIThread(nullptr);
 
     FinalizeShutdown();
   }
@@ -468,17 +596,20 @@ SkColor CefContext::GetBackgroundColor(
 CefTraceSubscriber* CefContext::GetTraceSubscriber() {
   CEF_REQUIRE_UIT();
   if (shutting_down_)
-    return NULL;
+    return nullptr;
   if (!trace_subscriber_.get())
     trace_subscriber_.reset(new CefTraceSubscriber());
   return trace_subscriber_.get();
 }
 
-void CefContext::PopulateRequestContextSettings(
+void CefContext::PopulateGlobalRequestContextSettings(
     CefRequestContextSettings* settings) {
   CefRefPtr<CefCommandLine> command_line =
       CefCommandLine::GetGlobalCommandLine();
+
+  // This value was already normalized in Initialize.
   CefString(&settings->cache_path) = CefString(&settings_.cache_path);
+
   settings->persist_session_cookies =
       settings_.persist_session_cookies ||
       command_line->HasSwitch(switches::kPersistSessionCookies);
@@ -488,11 +619,36 @@ void CefContext::PopulateRequestContextSettings(
   settings->ignore_certificate_errors =
       settings_.ignore_certificate_errors ||
       command_line->HasSwitch(switches::kIgnoreCertificateErrors);
-  settings->enable_net_security_expiration =
-      settings_.enable_net_security_expiration ||
-      command_line->HasSwitch(switches::kEnableNetSecurityExpiration);
   CefString(&settings->accept_language_list) =
       CefString(&settings_.accept_language_list);
+}
+
+void CefContext::NormalizeRequestContextSettings(
+    CefRequestContextSettings* settings) {
+  // The |root_cache_path| value was already normalized in Initialize.
+  const base::FilePath& root_cache_path = CefString(&settings_.root_cache_path);
+  NormalizeCachePathAndSet(settings->cache_path, root_cache_path);
+
+  if (settings->accept_language_list.length == 0) {
+    // Use the global language list setting.
+    CefString(&settings->accept_language_list) =
+        CefString(&settings_.accept_language_list);
+  }
+}
+
+void CefContext::AddObserver(Observer* observer) {
+  CEF_REQUIRE_UIT();
+  observers_.AddObserver(observer);
+}
+
+void CefContext::RemoveObserver(Observer* observer) {
+  CEF_REQUIRE_UIT();
+  observers_.RemoveObserver(observer);
+}
+
+bool CefContext::HasObserver(Observer* observer) const {
+  CEF_REQUIRE_UIT();
+  return observers_.HasObserver(observer);
 }
 
 void CefContext::OnContextInitialized() {
@@ -501,7 +657,7 @@ void CefContext::OnContextInitialized() {
   static_cast<ChromeBrowserProcessStub*>(g_browser_process)
       ->OnContextInitialized();
 
-#if defined(WIDEVINE_CDM_AVAILABLE) && BUILDFLAG(ENABLE_LIBRARY_CDMS)
+#if BUILDFLAG(ENABLE_WIDEVINE) && BUILDFLAG(ENABLE_LIBRARY_CDMS)
   CefWidevineLoader::GetInstance()->OnContextInitialized();
 #endif
 
@@ -521,10 +677,17 @@ void CefContext::FinishShutdownOnUIThread(
 
   browser_info_manager_->DestroyAllBrowsers();
 
+  for (auto& observer : observers_)
+    observer.OnContextDestroyed();
+
   if (trace_subscriber_.get())
-    trace_subscriber_.reset(NULL);
+    trace_subscriber_.reset(nullptr);
 
   static_cast<ChromeBrowserProcessStub*>(g_browser_process)->Shutdown();
+
+  ui::ResourceBundle::GetSharedInstance().CleanupOnUIThread();
+
+  sm_main_delegate_->ShutdownOnUIThread();
 
   if (uithread_shutdown_event)
     uithread_shutdown_event->Signal();
@@ -542,8 +705,11 @@ void CefContext::FinalizeShutdown() {
   // Shut down the content runner.
   service_manager::MainShutdown(*sm_main_params_);
 
-  browser_info_manager_.reset(NULL);
-  sm_main_params_.reset(NULL);
-  sm_main_delegate_.reset(NULL);
-  main_delegate_.reset(NULL);
+  browser_info_manager_.reset(nullptr);
+  sm_main_params_.reset(nullptr);
+  sm_main_delegate_.reset(nullptr);
+  main_delegate_.reset(nullptr);
+
+  delete g_browser_process;
+  g_browser_process = nullptr;
 }

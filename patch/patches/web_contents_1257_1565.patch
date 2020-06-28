@@ -1,8 +1,8 @@
 diff --git content/browser/web_contents/web_contents_impl.cc content/browser/web_contents/web_contents_impl.cc
-index 26384f823b51..0582c1a753af 100644
+index 024415bb096e..0166b65c74ad 100644
 --- content/browser/web_contents/web_contents_impl.cc
 +++ content/browser/web_contents/web_contents_impl.cc
-@@ -1931,21 +1931,30 @@ void WebContentsImpl::Init(const WebContents::CreateParams& params) {
+@@ -2096,15 +2096,22 @@ void WebContentsImpl::Init(const WebContents::CreateParams& params) {
    std::string unique_name;
    frame_tree_.root()->SetFrameName(params.main_frame_name, unique_name);
  
@@ -13,41 +13,29 @@ index 26384f823b51..0582c1a753af 100644
 +    render_view_host_delegate_view_ = params.delegate_view;
 +  }
  
--  if (GuestMode::IsCrossProcessFrameGuest(this)) {
+-  if (browser_plugin_guest_) {
 -    view_.reset(new WebContentsViewChildFrame(
 -        this, delegate, &render_view_host_delegate_view_));
 -  } else {
 -    view_.reset(CreateWebContentsView(this, delegate,
 -                                      &render_view_host_delegate_view_));
--    if (browser_plugin_guest_) {
--      view_ = std::make_unique<WebContentsViewGuest>(
--          this, browser_plugin_guest_.get(), std::move(view_),
--          &render_view_host_delegate_view_);
 +  if (!view_) {
 +    WebContentsViewDelegate* delegate =
 +        GetContentClient()->browser()->GetWebContentsViewDelegate(this);
 +
-+    if (GuestMode::IsCrossProcessFrameGuest(this)) {
++    if (browser_plugin_guest_) {
 +      view_.reset(new WebContentsViewChildFrame(
 +          this, delegate, &render_view_host_delegate_view_));
 +    } else {
 +      view_.reset(CreateWebContentsView(this, delegate,
 +                                        &render_view_host_delegate_view_));
-     }
++    }
    }
-+
-+  if (browser_plugin_guest_ && !GuestMode::IsCrossProcessFrameGuest(this)) {
-+    view_.reset(new WebContentsViewGuest(this, browser_plugin_guest_.get(),
-+                                         std::move(view_),
-+                                         &render_view_host_delegate_view_));
-+  }
-+
    CHECK(render_view_host_delegate_view_);
    CHECK(view_.get());
- 
-@@ -2622,6 +2631,15 @@ void WebContentsImpl::CreateNewWindow(
-   create_params.renderer_initiated_creation =
-       main_frame_route_id != MSG_ROUTING_NONE;
+@@ -2905,6 +2912,15 @@ RenderFrameHostDelegate* WebContentsImpl::CreateNewWindow(
+   // objects.
+   create_params.renderer_initiated_creation = !is_new_browsing_instance;
  
 +  if (delegate_) {
 +    delegate_->GetCustomWebContentsView(this,
@@ -58,48 +46,37 @@ index 26384f823b51..0582c1a753af 100644
 +                                        &create_params.delegate_view);
 +  }
 +
-   std::unique_ptr<WebContents> new_contents;
+   std::unique_ptr<WebContentsImpl> new_contents;
    if (!is_guest) {
      create_params.context = view_->GetNativeView();
-@@ -2652,7 +2670,7 @@ void WebContentsImpl::CreateNewWindow(
-       // TODO(brettw): It seems bogus that we have to call this function on the
-       // newly created object and give it one of its own member variables.
-       new_view->CreateViewForWidget(
--          new_contents->GetRenderViewHost()->GetWidget(), false);
-+          new_contents->GetRenderViewHost()->GetWidget(), nullptr);
-     }
-     // Save the created window associated with the route so we can show it
-     // later.
-@@ -5983,7 +6001,7 @@ InterstitialPageImpl* WebContentsImpl::GetInterstitialForRenderManager() {
- void WebContentsImpl::CreateRenderWidgetHostViewForRenderManager(
-     RenderViewHost* render_view_host) {
-   RenderWidgetHostViewBase* rwh_view =
--      view_->CreateViewForWidget(render_view_host->GetWidget(), false);
-+      view_->CreateViewForWidget(render_view_host->GetWidget(), nullptr);
+@@ -6262,6 +6278,9 @@ void WebContentsImpl::SetFocusedFrame(FrameTreeNode* node,
+     // This is an outermost WebContents.
+     SetAsFocusedWebContentsIfNecessary();
+   }
++
++  for (auto& observer : observers_)
++    observer.OnFrameFocused(node->current_frame_host());
+ }
  
-   // Now that the RenderView has been created, we need to tell it its size.
-   if (rwh_view)
+ void WebContentsImpl::DidCallFocus() {
 diff --git content/public/browser/web_contents.cc content/public/browser/web_contents.cc
-index df508da0aef2..f6f4bf42b108 100644
+index f1dcf53ea481..192f7c0ddd04 100644
 --- content/public/browser/web_contents.cc
 +++ content/public/browser/web_contents.cc
-@@ -30,7 +30,9 @@ WebContents::CreateParams::CreateParams(BrowserContext* context,
-       context(nullptr),
+@@ -29,6 +29,7 @@ WebContents::CreateParams::CreateParams(BrowserContext* context,
        renderer_initiated_creation(false),
        desired_renderer_state(kOkayToHaveRendererProcess),
--      starting_sandbox_flags(blink::WebSandboxFlags::kNone) {}
-+      starting_sandbox_flags(blink::WebSandboxFlags::kNone),
-+      view(nullptr),
-+      delegate_view(nullptr) {}
+       starting_sandbox_flags(network::mojom::WebSandboxFlags::kNone),
++      delegate_view(nullptr),
+       is_never_visible(false) {}
  
  WebContents::CreateParams::CreateParams(const CreateParams& other) = default;
- 
 diff --git content/public/browser/web_contents.h content/public/browser/web_contents.h
-index 0f82f91e437c..1c1e5e8f60bd 100644
+index 039f001f1294..9ee4058d46b4 100644
 --- content/public/browser/web_contents.h
 +++ content/public/browser/web_contents.h
-@@ -76,9 +76,11 @@ class BrowserPluginGuestDelegate;
- class InterstitialPage;
+@@ -82,9 +82,11 @@ class BrowserContext;
+ class BrowserPluginGuestDelegate;
  class RenderFrameHost;
  class RenderViewHost;
 +class RenderViewHostDelegateView;
@@ -107,12 +84,12 @@ index 0f82f91e437c..1c1e5e8f60bd 100644
  class RenderWidgetHostView;
  class WebContentsDelegate;
 +class WebContentsView;
+ class WebUI;
  struct CustomContextMenuContext;
  struct DropData;
- struct MHTMLGenerationParams;
-@@ -218,6 +220,10 @@ class WebContents : public PageNavigator,
+@@ -212,6 +214,10 @@ class WebContents : public PageNavigator,
      // Sandboxing flags set on the new WebContents.
-     blink::WebSandboxFlags starting_sandbox_flags;
+     network::mojom::WebSandboxFlags starting_sandbox_flags;
  
 +    // Optionally specify the view and delegate view.
 +    content::WebContentsView* view;
@@ -122,13 +99,13 @@ index 0f82f91e437c..1c1e5e8f60bd 100644
      // the value that'll be returned by GetLastActiveTime(). If this is left
      // default initialized then the value is not passed on to the WebContents
 diff --git content/public/browser/web_contents_delegate.h content/public/browser/web_contents_delegate.h
-index f7e72b32ee78..5a0a3ad770b8 100644
+index 7757c7720406..356fb0577bae 100644
 --- content/public/browser/web_contents_delegate.h
 +++ content/public/browser/web_contents_delegate.h
-@@ -47,10 +47,12 @@ class ColorChooser;
+@@ -61,10 +61,12 @@ class EyeDropperListener;
+ class FileSelectListener;
  class JavaScriptDialogManager;
  class RenderFrameHost;
- class RenderProcessHost;
 +class RenderViewHostDelegateView;
  class RenderWidgetHost;
  class SessionStorageNamespace;
@@ -137,8 +114,8 @@ index f7e72b32ee78..5a0a3ad770b8 100644
 +class WebContentsView;
  struct ContextMenuParams;
  struct DropData;
- struct FileChooserParams;
-@@ -310,6 +312,14 @@ class CONTENT_EXPORT WebContentsDelegate {
+ struct MediaPlayerWatchTime;
+@@ -331,6 +333,14 @@ class CONTENT_EXPORT WebContentsDelegate {
        const std::string& partition_id,
        SessionStorageNamespace* session_storage_namespace);
  
@@ -153,3 +130,18 @@ index f7e72b32ee78..5a0a3ad770b8 100644
    // Notifies the delegate about the creation of a new WebContents. This
    // typically happens when popups are created.
    virtual void WebContentsCreated(WebContents* source_contents,
+diff --git content/public/browser/web_contents_observer.h content/public/browser/web_contents_observer.h
+index f80da27979a7..0a04f21c131d 100644
+--- content/public/browser/web_contents_observer.h
++++ content/public/browser/web_contents_observer.h
+@@ -570,6 +570,10 @@ class CONTENT_EXPORT WebContentsObserver : public IPC::Listener {
+   // WebContents has gained/lost focus.
+   virtual void OnFocusChangedInPage(FocusedNodeDetails* details) {}
+ 
++  // Notification that |render_frame_host| for this WebContents has gained
++  // focus.
++  virtual void OnFrameFocused(RenderFrameHost* render_frame_host) {}
++
+   // Notifies that the manifest URL for the main frame changed to
+   // |manifest_url|. This will be invoked when a document with a manifest loads
+   // or when the manifest URL changes (possibly to nothing). It is not invoked

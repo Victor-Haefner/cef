@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,13 +9,14 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=4845905049834391c5596b3bd1581f3d1b7b434e$
+// $hash=b65d54f4da2586c066c6027fc3f3dbfdde465841$
 //
 
 #include "libcef_dll/cpptoc/x509certificate_cpptoc.h"
 #include <algorithm>
 #include "libcef_dll/cpptoc/binary_value_cpptoc.h"
 #include "libcef_dll/cpptoc/x509cert_principal_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -23,6 +24,8 @@ namespace {
 
 cef_x509cert_principal_t* CEF_CALLBACK
 x509certificate_get_subject(struct _cef_x509certificate_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -39,6 +42,8 @@ x509certificate_get_subject(struct _cef_x509certificate_t* self) {
 
 cef_x509cert_principal_t* CEF_CALLBACK
 x509certificate_get_issuer(struct _cef_x509certificate_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -55,6 +60,8 @@ x509certificate_get_issuer(struct _cef_x509certificate_t* self) {
 
 cef_binary_value_t* CEF_CALLBACK
 x509certificate_get_serial_number(struct _cef_x509certificate_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -71,6 +78,8 @@ x509certificate_get_serial_number(struct _cef_x509certificate_t* self) {
 
 cef_time_t CEF_CALLBACK
 x509certificate_get_valid_start(struct _cef_x509certificate_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -86,6 +95,8 @@ x509certificate_get_valid_start(struct _cef_x509certificate_t* self) {
 
 cef_time_t CEF_CALLBACK
 x509certificate_get_valid_expiry(struct _cef_x509certificate_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -101,6 +112,8 @@ x509certificate_get_valid_expiry(struct _cef_x509certificate_t* self) {
 
 cef_binary_value_t* CEF_CALLBACK
 x509certificate_get_derencoded(struct _cef_x509certificate_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -117,6 +130,8 @@ x509certificate_get_derencoded(struct _cef_x509certificate_t* self) {
 
 cef_binary_value_t* CEF_CALLBACK
 x509certificate_get_pemencoded(struct _cef_x509certificate_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -133,6 +148,8 @@ x509certificate_get_pemencoded(struct _cef_x509certificate_t* self) {
 
 size_t CEF_CALLBACK
 x509certificate_get_issuer_chain_size(struct _cef_x509certificate_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -150,6 +167,8 @@ void CEF_CALLBACK
 x509certificate_get_derencoded_issuer_chain(struct _cef_x509certificate_t* self,
                                             size_t* chainCount,
                                             cef_binary_value_t** chain) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -186,6 +205,8 @@ void CEF_CALLBACK
 x509certificate_get_pemencoded_issuer_chain(struct _cef_x509certificate_t* self,
                                             size_t* chainCount,
                                             cef_binary_value_t** chain) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -237,6 +258,12 @@ CefX509CertificateCppToC::CefX509CertificateCppToC() {
       x509certificate_get_pemencoded_issuer_chain;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefX509CertificateCppToC::~CefX509CertificateCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefX509Certificate> CefCppToCRefCounted<
     CefX509CertificateCppToC,
@@ -244,16 +271,8 @@ CefRefPtr<CefX509Certificate> CefCppToCRefCounted<
     cef_x509certificate_t>::UnwrapDerived(CefWrapperType type,
                                           cef_x509certificate_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefX509CertificateCppToC,
-                                         CefX509Certificate,
-                                         cef_x509certificate_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefX509CertificateCppToC,

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=80cca897c538cb8face7d7c2119b296ff3920bd1$
+// $hash=5dd7e1db0aefed2cc2bd78dac1cd77aabe76d064$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_WRITE_HANDLER_CTOCPP_H_
@@ -31,6 +31,7 @@ class CefWriteHandlerCToCpp : public CefCToCppRefCounted<CefWriteHandlerCToCpp,
                                                          cef_write_handler_t> {
  public:
   CefWriteHandlerCToCpp();
+  virtual ~CefWriteHandlerCToCpp();
 
   // CefWriteHandler methods.
   size_t Write(const void* ptr, size_t size, size_t n) override;

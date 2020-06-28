@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=9d4027f2094519b3a3b3e3b00f5704c9b3767099$
+// $hash=ce60f732df5ba8d6bf345f0451ca75a8a634e4e8$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_SCHEME_HANDLER_FACTORY_CTOCPP_H_
@@ -32,6 +32,7 @@ class CefSchemeHandlerFactoryCToCpp
                                  cef_scheme_handler_factory_t> {
  public:
   CefSchemeHandlerFactoryCToCpp();
+  virtual ~CefSchemeHandlerFactoryCToCpp();
 
   // CefSchemeHandlerFactory methods.
   CefRefPtr<CefResourceHandler> Create(CefRefPtr<CefBrowser> browser,

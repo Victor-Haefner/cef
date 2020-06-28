@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,10 +9,11 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=c01d4e5dd888f25a55a21e4c1a93c83d11237135$
+// $hash=7445defe1636c34ac7fc05e2acb02330cf71ef6e$
 //
 
 #include "libcef_dll/cpptoc/run_context_menu_callback_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -22,6 +23,8 @@ void CEF_CALLBACK
 run_context_menu_callback_cont(struct _cef_run_context_menu_callback_t* self,
                                int command_id,
                                cef_event_flags_t event_flags) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -34,6 +37,8 @@ run_context_menu_callback_cont(struct _cef_run_context_menu_callback_t* self,
 
 void CEF_CALLBACK run_context_menu_callback_cancel(
     struct _cef_run_context_menu_callback_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -53,6 +58,12 @@ CefRunContextMenuCallbackCppToC::CefRunContextMenuCallbackCppToC() {
   GetStruct()->cancel = run_context_menu_callback_cancel;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefRunContextMenuCallbackCppToC::~CefRunContextMenuCallbackCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefRunContextMenuCallback>
 CefCppToCRefCounted<CefRunContextMenuCallbackCppToC,
@@ -60,16 +71,8 @@ CefCppToCRefCounted<CefRunContextMenuCallbackCppToC,
                     cef_run_context_menu_callback_t>::
     UnwrapDerived(CefWrapperType type, cef_run_context_menu_callback_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<
-    CefRunContextMenuCallbackCppToC,
-    CefRunContextMenuCallback,
-    cef_run_context_menu_callback_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=90e35f08294283e00d0c2f927cd8fcc77ab4a7e5$
+// $hash=95cf5f4a9561fd25c98ef424df8a9d6047c24cc8$
 //
 
 #include "libcef_dll/cpptoc/v8stack_frame_cpptoc.h"
@@ -152,6 +152,10 @@ CefV8StackFrameCppToC::CefV8StackFrameCppToC() {
   GetStruct()->is_constructor = v8stack_frame_is_constructor;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefV8StackFrameCppToC::~CefV8StackFrameCppToC() {}
+
 template <>
 CefRefPtr<CefV8StackFrame> CefCppToCRefCounted<
     CefV8StackFrameCppToC,
@@ -159,16 +163,8 @@ CefRefPtr<CefV8StackFrame> CefCppToCRefCounted<
     cef_v8stack_frame_t>::UnwrapDerived(CefWrapperType type,
                                         cef_v8stack_frame_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefV8StackFrameCppToC,
-                                         CefV8StackFrame,
-                                         cef_v8stack_frame_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefV8StackFrameCppToC,

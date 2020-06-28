@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=c5900a7593f1b45a760ac28a76be35831d796b06$
+// $hash=8ef0b53920c747cb67c9ddca0082b9c36307200b$
 //
 
 #include "libcef_dll/cpptoc/post_data_cpptoc.h"
@@ -178,20 +178,17 @@ CefPostDataCppToC::CefPostDataCppToC() {
   GetStruct()->remove_elements = post_data_remove_elements;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefPostDataCppToC::~CefPostDataCppToC() {}
+
 template <>
 CefRefPtr<CefPostData>
 CefCppToCRefCounted<CefPostDataCppToC, CefPostData, cef_post_data_t>::
     UnwrapDerived(CefWrapperType type, cef_post_data_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefPostDataCppToC, CefPostData, cef_post_data_t>::
-        DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefPostDataCppToC,

@@ -103,6 +103,7 @@ int GetURLBarHeight(HWND hwnd) {
 
 RootWindowWin::RootWindowWin()
     : with_controls_(false),
+      always_on_top_(false),
       with_osr_(false),
       with_extension_(false),
       is_popup_(false),
@@ -152,6 +153,7 @@ void RootWindowWin::Init(RootWindow::Delegate* delegate,
 
   delegate_ = delegate;
   with_controls_ = config.with_controls;
+  always_on_top_ = config.always_on_top;
   with_osr_ = config.with_osr;
   with_extension_ = config.with_extension;
 
@@ -224,6 +226,9 @@ void RootWindowWin::Show(ShowMode mode) {
     case ShowMaximized:
       nCmdShow = SW_SHOWMAXIMIZED;
       break;
+    case ShowNoActivate:
+      nCmdShow = SW_SHOWNOACTIVATE;
+      break;
     default:
       break;
   }
@@ -281,7 +286,7 @@ CefRefPtr<CefBrowser> RootWindowWin::GetBrowser() const {
 
   if (browser_window_)
     return browser_window_->GetBrowser();
-  return NULL;
+  return nullptr;
 }
 
 ClientWindowHandle RootWindowWin::GetWindowHandle() const {
@@ -301,7 +306,7 @@ bool RootWindowWin::WithExtension() const {
 
 void RootWindowWin::CreateBrowserWindow(const std::string& startup_url) {
   if (with_osr_) {
-    OsrRenderer::Settings settings = {};
+    OsrRendererSettings settings = {};
     MainContext::Get()->PopulateOsrSettings(&settings);
     browser_window_.reset(new BrowserWindowOsrWin(this, startup_url, settings));
   } else {
@@ -332,7 +337,16 @@ void RootWindowWin::CreateRootWindow(const CefBrowserSettings& settings,
   find_message_id_ = RegisterWindowMessage(FINDMSGSTRING);
   CHECK(find_message_id_);
 
+  CefRefPtr<CefCommandLine> command_line =
+      CefCommandLine::GetGlobalCommandLine();
+  const bool no_activate = command_line->HasSwitch(switches::kNoActivate);
+
   const DWORD dwStyle = WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN;
+  DWORD dwExStyle = always_on_top_ ? WS_EX_TOPMOST : 0;
+  if (no_activate) {
+    // Don't activate the browser window on creation.
+    dwExStyle |= WS_EX_NOACTIVATE;
+  }
 
   int x, y, width, height;
   if (::IsRectEmpty(&start_rect_)) {
@@ -341,7 +355,7 @@ void RootWindowWin::CreateRootWindow(const CefBrowserSettings& settings,
   } else {
     // Adjust the window size to account for window frame and controls.
     RECT window_rect = start_rect_;
-    ::AdjustWindowRectEx(&window_rect, dwStyle, with_controls_, 0);
+    ::AdjustWindowRectEx(&window_rect, dwStyle, with_controls_, dwExStyle);
 
     x = start_rect_.left;
     y = start_rect_.top;
@@ -352,8 +366,8 @@ void RootWindowWin::CreateRootWindow(const CefBrowserSettings& settings,
   browser_settings_ = settings;
 
   // Create the main window initially hidden.
-  CreateWindow(window_class.c_str(), window_title.c_str(), dwStyle, x, y, width,
-               height, NULL, NULL, hInstance, this);
+  CreateWindowEx(dwExStyle, window_class.c_str(), window_title.c_str(), dwStyle,
+                 x, y, width, height, NULL, NULL, hInstance, this);
   CHECK(hwnd_);
 
   if (!called_enable_non_client_dpi_scaling_ && IsProcessPerMonitorDpiAware()) {
@@ -370,7 +384,7 @@ void RootWindowWin::CreateRootWindow(const CefBrowserSettings& settings,
 
   if (!initially_hidden) {
     // Show this window.
-    Show(ShowNormal);
+    Show(no_activate ? ShowNoActivate : ShowNormal);
   }
 }
 
@@ -475,7 +489,7 @@ LRESULT CALLBACK RootWindowWin::RootWndProc(HWND hWnd,
                                             LPARAM lParam) {
   REQUIRE_MAIN_THREAD();
 
-  RootWindowWin* self = NULL;
+  RootWindowWin* self = nullptr;
   if (message != WM_NCCREATE) {
     self = GetUserDataPtr<RootWindowWin*>(hWnd);
     if (!self)
@@ -609,7 +623,10 @@ void RootWindowWin::OnPaint() {
 }
 
 void RootWindowWin::OnFocus() {
-  if (browser_window_)
+  // Selecting "Close window" from the task bar menu may send a focus
+  // notification even though the window is currently disabled (e.g. while a
+  // modal JS dialog is displayed).
+  if (browser_window_ && ::IsWindowEnabled(hwnd_))
     browser_window_->SetFocus(true);
 }
 
@@ -732,7 +749,7 @@ void RootWindowWin::OnDpiChanged(WPARAM wParam, LPARAM lParam) {
 
 bool RootWindowWin::OnEraseBkgnd() {
   // Erase the background when the browser does not exist.
-  return (GetBrowser() == NULL);
+  return (GetBrowser() == nullptr);
 }
 
 bool RootWindowWin::OnCommand(UINT id) {
@@ -932,7 +949,7 @@ void RootWindowWin::OnCreate(LPCREATESTRUCT lpCreateStruct) {
     // Create the browser window.
     CefRect cef_rect(rect.left, rect.top, rect.right - rect.left,
                      rect.bottom - rect.top);
-    browser_window_->CreateBrowser(hwnd_, cef_rect, browser_settings_,
+    browser_window_->CreateBrowser(hwnd_, cef_rect, browser_settings_, nullptr,
                                    delegate_->GetRequestContext(this));
   } else {
     // With popups we already have a browser window. Parent the browser window
@@ -1065,6 +1082,22 @@ void RootWindowWin::OnSetLoadingState(bool isLoading,
     EnableWindow(reload_hwnd_, !isLoading);
     EnableWindow(stop_hwnd_, isLoading);
     EnableWindow(edit_hwnd_, TRUE);
+  }
+
+  if (!isLoading && GetWindowLongPtr(hwnd_, GWL_EXSTYLE) & WS_EX_NOACTIVATE) {
+    // Done with the initial navigation. Remove the WS_EX_NOACTIVATE style so
+    // that future mouse clicks inside the browser correctly activate and focus
+    // the window. For the top-level window removing this style causes Windows
+    // to display the task bar button.
+    SetWindowLongPtr(hwnd_, GWL_EXSTYLE,
+                     GetWindowLongPtr(hwnd_, GWL_EXSTYLE) & ~WS_EX_NOACTIVATE);
+
+    if (browser_window_) {
+      HWND browser_hwnd = browser_window_->GetWindowHandle();
+      SetWindowLongPtr(
+          browser_hwnd, GWL_EXSTYLE,
+          GetWindowLongPtr(browser_hwnd, GWL_EXSTYLE) & ~WS_EX_NOACTIVATE);
+    }
   }
 }
 

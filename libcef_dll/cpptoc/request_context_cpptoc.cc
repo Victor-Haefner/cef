@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,13 +9,14 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=2c59a79b3f2ef5cbe72cae26016fe329b14ed234$
+// $hash=5168000f75f7911dce0bffcf47341e4ee1c2a275$
 //
 
 #include "libcef_dll/cpptoc/request_context_cpptoc.h"
 #include "libcef_dll/cpptoc/cookie_manager_cpptoc.h"
 #include "libcef_dll/cpptoc/dictionary_value_cpptoc.h"
 #include "libcef_dll/cpptoc/extension_cpptoc.h"
+#include "libcef_dll/cpptoc/media_router_cpptoc.h"
 #include "libcef_dll/cpptoc/value_cpptoc.h"
 #include "libcef_dll/ctocpp/completion_callback_ctocpp.h"
 #include "libcef_dll/ctocpp/extension_handler_ctocpp.h"
@@ -171,9 +172,9 @@ request_context_get_cache_path(struct _cef_request_context_t* self) {
   return _retval.DetachToUserFree();
 }
 
-cef_cookie_manager_t* CEF_CALLBACK request_context_get_default_cookie_manager(
-    struct _cef_request_context_t* self,
-    cef_completion_callback_t* callback) {
+cef_cookie_manager_t* CEF_CALLBACK
+request_context_get_cookie_manager(struct _cef_request_context_t* self,
+                                   cef_completion_callback_t* callback) {
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -183,7 +184,7 @@ cef_cookie_manager_t* CEF_CALLBACK request_context_get_default_cookie_manager(
 
   // Execute
   CefRefPtr<CefCookieManager> _retval =
-      CefRequestContextCppToC::Get(self)->GetDefaultCookieManager(
+      CefRequestContextCppToC::Get(self)->GetCookieManager(
           CefCompletionCallbackCToCpp::Wrap(callback));
 
   // Return type: refptr_same
@@ -373,6 +374,21 @@ void CEF_CALLBACK request_context_clear_certificate_exceptions(
       CefCompletionCallbackCToCpp::Wrap(callback));
 }
 
+void CEF_CALLBACK request_context_clear_http_auth_credentials(
+    struct _cef_request_context_t* self,
+    cef_completion_callback_t* callback) {
+  // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
+
+  DCHECK(self);
+  if (!self)
+    return;
+  // Unverified params: callback
+
+  // Execute
+  CefRequestContextCppToC::Get(self)->ClearHttpAuthCredentials(
+      CefCompletionCallbackCToCpp::Wrap(callback));
+}
+
 void CEF_CALLBACK
 request_context_close_all_connections(struct _cef_request_context_t* self,
                                       cef_completion_callback_t* callback) {
@@ -409,41 +425,6 @@ request_context_resolve_host(struct _cef_request_context_t* self,
   // Execute
   CefRequestContextCppToC::Get(self)->ResolveHost(
       CefString(origin), CefResolveCallbackCToCpp::Wrap(callback));
-}
-
-cef_errorcode_t CEF_CALLBACK
-request_context_resolve_host_cached(struct _cef_request_context_t* self,
-                                    const cef_string_t* origin,
-                                    cef_string_list_t resolved_ips) {
-  // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
-
-  DCHECK(self);
-  if (!self)
-    return ERR_FAILED;
-  // Verify param: origin; type: string_byref_const
-  DCHECK(origin);
-  if (!origin)
-    return ERR_FAILED;
-  // Verify param: resolved_ips; type: string_vec_byref
-  DCHECK(resolved_ips);
-  if (!resolved_ips)
-    return ERR_FAILED;
-
-  // Translate param: resolved_ips; type: string_vec_byref
-  std::vector<CefString> resolved_ipsList;
-  transfer_string_list_contents(resolved_ips, resolved_ipsList);
-
-  // Execute
-  cef_errorcode_t _retval =
-      CefRequestContextCppToC::Get(self)->ResolveHostCached(CefString(origin),
-                                                            resolved_ipsList);
-
-  // Restore param: resolved_ips; type: string_vec_byref
-  cef_string_list_clear(resolved_ips);
-  transfer_string_list_contents(resolved_ipsList, resolved_ips);
-
-  // Return type: simple
-  return _retval;
 }
 
 void CEF_CALLBACK
@@ -560,6 +541,22 @@ request_context_get_extension(struct _cef_request_context_t* self,
   return CefExtensionCppToC::Wrap(_retval);
 }
 
+cef_media_router_t* CEF_CALLBACK
+request_context_get_media_router(struct _cef_request_context_t* self) {
+  // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
+
+  DCHECK(self);
+  if (!self)
+    return NULL;
+
+  // Execute
+  CefRefPtr<CefMediaRouter> _retval =
+      CefRequestContextCppToC::Get(self)->GetMediaRouter();
+
+  // Return type: refptr_same
+  return CefMediaRouterCppToC::Wrap(_retval);
+}
+
 }  // namespace
 
 // CONSTRUCTOR - Do not edit by hand.
@@ -570,8 +567,7 @@ CefRequestContextCppToC::CefRequestContextCppToC() {
   GetStruct()->is_global = request_context_is_global;
   GetStruct()->get_handler = request_context_get_handler;
   GetStruct()->get_cache_path = request_context_get_cache_path;
-  GetStruct()->get_default_cookie_manager =
-      request_context_get_default_cookie_manager;
+  GetStruct()->get_cookie_manager = request_context_get_cookie_manager;
   GetStruct()->register_scheme_handler_factory =
       request_context_register_scheme_handler_factory;
   GetStruct()->clear_scheme_handler_factories =
@@ -585,15 +581,21 @@ CefRequestContextCppToC::CefRequestContextCppToC() {
   GetStruct()->set_preference = request_context_set_preference;
   GetStruct()->clear_certificate_exceptions =
       request_context_clear_certificate_exceptions;
+  GetStruct()->clear_http_auth_credentials =
+      request_context_clear_http_auth_credentials;
   GetStruct()->close_all_connections = request_context_close_all_connections;
   GetStruct()->resolve_host = request_context_resolve_host;
-  GetStruct()->resolve_host_cached = request_context_resolve_host_cached;
   GetStruct()->load_extension = request_context_load_extension;
   GetStruct()->did_load_extension = request_context_did_load_extension;
   GetStruct()->has_extension = request_context_has_extension;
   GetStruct()->get_extensions = request_context_get_extensions;
   GetStruct()->get_extension = request_context_get_extension;
+  GetStruct()->get_media_router = request_context_get_media_router;
 }
+
+// DESTRUCTOR - Do not edit by hand.
+
+CefRequestContextCppToC::~CefRequestContextCppToC() {}
 
 template <>
 CefRefPtr<CefRequestContext> CefCppToCRefCounted<
@@ -602,16 +604,8 @@ CefRefPtr<CefRequestContext> CefCppToCRefCounted<
     cef_request_context_t>::UnwrapDerived(CefWrapperType type,
                                           cef_request_context_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefRequestContextCppToC,
-                                         CefRequestContext,
-                                         cef_request_context_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefRequestContextCppToC,

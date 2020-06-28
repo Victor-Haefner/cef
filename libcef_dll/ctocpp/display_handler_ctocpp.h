@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=6fc6aa5750ef1aa3353c78daa018f761a7ba22a3$
+// $hash=2a5e7a2afb4d183e4688ef7aec8d12d2bc1d5212$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_DISPLAY_HANDLER_CTOCPP_H_
@@ -33,6 +33,7 @@ class CefDisplayHandlerCToCpp
                                  cef_display_handler_t> {
  public:
   CefDisplayHandlerCToCpp();
+  virtual ~CefDisplayHandlerCToCpp();
 
   // CefDisplayHandler methods.
   void OnAddressChange(CefRefPtr<CefBrowser> browser,

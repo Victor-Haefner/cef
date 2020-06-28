@@ -12,6 +12,7 @@
 #include "base/logging.h"
 #include "base/message_loop/message_loop.h"
 #include "base/threading/thread_task_runner_handle.h"
+#include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/child_process_launcher_utils.h"
 
@@ -25,7 +26,7 @@ CefRefPtr<CefTaskRunner> CefTaskRunner::GetForCurrentThread() {
       CefTaskRunnerImpl::GetCurrentTaskRunner();
   if (task_runner.get())
     return new CefTaskRunnerImpl(task_runner);
-  return NULL;
+  return nullptr;
 }
 
 // static
@@ -36,7 +37,7 @@ CefRefPtr<CefTaskRunner> CefTaskRunner::GetForThread(CefThreadId threadId) {
     return new CefTaskRunnerImpl(task_runner);
 
   LOG(WARNING) << "Invalid thread id " << threadId;
-  return NULL;
+  return nullptr;
 }
 
 // CefTaskRunnerImpl
@@ -55,13 +56,13 @@ scoped_refptr<base::SingleThreadTaskRunner> CefTaskRunnerImpl::GetTaskRunner(
     CefContentRendererClient* client = CefContentRendererClient::Get();
     if (client)
       return client->render_task_runner();
-    return NULL;
+    return nullptr;
   }
 
   // Browser process.
   CefContentBrowserClient* client = CefContentBrowserClient::Get();
   if (!client)
-    return NULL;
+    return nullptr;
 
   int id = -1;
   switch (threadId) {
@@ -85,11 +86,14 @@ scoped_refptr<base::SingleThreadTaskRunner> CefTaskRunnerImpl::GetTaskRunner(
 
   if (id >= 0 &&
       BrowserThread::IsThreadInitialized(static_cast<BrowserThread::ID>(id))) {
-    return BrowserThread::GetTaskRunnerForThread(
-        static_cast<BrowserThread::ID>(id));
+    // Specify USER_BLOCKING so that BrowserTaskExecutor::GetTaskRunner always
+    // gives us the same TaskRunner object.
+    return base::CreateSingleThreadTaskRunner(
+        {static_cast<BrowserThread::ID>(id),
+         base::TaskPriority::USER_BLOCKING});
   }
 
-  return NULL;
+  return nullptr;
 }
 
 // static
@@ -102,7 +106,10 @@ CefTaskRunnerImpl::GetCurrentTaskRunner() {
   BrowserThread::ID current_id;
   if (BrowserThread::GetCurrentThreadIdentifier(&current_id) &&
       BrowserThread::IsThreadInitialized(current_id)) {
-    task_runner = BrowserThread::GetTaskRunnerForThread(current_id);
+    // Specify USER_BLOCKING so that BrowserTaskExecutor::GetTaskRunner always
+    // gives us the same TaskRunner object.
+    task_runner = base::CreateSingleThreadTaskRunner(
+        {current_id, base::TaskPriority::USER_BLOCKING});
   }
 
   if (!task_runner.get()) {

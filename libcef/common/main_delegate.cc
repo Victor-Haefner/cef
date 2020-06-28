@@ -3,6 +3,12 @@
 // found in the LICENSE file.
 
 #include "libcef/common/main_delegate.h"
+
+#if defined(OS_LINUX)
+#include <dlfcn.h>
+#endif
+
+#include "libcef/browser/browser_message_loop.h"
 #include "libcef/browser/content_browser_client.h"
 #include "libcef/browser/context.h"
 #include "libcef/common/cef_switches.h"
@@ -10,25 +16,31 @@
 #include "libcef/common/crash_reporting.h"
 #include "libcef/common/extensions/extensions_util.h"
 #include "libcef/renderer/content_renderer_client.h"
-#include "libcef/utility/content_utility_client.h"
 
+#include "base/at_exit.h"
 #include "base/base_switches.h"
 #include "base/command_line.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
 #include "base/path_service.h"
+#include "base/run_loop.h"
+#include "base/stl_util.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
 #include "base/synchronization/waitable_event.h"
 #include "base/threading/thread.h"
 #include "chrome/browser/browser_process.h"
+#include "chrome/browser/media/router/media_router_feature.h"
 #include "chrome/child/pdf_child_init.h"
 #include "chrome/common/chrome_constants.h"
 #include "chrome/common/chrome_paths.h"
+#include "chrome/common/chrome_paths_internal.h"
 #include "chrome/common/chrome_switches.h"
+#include "chrome/utility/chrome_content_utility_client.h"
 #include "components/content_settings/core/common/content_settings_pattern.h"
 #include "components/viz/common/features.h"
 #include "content/browser/browser_process_sub_thread.h"
+#include "content/browser/scheduler/browser_task_executor.h"
 #include "content/public/browser/browser_main_runner.h"
 #include "content/public/browser/render_process_host.h"
 #include "content/public/common/content_features.h"
@@ -36,11 +48,13 @@
 #include "content/public/common/main_function_params.h"
 #include "extensions/common/constants.h"
 #include "ipc/ipc_buildflags.h"
+#include "net/base/features.h"
 #include "pdf/pdf_ppapi.h"
+#include "services/network/public/cpp/features.h"
 #include "services/service_manager/sandbox/switches.h"
 #include "ui/base/layout.h"
-#include "ui/base/material_design/material_design_controller.h"
 #include "ui/base/resource/resource_bundle.h"
+#include "ui/base/ui_base_features.h"
 #include "ui/base/ui_base_paths.h"
 #include "ui/base/ui_base_switches.h"
 
@@ -74,7 +88,7 @@ namespace {
 const char* const kNonWildcardDomainNonPortSchemes[] = {
     extensions::kExtensionScheme};
 const size_t kNonWildcardDomainNonPortSchemesSize =
-    arraysize(kNonWildcardDomainNonPortSchemes);
+    base::size(kNonWildcardDomainNonPortSchemes);
 
 #if defined(OS_MACOSX)
 
@@ -98,6 +112,20 @@ void OverrideFrameworkBundlePath() {
   base::mac::SetOverrideFrameworkBundlePath(framework_path);
 }
 
+void OverrideOuterBundlePath() {
+  base::FilePath bundle_path = util_mac::GetMainBundlePath();
+  DCHECK(!bundle_path.empty());
+
+  base::mac::SetOverrideOuterBundlePath(bundle_path);
+}
+
+void OverrideBaseBundleID() {
+  std::string bundle_id = util_mac::GetMainBundleID();
+  DCHECK(!bundle_id.empty());
+
+  base::mac::SetBaseBundleID(bundle_id.c_str());
+}
+
 void OverrideChildProcessPath() {
   base::FilePath child_process_path =
       base::CommandLine::ForCurrentProcess()->GetSwitchValuePath(
@@ -116,7 +144,7 @@ void OverrideChildProcessPath() {
 
 base::FilePath GetResourcesFilePath() {
   base::FilePath pak_dir;
-  base::PathService::Get(base::DIR_MODULE, &pak_dir);
+  base::PathService::Get(base::DIR_ASSETS, &pak_dir);
   return pak_dir;
 }
 
@@ -155,6 +183,7 @@ const base::FilePath::CharType kPepperFlashSystemBaseDirectory[] =
 #endif
 
 void OverridePepperFlashSystemPluginPath() {
+#if defined(OS_WIN) || defined(OS_MACOSX)
   base::FilePath plugin_filename;
 #if defined(OS_WIN)
   if (!GetSystemFlashFilename(&plugin_filename))
@@ -164,15 +193,16 @@ void OverridePepperFlashSystemPluginPath() {
     return;
   plugin_filename = plugin_filename.Append(kPepperFlashSystemBaseDirectory)
                         .Append(chrome::kPepperFlashPluginFilename);
-#else
-  // A system plugin is not available on other platforms.
-  return;
-#endif
+#endif  // defined(OS_MACOSX)
 
   if (!plugin_filename.empty()) {
     base::PathService::Override(chrome::FILE_PEPPER_FLASH_SYSTEM_PLUGIN,
                                 plugin_filename);
   }
+#else  // !(defined(OS_WIN) || defined(OS_MACOSX))
+  // A system plugin is not available on other platforms.
+  return;
+#endif
 }
 
 #if defined(OS_LINUX)
@@ -231,6 +261,48 @@ base::FilePath GetUserDataPath() {
   return result;
 }
 
+bool GetDefaultDownloadDirectory(base::FilePath* result) {
+  // This will return the safe download directory if necessary.
+  return chrome::GetUserDownloadsDirectory(result);
+}
+
+// From chrome/browser/download/download_prefs.cc.
+// Consider downloads 'dangerous' if they go to the home directory on Linux and
+// to the desktop on any platform.
+bool DownloadPathIsDangerous(const base::FilePath& download_path) {
+#if defined(OS_LINUX)
+  base::FilePath home_dir = base::GetHomeDir();
+  if (download_path == home_dir) {
+    return true;
+  }
+#endif
+
+  base::FilePath desktop_dir;
+  if (!base::PathService::Get(base::DIR_USER_DESKTOP, &desktop_dir)) {
+    NOTREACHED();
+    return false;
+  }
+  return (download_path == desktop_dir);
+}
+
+bool GetDefaultDownloadSafeDirectory(base::FilePath* result) {
+  // Start with the default download directory.
+  if (!GetDefaultDownloadDirectory(result))
+    return false;
+
+  if (DownloadPathIsDangerous(*result)) {
+#if defined(OS_WIN) || defined(OS_LINUX)
+    // Explicitly switch to the safe download directory.
+    return chrome::GetUserDownloadsDirectorySafe(result);
+#else
+    // No viable alternative on macOS.
+    return false;
+#endif
+  }
+
+  return true;
+}
+
 // Returns true if |scale_factor| is supported by this platform.
 // Same as ui::ResourceBundle::IsScaleFactorSupported.
 bool IsScaleFactorSupported(ui::ScaleFactor scale_factor) {
@@ -241,44 +313,129 @@ bool IsScaleFactorSupported(ui::ScaleFactor scale_factor) {
                    scale_factor) != supported_scale_factors.end();
 }
 
-// Used to run the UI on a separate thread.
-class CefUIThread : public base::Thread {
- public:
-  CefUIThread(const content::MainFunctionParams& main_function_params)
-      : base::Thread("CefUIThread"),
-        main_function_params_(main_function_params) {}
-
-  void Init() override {
-#if defined(OS_WIN)
-    // Initializes the COM library on the current thread.
-    CoInitialize(NULL);
+#if defined(OS_LINUX)
+// Look for binary files (*.bin, *.dat, *.pak, chrome-sandbox, libGLESv2.so,
+// libEGL.so, locales/*.pak, swiftshader/*.so) next to libcef instead of the exe
+// on Linux. This is already the default on Windows.
+void OverrideAssetPath() {
+  Dl_info dl_info;
+  if (dladdr(reinterpret_cast<const void*>(&OverrideAssetPath), &dl_info)) {
+    base::FilePath path = base::FilePath(dl_info.dli_fname).DirName();
+    base::PathService::Override(base::DIR_ASSETS, path);
+  }
+}
 #endif
 
-    // Use our own browser process runner.
-    browser_runner_.reset(content::BrowserMainRunner::Create());
+}  // namespace
 
-    // Initialize browser process state. Uses the current thread's mesage loop.
-    int exit_code = browser_runner_->Initialize(main_function_params_);
+// Used to run the UI on a separate thread.
+class CefUIThread : public base::PlatformThread::Delegate {
+ public:
+  explicit CefUIThread(base::OnceClosure setup_callback)
+      : setup_callback_(std::move(setup_callback)) {}
+  ~CefUIThread() override { Stop(); }
+
+  void Start() {
+    base::AutoLock lock(thread_lock_);
+    bool success = base::PlatformThread::CreateWithPriority(
+        0, this, &thread_, base::ThreadPriority::NORMAL);
+    if (!success) {
+      LOG(FATAL) << "failed to UI create thread";
+    }
+  }
+
+  void Stop() {
+    base::AutoLock lock(thread_lock_);
+
+    if (!stopping_) {
+      stopping_ = true;
+      base::PostTask(
+          FROM_HERE, {content::BrowserThread::UI},
+          base::BindOnce(&CefUIThread::ThreadQuitHelper, Unretained(this)));
+    }
+
+    // Can't join if the |thread_| is either already gone or is non-joinable.
+    if (thread_.is_null())
+      return;
+
+    base::PlatformThread::Join(thread_);
+    thread_ = base::PlatformThreadHandle();
+
+    stopping_ = false;
+  }
+
+  bool WaitUntilThreadStarted() const {
+    DCHECK(owning_sequence_checker_.CalledOnValidSequence());
+    start_event_.Wait();
+    return true;
+  }
+
+  void InitializeBrowserRunner(
+      const content::MainFunctionParams& main_function_params) {
+    // Use our own browser process runner.
+    browser_runner_ = content::BrowserMainRunner::Create();
+
+    // Initialize browser process state. Uses the current thread's message loop.
+    int exit_code = browser_runner_->Initialize(main_function_params);
     CHECK_EQ(exit_code, -1);
   }
 
-  void CleanUp() override {
+ protected:
+  void ThreadMain() override {
+    base::PlatformThread::SetName("CefUIThread");
+
+#if defined(OS_WIN)
+    // Initializes the COM library on the current thread.
+    CoInitialize(nullptr);
+#endif
+
+    start_event_.Signal();
+
+    std::move(setup_callback_).Run();
+
+    base::RunLoop run_loop;
+    run_loop_ = &run_loop;
+    run_loop.Run();
+
     browser_runner_->Shutdown();
-    browser_runner_.reset(NULL);
+    browser_runner_.reset(nullptr);
+
+    content::BrowserTaskExecutor::Shutdown();
+
+    // Run exit callbacks on the UI thread to avoid sequence check failures.
+    base::AtExitManager::ProcessCallbacksNow();
 
 #if defined(OS_WIN)
     // Closes the COM library on the current thread. CoInitialize must
     // be balanced by a corresponding call to CoUninitialize.
     CoUninitialize();
 #endif
+
+    run_loop_ = nullptr;
   }
 
- protected:
-  content::MainFunctionParams main_function_params_;
-  std::unique_ptr<content::BrowserMainRunner> browser_runner_;
-};
+  void ThreadQuitHelper() {
+    DCHECK(run_loop_);
+    run_loop_->QuitWhenIdle();
+  }
 
-}  // namespace
+  std::unique_ptr<content::BrowserMainRunner> browser_runner_;
+  base::OnceClosure setup_callback_;
+
+  bool stopping_ = false;
+
+  // The thread's handle.
+  base::PlatformThreadHandle thread_;
+  mutable base::Lock thread_lock_;  // Protects |thread_|.
+
+  base::RunLoop* run_loop_ = nullptr;
+
+  mutable base::WaitableEvent start_event_;
+
+  // This class is not thread-safe, use this to verify access from the owning
+  // sequence of the Thread.
+  base::SequenceChecker owning_sequence_checker_;
+};
 
 CefMainDelegate::CefMainDelegate(CefRefPtr<CefApp> application)
     : content_client_(application) {
@@ -286,9 +443,17 @@ CefMainDelegate::CefMainDelegate(CefRefPtr<CefApp> application)
   // in the binary.
   extern void base_impl_stub();
   base_impl_stub();
+
+#if defined(OS_LINUX)
+  OverrideAssetPath();
+#endif
 }
 
 CefMainDelegate::~CefMainDelegate() {}
+
+void CefMainDelegate::PreCreateMainMessageLoop() {
+  InitMessagePumpFactoryForUI();
+}
 
 bool CefMainDelegate::BasicStartupComplete(int* exit_code) {
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
@@ -338,6 +503,13 @@ bool CefMainDelegate::BasicStartupComplete(int* exit_code) {
           base::FilePath(CefString(&settings.framework_dir_path));
       if (!file_path.empty())
         command_line->AppendSwitchPath(switches::kFrameworkDirPath, file_path);
+    }
+
+    if (settings.main_bundle_path.length > 0) {
+      base::FilePath file_path =
+          base::FilePath(CefString(&settings.main_bundle_path));
+      if (!file_path.empty())
+        command_line->AppendSwitchPath(switches::kMainBundlePath, file_path);
     }
 #endif
 
@@ -389,6 +561,9 @@ bool CefMainDelegate::BasicStartupComplete(int* exit_code) {
         case LOGSEVERITY_ERROR:
           log_severity = switches::kLogSeverity_Error;
           break;
+        case LOGSEVERITY_FATAL:
+          log_severity = switches::kLogSeverity_Fatal;
+          break;
         case LOGSEVERITY_DISABLE:
           log_severity = switches::kLogSeverity_Disable;
           break;
@@ -428,23 +603,31 @@ bool CefMainDelegate::BasicStartupComplete(int* exit_code) {
         settings.remote_debugging_port <= 65535) {
       command_line->AppendSwitchASCII(
           switches::kRemoteDebuggingPort,
-          base::IntToString(settings.remote_debugging_port));
+          base::NumberToString(settings.remote_debugging_port));
     }
 
     if (settings.uncaught_exception_stack_size > 0) {
       command_line->AppendSwitchASCII(
           switches::kUncaughtExceptionStackSize,
-          base::IntToString(settings.uncaught_exception_stack_size));
+          base::NumberToString(settings.uncaught_exception_stack_size));
     }
 
-#if defined(OS_MACOSX)
     std::vector<std::string> disable_features;
 
-    // TODO: Remove once MacV2Sandbox is supported. See issue #2459.
-    if (features::kMacV2Sandbox.default_state ==
+    if (network::features::kOutOfBlinkCors.default_state ==
         base::FEATURE_ENABLED_BY_DEFAULT) {
-      disable_features.push_back(features::kMacV2Sandbox.name);
+      // TODO: Add support for out-of-Blink CORS (see issue #2716)
+      disable_features.push_back(network::features::kOutOfBlinkCors.name);
     }
+
+#if defined(OS_WIN)
+    if (features::kCalculateNativeWinOcclusion.default_state ==
+        base::FEATURE_ENABLED_BY_DEFAULT) {
+      // TODO: Add support for occlusion detection in combination with native
+      // parent windows (see issue #2805).
+      disable_features.push_back(features::kCalculateNativeWinOcclusion.name);
+    }
+#endif  // defined(OS_WIN)
 
     if (!disable_features.empty()) {
       DCHECK(!base::FeatureList::GetInstance());
@@ -458,7 +641,33 @@ bool CefMainDelegate::BasicStartupComplete(int* exit_code) {
       command_line->AppendSwitchASCII(switches::kDisableFeatures,
                                       disable_features_str);
     }
-#endif  // defined(OS_MACOSX)
+
+    std::vector<std::string> enable_features;
+
+    if (media_router::kDialMediaRouteProvider.default_state ==
+        base::FEATURE_DISABLED_BY_DEFAULT) {
+      // Enable discovery of DIAL devices.
+      enable_features.push_back(media_router::kDialMediaRouteProvider.name);
+    }
+
+    if (media_router::kCastMediaRouteProvider.default_state ==
+        base::FEATURE_DISABLED_BY_DEFAULT) {
+      // Enable discovery of Cast devices.
+      enable_features.push_back(media_router::kCastMediaRouteProvider.name);
+    }
+
+    if (!enable_features.empty()) {
+      DCHECK(!base::FeatureList::GetInstance());
+      std::string enable_features_str =
+          command_line->GetSwitchValueASCII(switches::kEnableFeatures);
+      for (auto feature_str : enable_features) {
+        if (!enable_features_str.empty())
+          enable_features_str += ",";
+        enable_features_str += feature_str;
+      }
+      command_line->AppendSwitchASCII(switches::kEnableFeatures,
+                                      enable_features_str);
+    }
   }
 
   if (content_client_.application().get()) {
@@ -467,7 +676,7 @@ bool CefMainDelegate::BasicStartupComplete(int* exit_code) {
         new CefCommandLineImpl(command_line, false, false));
     content_client_.application()->OnBeforeCommandLineProcessing(
         CefString(process_type), commandLinePtr.get());
-    commandLinePtr->Detach(NULL);
+    commandLinePtr->Detach(nullptr);
   }
 
   // Initialize logging.
@@ -476,7 +685,7 @@ bool CefMainDelegate::BasicStartupComplete(int* exit_code) {
   const base::FilePath& log_file =
       command_line->GetSwitchValuePath(switches::kLogFile);
   DCHECK(!log_file.empty());
-  log_settings.log_file = log_file.value().c_str();
+  log_settings.log_file_path = log_file.value().c_str();
 
   log_settings.lock_log = logging::DONT_LOCK_LOG_FILE;
   log_settings.delete_old = logging::APPEND_TO_OLD_LOG_FILE;
@@ -496,6 +705,9 @@ bool CefMainDelegate::BasicStartupComplete(int* exit_code) {
                                           switches::kLogSeverity_Error)) {
       log_severity = logging::LOG_ERROR;
     } else if (base::LowerCaseEqualsASCII(log_severity_str,
+                                          switches::kLogSeverity_Fatal)) {
+      log_severity = logging::LOG_FATAL;
+    } else if (base::LowerCaseEqualsASCII(log_severity_str,
                                           switches::kLogSeverity_Disable)) {
       log_severity = LOGSEVERITY_DISABLE;
     }
@@ -503,6 +715,10 @@ bool CefMainDelegate::BasicStartupComplete(int* exit_code) {
 
   if (log_severity == LOGSEVERITY_DISABLE) {
     log_settings.logging_dest = logging::LOG_NONE;
+    // By default, ERROR and FATAL messages will always be output to stderr due
+    // to the kAlwaysPrintErrorLevel value in base/logging.cc. We change the log
+    // level here so that only FATAL messages are output.
+    logging::SetMinLogLevel(logging::LOG_FATAL);
   } else {
     log_settings.logging_dest = logging::LOG_TO_ALL;
     logging::SetMinLogLevel(log_severity);
@@ -517,6 +733,8 @@ bool CefMainDelegate::BasicStartupComplete(int* exit_code) {
 
 #if defined(OS_MACOSX)
   OverrideFrameworkBundlePath();
+  OverrideOuterBundlePath();
+  OverrideBaseBundleID();
 #endif
 
   return false;
@@ -535,6 +753,17 @@ void CefMainDelegate::PreSandboxStartup() {
 #endif
 
     OverridePepperFlashSystemPluginPath();
+
+    base::FilePath dir_default_download;
+    base::FilePath dir_default_download_safe;
+    if (GetDefaultDownloadDirectory(&dir_default_download)) {
+      base::PathService::Override(chrome::DIR_DEFAULT_DOWNLOADS,
+                                  dir_default_download);
+    }
+    if (GetDefaultDownloadSafeDirectory(&dir_default_download_safe)) {
+      base::PathService::Override(chrome::DIR_DEFAULT_DOWNLOADS_SAFE,
+                                  dir_default_download_safe);
+    }
 
     const base::FilePath& user_data_path = GetUserDataPath();
     base::PathService::Override(chrome::DIR_USER_DATA, user_data_path);
@@ -558,7 +787,7 @@ void CefMainDelegate::PreSandboxStartup() {
   crash_reporting::PreSandboxStartup(*command_line, process_type);
 
   InitializeResourceBundle();
-  InitializePDF();
+  MaybeInitializeGDI();
 }
 
 void CefMainDelegate::SandboxInitialized(const std::string& process_type) {
@@ -574,7 +803,7 @@ int CefMainDelegate::RunProcess(
     const CefSettings& settings = CefContext::Get()->settings();
     if (!settings.multi_threaded_message_loop) {
       // Use our own browser process runner.
-      browser_runner_.reset(content::BrowserMainRunner::Create());
+      browser_runner_ = content::BrowserMainRunner::Create();
 
       // Initialize browser process state. Results in a call to
       // CefBrowserMain::PreMainMessageLoopStart() which creates the UI message
@@ -583,23 +812,26 @@ int CefMainDelegate::RunProcess(
       if (exit_code >= 0)
         return exit_code;
     } else {
-      // Run the UI on a separate thread.
-      std::unique_ptr<base::Thread> thread;
-      thread.reset(new CefUIThread(main_function_params));
-      base::Thread::Options options;
-      options.message_loop_type = base::MessageLoop::TYPE_UI;
-      if (!thread->StartWithOptions(options)) {
-        NOTREACHED() << "failed to start UI thread";
-        return 1;
-      }
-      thread->WaitUntilThreadStarted();
-      ui_thread_.swap(thread);
+      // Running on the separate UI thread.
+      DCHECK(ui_thread_);
+      ui_thread_->InitializeBrowserRunner(main_function_params);
     }
 
     return 0;
   }
 
   return -1;
+}
+
+bool CefMainDelegate::CreateUIThread(base::OnceClosure setup_callback) {
+  DCHECK(!ui_thread_);
+
+  ui_thread_.reset(new CefUIThread(std::move(setup_callback)));
+  ui_thread_->Start();
+  ui_thread_->WaitUntilThreadStarted();
+
+  InitMessagePumpFactoryForUI();
+  return true;
 }
 
 void CefMainDelegate::ProcessExiting(const std::string& process_type) {
@@ -627,15 +859,16 @@ content::ContentRendererClient* CefMainDelegate::CreateContentRendererClient() {
 }
 
 content::ContentUtilityClient* CefMainDelegate::CreateContentUtilityClient() {
-  utility_client_.reset(new CefContentUtilityClient);
+  utility_client_.reset(new ChromeContentUtilityClient);
   return utility_client_.get();
 }
 
 void CefMainDelegate::ShutdownBrowser() {
   if (browser_runner_.get()) {
     browser_runner_->Shutdown();
-    browser_runner_.reset(NULL);
+    browser_runner_.reset(nullptr);
   }
+
   if (ui_thread_.get()) {
     // Blocks until the thread has stopped.
     ui_thread_->Stop();
@@ -686,7 +919,8 @@ void CefMainDelegate::InitializeResourceBundle() {
 
   const std::string loaded_locale =
       ui::ResourceBundle::InitSharedInstanceWithLocale(
-          locale, &content_client_, ui::ResourceBundle::LOAD_COMMON_RESOURCES);
+          locale, content_client_.GetCefResourceBundleDelegate(),
+          ui::ResourceBundle::LOAD_COMMON_RESOURCES);
   if (!loaded_locale.empty() && g_browser_process)
     g_browser_process->SetApplicationLocale(loaded_locale);
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,16 +9,19 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=cf99897b4d952622c81f0cf24a72491e5bce6698$
+// $hash=7cb7bbf83d9ae4cd85a4493036150f4c47c8b879$
 //
 
 #include "libcef_dll/cpptoc/process_message_cpptoc.h"
 #include "libcef_dll/cpptoc/list_value_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // GLOBAL FUNCTIONS - Body may be edited by hand.
 
 CEF_EXPORT cef_process_message_t* cef_process_message_create(
     const cef_string_t* name) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Verify param: name; type: string_byref_const
@@ -39,6 +42,8 @@ namespace {
 // MEMBER FUNCTIONS - Body may be edited by hand.
 
 int CEF_CALLBACK process_message_is_valid(struct _cef_process_message_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -54,6 +59,8 @@ int CEF_CALLBACK process_message_is_valid(struct _cef_process_message_t* self) {
 
 int CEF_CALLBACK
 process_message_is_read_only(struct _cef_process_message_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -69,6 +76,8 @@ process_message_is_read_only(struct _cef_process_message_t* self) {
 
 struct _cef_process_message_t* CEF_CALLBACK
 process_message_copy(struct _cef_process_message_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -85,6 +94,8 @@ process_message_copy(struct _cef_process_message_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 process_message_get_name(struct _cef_process_message_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -100,6 +111,8 @@ process_message_get_name(struct _cef_process_message_t* self) {
 
 struct _cef_list_value_t* CEF_CALLBACK
 process_message_get_argument_list(struct _cef_process_message_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -126,6 +139,12 @@ CefProcessMessageCppToC::CefProcessMessageCppToC() {
   GetStruct()->get_argument_list = process_message_get_argument_list;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefProcessMessageCppToC::~CefProcessMessageCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefProcessMessage> CefCppToCRefCounted<
     CefProcessMessageCppToC,
@@ -133,16 +152,8 @@ CefRefPtr<CefProcessMessage> CefCppToCRefCounted<
     cef_process_message_t>::UnwrapDerived(CefWrapperType type,
                                           cef_process_message_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefProcessMessageCppToC,
-                                         CefProcessMessage,
-                                         cef_process_message_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefProcessMessageCppToC,

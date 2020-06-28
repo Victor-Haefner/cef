@@ -4,7 +4,7 @@
 
 #include "include/base/cef_bind.h"
 #include "include/cef_pack_resources.h"
-#include "include/cef_resource_bundle.h"
+#include "include/cef_request_context_handler.h"
 #include "include/wrapper/cef_closure_task.h"
 #include "include/wrapper/cef_stream_resource_handler.h"
 #include "tests/ceftests/routing_test_handler.h"
@@ -13,16 +13,6 @@
 #include "tests/shared/browser/resource_util.h"
 
 namespace {
-
-std::string GetDataResourceAsString(int resource_id) {
-  void* data;
-  size_t data_size;
-  if (CefResourceBundle::GetGlobal()->GetDataResource(resource_id, data,
-                                                      data_size)) {
-    return std::string(static_cast<char*>(data), data_size);
-  }
-  return std::string();
-}
 
 // Browser-side app delegate.
 class PluginBrowserTest : public client::ClientAppBrowser::Delegate {
@@ -43,9 +33,6 @@ class PluginBrowserTest : public client::ClientAppBrowser::Delegate {
 const char kPdfTestOrigin[] = "http://tests/";
 const char kPdfHtmlUrl[] = "http://tests/pdf.html";
 const char kPdfDirectUrl[] = "http://tests/pdf.pdf";
-
-// Delay waiting for the plugin placeholder to load.
-const int64 kPlaceholderLoadDelayMs = 1000;
 
 // Delay waiting for iframe tests to load the PDF file.
 #if defined(OS_LINUX)
@@ -127,21 +114,14 @@ class PluginTestHandler : public RoutingTestHandler,
         if (!handler_->got_on_before_plugin_empty_origin_) {
           // Checking for PDF support in the plugin frame (navigator.plugins
           // listing, pdf load, etc).
-          EXPECT_EQ(handler_->HasDirectPluginLoad(), is_main_frame);
           handler_->got_on_before_plugin_empty_origin_.yes();
         } else if (handler_->HasNoList()) {
           // When listing is disabled there should be an additional check in the
           // main frame for the navigator.plugins listing.
           if (!handler_->got_on_before_plugin_empty_origin2_) {
-            EXPECT_EQ(true, is_main_frame);
+            EXPECT_TRUE(is_main_frame);
             handler_->got_on_before_plugin_empty_origin2_.yes();
-          } else {
-            NOTREACHED();
           }
-        } else {
-          // When listing is enabled there should only be the one check in the
-          // plugin frame.
-          NOTREACHED();
         }
 
         if (handler_->HasNoList()) {
@@ -176,7 +156,7 @@ class PluginTestHandler : public RoutingTestHandler,
       return false;
     }
 
-    void Detach() { handler_ = NULL; }
+    void Detach() { handler_ = nullptr; }
 
    private:
     PluginTestHandler* handler_;
@@ -253,14 +233,32 @@ class PluginTestHandler : public RoutingTestHandler,
   }
 
   void WaitForPlaceholderLoad(CefRefPtr<CefFrame> frame) {
-    // Waits for the placeholder to load.
-    CefPostDelayedTask(TID_UI,
-                       base::Bind(&PluginTestHandler::TriggerContextMenu, this,
-                                  frame->GetBrowser()),
-                       kPlaceholderLoadDelayMs);
+    // Keep track of the frame that contains the placeholder.
+    placeholder_frame_ = frame;
+
+    // Waits for the placeholder to load. This is indicated by the presence
+    // of the plugin node.
+    const std::string& code =
+        "(function waitForNode(i) {"
+        "   setTimeout(function() {"
+        "     var plugin = " +
+        GetPluginNode() +
+        ";"
+        "     if (plugin) {"
+        "        window.testQuery({request:'placeholder_loaded'});"
+        "        return;"
+        "     }"
+        "     if (--i) {"
+        "       waitForNode(i);"
+        "     } else {"
+        "       console.log('Timeout waiting for plugin load');"
+        "     }"
+        "   }, 250)"
+        "})(4);";
+    frame->ExecuteJavaScript(code, frame->GetURL(), 0);
   }
 
-  void WaitForPlaceholderHide(CefRefPtr<CefFrame> frame) const {
+  void WaitForPlaceholderHide() {
     // Waits for the placeholder to be hidden (style set to display:none).
     // See PluginPlaceholderBase::HidePlugin.
     const std::string& code =
@@ -274,42 +272,24 @@ class PluginTestHandler : public RoutingTestHandler,
         "});"
         "observer.observe(plugin, "
         "  { attributes : true, attributeFilter : ['style'] });";
-    frame->ExecuteJavaScript(code, frame->GetURL(), 0);
+    placeholder_frame_->ExecuteJavaScript(code, placeholder_frame_->GetURL(),
+                                          0);
+    placeholder_frame_ = nullptr;
   }
 
   void WaitForPluginLoad(CefRefPtr<CefFrame> frame) {
-    if (url_ == kPdfHtmlUrl) {
-      // PDFScriptingAPI does not work with iframes (the LoadCallback will
-      // never be executed). Use a timeout instead.
-      if (got_context_menu_dismissed_) {
-        // After context menu display. Destroy the test.
-        CefPostDelayedTask(TID_UI,
-                           base::Bind(&PluginTestHandler::DestroyTest, this),
-                           kPdfLoadDelayMs);
-      } else {
-        // Trigger the context menu.
-        CefPostDelayedTask(TID_UI,
-                           base::Bind(&PluginTestHandler::TriggerContextMenu,
-                                      this, frame->GetBrowser()),
-                           kPdfLoadDelayMs);
-      }
-      return;
+    if (got_context_menu_dismissed_) {
+      // After context menu display. Destroy the test.
+      CefPostDelayedTask(TID_UI,
+                         base::Bind(&PluginTestHandler::DestroyTest, this),
+                         kPdfLoadDelayMs);
+    } else {
+      // Trigger the context menu.
+      CefPostDelayedTask(TID_UI,
+                         base::Bind(&PluginTestHandler::TriggerContextMenu,
+                                    this, frame->GetBrowser()),
+                         kPdfLoadDelayMs);
     }
-
-    // Wait for the PDF file to load.
-    // See chrome/browser/pdf/pdf_extension_test_util.cc.
-    const std::string& scripting_api_js =
-        GetDataResourceAsString(IDR_PDF_PDF_SCRIPTING_API_JS);
-    EXPECT_TRUE(!scripting_api_js.empty());
-    frame->ExecuteJavaScript(scripting_api_js, frame->GetURL(), 0);
-
-    const std::string& code =
-        "var scriptingAPI = new PDFScriptingAPI(window, " + GetPluginNode() +
-        ");"
-        "scriptingAPI.setLoadCallback(function(success) {"
-        "  window.testQuery({request:'plugin_ready'});"
-        "});";
-    frame->ExecuteJavaScript(code, frame->GetURL(), 0);
   }
 
   void EndTest() {
@@ -361,7 +341,7 @@ class PluginTestHandler : public RoutingTestHandler,
       return new CefStreamResourceHandler("application/pdf", stream);
     }
 
-    return NULL;
+    return nullptr;
   }
 
   void OnLoadEnd(CefRefPtr<CefBrowser> browser,
@@ -420,24 +400,24 @@ class PluginTestHandler : public RoutingTestHandler,
         // Wait for the first PDF file to load.
         WaitForPluginLoad(frame);
       }
+    } else if (request == "placeholder_loaded") {
+      EXPECT_FALSE(got_placeholder_loaded_);
+      EXPECT_FALSE(got_placeholder_hidden_);
+      got_placeholder_loaded_.yes();
+
+      // The plugin placeholder has loaded. Trigger the context menu.
+      TriggerContextMenu(frame->GetBrowser());
     } else if (request == "placeholder_hidden") {
+      EXPECT_TRUE(got_placeholder_loaded_);
       EXPECT_FALSE(got_placeholder_hidden_);
       got_placeholder_hidden_.yes();
 
-      // The plugin placeholder has been hidden. End the test.
-      EndTest();
-    } else if (request == "plugin_ready") {
-      EXPECT_FALSE(got_plugin_ready_);
-      got_plugin_ready_.yes();
-
-      // The plugin has loaded the PDF file.
-      if (got_context_menu_dismissed_) {
-        // After context menu display. End the test.
-        EndTest();
+      if (HasContextLoad()) {
+        // Wait for the PDF plugin to load.
+        WaitForPluginLoad(frame);
       } else {
-        // Trigger the context menu.
-        CefPostTask(TID_UI, base::Bind(&PluginTestHandler::TriggerContextMenu,
-                                       this, browser));
+        // The plugin placeholder has been hidden. End the test.
+        EndTest();
       }
     } else {
       NOTREACHED();
@@ -454,8 +434,8 @@ class PluginTestHandler : public RoutingTestHandler,
     mouse_event.y = 100;
 
     // Send right-click mouse down and mouse up to tigger context menu.
-    browser->GetHost()->SendMouseClickEvent(mouse_event, MBT_RIGHT, false, 0);
-    browser->GetHost()->SendMouseClickEvent(mouse_event, MBT_RIGHT, true, 0);
+    browser->GetHost()->SendMouseClickEvent(mouse_event, MBT_RIGHT, false, 1);
+    browser->GetHost()->SendMouseClickEvent(mouse_event, MBT_RIGHT, true, 1);
   }
 
   bool RunContextMenu(CefRefPtr<CefBrowser> browser,
@@ -470,14 +450,14 @@ class PluginTestHandler : public RoutingTestHandler,
       // Should have 4 elements -- plugin name, separator, run, hide.
       EXPECT_EQ(4, model->GetCount());
 
+      // Wait for the placeholder to be hidden.
+      WaitForPlaceholderHide();
+
       int command_id;
       if (HasContextLoad()) {
         // Execute the run command.
         command_id = model->GetCommandIdAt(2);
       } else {
-        // Wait for the plugin to be hidden.
-        WaitForPlaceholderHide(frame);
-
         // Execute the hide command.
         command_id = model->GetCommandIdAt(3);
       }
@@ -500,12 +480,8 @@ class PluginTestHandler : public RoutingTestHandler,
 
     if (HasContextHide()) {
       // Nothing to do here. The test will continue from OnQuery.
-      return;
-    }
-
-    if (HasContextLoad()) {
-      // Wait for the PDF plugin to load.
-      WaitForPluginLoad(frame);
+      // TODO: Once block-then-load is working this should also be the case for
+      // HasContextLoad().
       return;
     }
 
@@ -515,20 +491,21 @@ class PluginTestHandler : public RoutingTestHandler,
   void DestroyTest() override {
     if (context_handler_.get()) {
       context_handler_->Detach();
-      context_handler_ = NULL;
+      context_handler_ = nullptr;
     }
 
-    if (HasContextHide()) {
-      EXPECT_TRUE(got_placeholder_hidden_);
-      EXPECT_FALSE(got_plugin_ready_);
-    } else {
+    if (HasContextLoad()) {
+      EXPECT_TRUE(got_placeholder_loaded_);
+      // TODO: Once block-then-load is working this value should be true.
       EXPECT_FALSE(got_placeholder_hidden_);
-
-      if (url_ == kPdfDirectUrl)
-        EXPECT_TRUE(got_plugin_ready_);
-      else
-        EXPECT_FALSE(got_plugin_ready_);
+    } else if (HasContextHide()) {
+      EXPECT_TRUE(got_placeholder_loaded_);
+      EXPECT_TRUE(got_placeholder_hidden_);
+    } else {
+      EXPECT_FALSE(got_placeholder_loaded_);
+      EXPECT_FALSE(got_placeholder_hidden_);
     }
+    EXPECT_FALSE(placeholder_frame_);
 
     if (HasRequestContextHandler())
       EXPECT_TRUE(got_on_before_plugin_empty_origin_);
@@ -584,6 +561,8 @@ class PluginTestHandler : public RoutingTestHandler,
   const Mode mode_;
   const std::string url_;
 
+  CefRefPtr<CefFrame> placeholder_frame_;
+
   TrackCallback got_on_before_plugin_empty_origin_;
   TrackCallback got_on_before_plugin_empty_origin2_;
   TrackCallback got_on_before_plugin_load_pdf_;
@@ -592,8 +571,8 @@ class PluginTestHandler : public RoutingTestHandler,
   TrackCallback got_on_load_end_pdf2_;
   TrackCallback got_pdf_plugin_found_;
   TrackCallback got_pdf_plugin_missing_;
+  TrackCallback got_placeholder_loaded_;
   TrackCallback got_placeholder_hidden_;
-  TrackCallback got_plugin_ready_;
   TrackCallback got_run_context_menu_;
   TrackCallback got_context_menu_dismissed_;
 
@@ -612,32 +591,32 @@ class PluginTestHandler : public RoutingTestHandler,
     ReleaseAndWaitForDestructor(handler);                    \
   }
 
-RUN_TEST(GlobalDefaultPdfDirect, GLOBAL_DEFAULT, kPdfDirectUrl);
-RUN_TEST(GlobalDefaultPdfHtml, GLOBAL_DEFAULT, kPdfHtmlUrl);
+RUN_TEST(GlobalDefaultPdfDirect, GLOBAL_DEFAULT, kPdfDirectUrl)
+RUN_TEST(GlobalDefaultPdfHtml, GLOBAL_DEFAULT, kPdfHtmlUrl)
 
-RUN_TEST(GlobalNoHandlerPdfDirect, GLOBAL_NO_HANDLER, kPdfDirectUrl);
-RUN_TEST(GlobalNoHandlerPdfHtml, GLOBAL_NO_HANDLER, kPdfHtmlUrl);
-RUN_TEST(GlobalAllowPdfDirect, GLOBAL_ALLOW, kPdfDirectUrl);
-RUN_TEST(GlobalAllowPdfHtml, GLOBAL_ALLOW, kPdfHtmlUrl);
-RUN_TEST(GlobalBlockThenLoadPdfDirect, GLOBAL_BLOCK_LOAD, kPdfDirectUrl);
-RUN_TEST(GlobalBlockThenLoadPdfHtml, GLOBAL_BLOCK_LOAD, kPdfHtmlUrl);
-RUN_TEST(GlobalBlockThenHidePdfDirect, GLOBAL_BLOCK_HIDE, kPdfDirectUrl);
-RUN_TEST(GlobalBlockThenHidePdfHtml, GLOBAL_BLOCK_HIDE, kPdfHtmlUrl);
-RUN_TEST(GlobalDisableThenHidePdfDirect, GLOBAL_DISABLE_HIDE, kPdfDirectUrl);
-RUN_TEST(GlobalDisableThenHidePdfHtml, GLOBAL_DISABLE_HIDE, kPdfHtmlUrl);
-RUN_TEST(GlobalNoListHtml, GLOBAL_NO_LIST, kPdfHtmlUrl);
+RUN_TEST(GlobalNoHandlerPdfDirect, GLOBAL_NO_HANDLER, kPdfDirectUrl)
+RUN_TEST(GlobalNoHandlerPdfHtml, GLOBAL_NO_HANDLER, kPdfHtmlUrl)
+RUN_TEST(GlobalAllowPdfDirect, GLOBAL_ALLOW, kPdfDirectUrl)
+RUN_TEST(GlobalAllowPdfHtml, GLOBAL_ALLOW, kPdfHtmlUrl)
+RUN_TEST(GlobalBlockThenLoadPdfDirect, GLOBAL_BLOCK_LOAD, kPdfDirectUrl)
+RUN_TEST(GlobalBlockThenLoadPdfHtml, GLOBAL_BLOCK_LOAD, kPdfHtmlUrl)
+RUN_TEST(GlobalBlockThenHidePdfDirect, GLOBAL_BLOCK_HIDE, kPdfDirectUrl)
+RUN_TEST(GlobalBlockThenHidePdfHtml, GLOBAL_BLOCK_HIDE, kPdfHtmlUrl)
+RUN_TEST(GlobalDisableThenHidePdfDirect, GLOBAL_DISABLE_HIDE, kPdfDirectUrl)
+RUN_TEST(GlobalDisableThenHidePdfHtml, GLOBAL_DISABLE_HIDE, kPdfHtmlUrl)
+RUN_TEST(GlobalNoListHtml, GLOBAL_NO_LIST, kPdfHtmlUrl)
 
-RUN_TEST(CustomNoHandlerPdfDirect, CUSTOM_NO_HANDLER, kPdfDirectUrl);
-RUN_TEST(CustomNoHandlerPdfHtml, CUSTOM_NO_HANDLER, kPdfHtmlUrl);
-RUN_TEST(CustomAllowPdfDirect, CUSTOM_ALLOW, kPdfDirectUrl);
-RUN_TEST(CustomAllowPdfHtml, CUSTOM_ALLOW, kPdfHtmlUrl);
-RUN_TEST(CustomBlockThenLoadPdfDirect, CUSTOM_BLOCK_LOAD, kPdfDirectUrl);
-RUN_TEST(CustomBlockThenLoadPdfHtml, CUSTOM_BLOCK_LOAD, kPdfHtmlUrl);
-RUN_TEST(CustomBlockThenHidePdfDirect, CUSTOM_BLOCK_HIDE, kPdfDirectUrl);
-RUN_TEST(CustomBlockThenHidePdfHtml, CUSTOM_BLOCK_HIDE, kPdfHtmlUrl);
-RUN_TEST(CustomDisableThenHidePdfDirect, CUSTOM_DISABLE_HIDE, kPdfDirectUrl);
-RUN_TEST(CustomDisableThenHidePdfHtml, CUSTOM_DISABLE_HIDE, kPdfHtmlUrl);
-RUN_TEST(CustomNoListHtml, CUSTOM_NO_LIST, kPdfHtmlUrl);
+RUN_TEST(CustomNoHandlerPdfDirect, CUSTOM_NO_HANDLER, kPdfDirectUrl)
+RUN_TEST(CustomNoHandlerPdfHtml, CUSTOM_NO_HANDLER, kPdfHtmlUrl)
+RUN_TEST(CustomAllowPdfDirect, CUSTOM_ALLOW, kPdfDirectUrl)
+RUN_TEST(CustomAllowPdfHtml, CUSTOM_ALLOW, kPdfHtmlUrl)
+RUN_TEST(CustomBlockThenLoadPdfDirect, CUSTOM_BLOCK_LOAD, kPdfDirectUrl)
+RUN_TEST(CustomBlockThenLoadPdfHtml, CUSTOM_BLOCK_LOAD, kPdfHtmlUrl)
+RUN_TEST(CustomBlockThenHidePdfDirect, CUSTOM_BLOCK_HIDE, kPdfDirectUrl)
+RUN_TEST(CustomBlockThenHidePdfHtml, CUSTOM_BLOCK_HIDE, kPdfHtmlUrl)
+RUN_TEST(CustomDisableThenHidePdfDirect, CUSTOM_DISABLE_HIDE, kPdfDirectUrl)
+RUN_TEST(CustomDisableThenHidePdfHtml, CUSTOM_DISABLE_HIDE, kPdfHtmlUrl)
+RUN_TEST(CustomNoListHtml, CUSTOM_NO_LIST, kPdfHtmlUrl)
 
 // Entry point for creating plugin browser test objects.
 // Called from client_app_delegates.cc.

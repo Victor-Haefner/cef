@@ -40,12 +40,15 @@ class CefPrefStore : public PersistentPrefStore {
   void SetValueSilently(const std::string& key,
                         std::unique_ptr<base::Value> value,
                         uint32_t flags) override;
+  void RemoveValuesByPrefixSilently(const std::string& prefix) override;
   void RemoveValue(const std::string& key, uint32_t flags) override;
   bool ReadOnly() const override;
   PrefReadError GetReadError() const override;
   PersistentPrefStore::PrefReadError ReadPrefs() override;
   void ReadPrefsAsync(ReadErrorDelegate* error_delegate) override;
-  virtual void CommitPendingWrite(base::OnceClosure done_callback) override;
+  virtual void CommitPendingWrite(
+      base::OnceClosure done_callback,
+      base::OnceClosure synchronous_done_callback) override;
   void SchedulePendingLossyWrites() override;
   void ClearMutableValues() override;
   void OnStoreDeletionFromDisk() override;
@@ -109,7 +112,7 @@ class CefPrefStore : public PersistentPrefStore {
   bool committed_;
 
   std::unique_ptr<ReadErrorDelegate> error_delegate_;
-  base::ObserverList<PrefStore::Observer, true> observers_;
+  base::ObserverList<PrefStore::Observer, true>::Unchecked observers_;
 
   DISALLOW_COPY_AND_ASSIGN(CefPrefStore);
 };

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,11 +9,12 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=9b9a7d5716cc862fde477fada209350ae6ce01b5$
+// $hash=853cd02f42c843f486d936058a0f012d6099834c$
 //
 
 #include "libcef_dll/ctocpp/keyboard_handler_ctocpp.h"
 #include "libcef_dll/cpptoc/browser_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
@@ -22,6 +23,8 @@ bool CefKeyboardHandlerCToCpp::OnPreKeyEvent(CefRefPtr<CefBrowser> browser,
                                              const CefKeyEvent& event,
                                              CefEventHandle os_event,
                                              bool* is_keyboard_shortcut) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_keyboard_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_pre_key_event))
     return false;
@@ -58,6 +61,8 @@ NO_SANITIZE("cfi-icall")
 bool CefKeyboardHandlerCToCpp::OnKeyEvent(CefRefPtr<CefBrowser> browser,
                                           const CefKeyEvent& event,
                                           CefEventHandle os_event) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_keyboard_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_key_event))
     return false;
@@ -81,6 +86,12 @@ bool CefKeyboardHandlerCToCpp::OnKeyEvent(CefRefPtr<CefBrowser> browser,
 
 CefKeyboardHandlerCToCpp::CefKeyboardHandlerCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefKeyboardHandlerCToCpp::~CefKeyboardHandlerCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_keyboard_handler_t* CefCToCppRefCounted<
     CefKeyboardHandlerCToCpp,
@@ -88,16 +99,8 @@ cef_keyboard_handler_t* CefCToCppRefCounted<
     cef_keyboard_handler_t>::UnwrapDerived(CefWrapperType type,
                                            CefKeyboardHandler* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefKeyboardHandlerCToCpp,
-                                         CefKeyboardHandler,
-                                         cef_keyboard_handler_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefKeyboardHandlerCToCpp,

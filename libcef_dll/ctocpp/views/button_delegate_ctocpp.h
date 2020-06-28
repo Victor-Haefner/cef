@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=9ddb5dd6308fe7f88d8da188c09778107ed74a82$
+// $hash=6e52653a50e0930437a93fa1f9ac01b8c3b39c02$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_VIEWS_BUTTON_DELEGATE_CTOCPP_H_
@@ -34,6 +34,7 @@ class CefButtonDelegateCToCpp
                                  cef_button_delegate_t> {
  public:
   CefButtonDelegateCToCpp();
+  virtual ~CefButtonDelegateCToCpp();
 
   // CefButtonDelegate methods.
   void OnButtonPressed(CefRefPtr<CefButton> button) override;

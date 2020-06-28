@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=56b9128ff5ebac0aa07bf74e06783e4500fe3546$
+// $hash=c0d4e71c707c9d63a00ca1a497aaede3e429e970$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_RESOURCE_BUNDLE_CTOCPP_H_
@@ -32,6 +32,7 @@ class CefResourceBundleCToCpp
                                  cef_resource_bundle_t> {
  public:
   CefResourceBundleCToCpp();
+  virtual ~CefResourceBundleCToCpp();
 
   // CefResourceBundle methods.
   CefString GetLocalizedString(int string_id) OVERRIDE;

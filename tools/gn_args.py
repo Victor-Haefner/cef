@@ -60,6 +60,8 @@
 #     - Perform validation in ValidateArgs().
 #     - Result: An AssertionError will be thrown if validation fails.
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import shlex
 import sys
@@ -77,12 +79,12 @@ elif sys.platform == 'darwin':
 elif sys.platform.startswith('linux'):
   platform = 'linux'
 else:
-  print 'Unknown operating system platform'
+  print('Unknown operating system platform')
   sys.exit()
 
 
 def msg(msg):
-  print 'NOTE: ' + msg
+  print('NOTE: ' + msg)
 
 
 def NameValueListToDict(name_value_list):
@@ -105,7 +107,7 @@ def NameValueListToDict(name_value_list):
         try:
           token_value = int(token_value)
         except ValueError:
-          sys.exc_clear()
+          pass
       # Set the variable to the supplied value.
       result[tokens[0]] = token_value
     else:
@@ -139,13 +141,15 @@ def GetValueString(val):
   """
   Return the string representation of |val| expected by GN.
   """
-  if isinstance(val, basestring):
-    return '"%s"' % val
-  elif isinstance(val, bool):
+  if isinstance(val, bool):
     if val:
       return 'true'
     else:
       return 'false'
+  elif isinstance(val, int):
+    return val
+  else:
+    return '"%s"' % val
   return val
 
 
@@ -202,17 +206,18 @@ def GetRecommendedDefaultArgs():
       # in faster local builds but False is required to create a CEF binary
       # distribution.
       'is_component_build': False,
+
+      # Don't enforce component builds in debug mode.
+      'forbid_non_component_debug_builds': False,
+
+      # Specify the current PGO phase. Default is 0 (turned off) for normal
+      # builds and 2 (used during the optimization phase) for official Windows
+      # and macOS builds. Currently turned off for CEF because it requires
+      # additional setup and is not yet tested. See issue #2956.
+      'chrome_pgo_phase': 0,
   }
 
   if platform == 'linux':
-    # Use GTK3 instead of GTK2. Default is true. False is recommended because
-    # the cefclient sample application requires GTK2. This avoids the "GTK+ 2.x
-    # symbols detected. Using GTK+ 2.x and GTK+ 3 in the same process is not
-    # supported" error when running cefclient. Using a value of true is fine if
-    # your application requires GTK3 and you're not planning to build the
-    # cefclient target (see issue #2014).
-    result['use_gtk3'] = False
-
     # Use a sysroot environment. Default is true. False is recommended for local
     # builds.
     # Run the following commands to download the sysroot environment:
@@ -244,8 +249,9 @@ def GetRequiredArgs():
   result = {
       # Set ENABLE_PRINTING=1 ENABLE_BASIC_PRINTING=1.
       'enable_basic_printing': True,
-      'enable_print_preview': False,
-
+      # ENABLE_SERVICE_DISCOVERY=0 for print preview support
+      'enable_print_preview': True,
+      'optimize_webui': True,
       # Enable support for Widevine CDM.
       'enable_widevine': True,
 
@@ -260,13 +266,8 @@ def GetRequiredArgs():
     # can't be enforced by assert().
     result['enable_linux_installer'] = False
 
-    # Use system fontconfig. This avoids a startup hang on Ubuntu 16.04.4 (see
-    # issue #2424).
-    result['use_bundled_fontconfig'] = False
-
-    # Disable vulkan to avoid linker errors.
-    # See https://bugs.chromium.org/p/chromium/issues/detail?id=848100#c4
-    result['enable_vulkan'] = False
+    # Build without GTK dependencies (see issue #2014).
+    result['use_gtk'] = False
 
   if platform == 'macosx':
     # Always generate dSYM files. The make_distrib script will fail if
@@ -320,16 +321,20 @@ def ValidateArgs(args):
   if platform == 'macosx':
     assert target_cpu == 'x64', 'target_cpu must be "x64"'
   elif platform == 'windows':
-    assert target_cpu in ('x86', 'x64'), 'target_cpu must be "x86" or "x64"'
+    assert target_cpu in (
+        'x86', 'x64', 'arm64'), 'target_cpu must be "x86", "x64" or "arm64"'
   elif platform == 'linux':
-    assert target_cpu in ('x86', 'x64',
-                          'arm'), 'target_cpu must be "x86", "x64" or "arm"'
+    assert target_cpu in (
+        'x86', 'x64', 'arm',
+        'arm64'), 'target_cpu must be "x86", "x64", "arm" or "arm64"'
 
   if platform == 'linux':
     if target_cpu == 'x86':
       assert use_sysroot, 'target_cpu="x86" requires use_sysroot=true'
     elif target_cpu == 'arm':
       assert use_sysroot, 'target_cpu="arm" requires use_sysroot=true'
+    elif target_cpu == 'arm64':
+      assert use_sysroot, 'target_cpu="arm64" requires use_sysroot=true'
 
   # ASAN requires Release builds.
   if is_asan:
@@ -426,7 +431,7 @@ def GetConfigArgs(args, is_debug, cpu):
       'target_cpu': cpu,
   })
 
-  if platform == 'linux' and cpu != 'arm':
+  if platform == 'linux' and not cpu.startswith('arm'):
     # Remove any arm-related values from non-arm configs.
     for key in result.keys():
       if key.startswith('arm_'):
@@ -436,18 +441,29 @@ def GetConfigArgs(args, is_debug, cpu):
   return result
 
 
-def WinGetConfigArgsSandbox(args, is_debug, cpu):
+def GetConfigArgsSandbox(platform, args, is_debug, cpu):
   """
-  Return merged GN args for the Windows cef_sandbox.lib configuration and
-  validate.
+  Return merged GN args for the cef_sandbox configuration and validate.
   """
   add_args = {
       # Avoid libucrt.lib linker errors.
       'use_allocator_shim': False,
 
       # Avoid /LTCG linker warnings and generate smaller lib files.
-      'is_official_build': False
+      'is_official_build': False,
+
+      # Enable base target customizations necessary for distribution of the
+      # cef_sandbox static library.
+      'is_cef_sandbox_build': True,
   }
+
+  if is_debug:
+    # Enable iterator debugging (_ITERATOR_DEBUG_LEVEL=2).
+    add_args['enable_iterator_debugging'] = True
+
+  if platform == 'windows':
+    # Avoid Debug build linker errors caused by custom libc++.
+    add_args['use_custom_libcxx'] = False
 
   result = MergeDicts(args, add_args, {
       'is_debug': is_debug,
@@ -472,6 +488,8 @@ def LinuxSysrootExists(cpu):
     sysroot_name = 'debian_sid_amd64-sysroot'
   elif cpu == 'arm':
     sysroot_name = 'debian_sid_arm-sysroot'
+  elif cpu == 'arm64':
+    sysroot_name = 'debian_sid_arm64-sysroot'
   else:
     raise Exception('Unrecognized sysroot CPU: %s' % cpu)
 
@@ -500,7 +518,7 @@ def GetAllPlatformConfigs(build_args):
     use_sysroot = GetArgValue(args, 'use_sysroot')
     if use_sysroot:
       # Only generate configurations for sysroots that have been installed.
-      for cpu in ('x86', 'x64', 'arm'):
+      for cpu in ('x86', 'x64', 'arm', 'arm64'):
         if LinuxSysrootExists(cpu):
           supported_cpus.append(cpu)
         else:
@@ -510,6 +528,8 @@ def GetAllPlatformConfigs(build_args):
       supported_cpus = ['x64']
   elif platform == 'windows':
     supported_cpus = ['x86', 'x64']
+    if os.environ.get('CEF_ENABLE_ARM64', '') == '1':
+      supported_cpus.append('arm64')
   elif platform == 'macosx':
     supported_cpus = ['x64']
   else:
@@ -520,13 +540,14 @@ def GetAllPlatformConfigs(build_args):
       result['Debug_GN_' + cpu] = GetConfigArgs(args, True, cpu)
     result['Release_GN_' + cpu] = GetConfigArgs(args, False, cpu)
 
-    if platform == 'windows' and GetArgValue(args, 'is_official_build'):
+    if platform in ('windows', 'macosx') and GetArgValue(
+        args, 'is_official_build'):
       # Build cef_sandbox.lib with a different configuration.
       if create_debug:
-        result['Debug_GN_' + cpu + '_sandbox'] = WinGetConfigArgsSandbox(
-            args, True, cpu)
-      result['Release_GN_' + cpu + '_sandbox'] = WinGetConfigArgsSandbox(
-          args, False, cpu)
+        result['Debug_GN_' + cpu + '_sandbox'] = GetConfigArgsSandbox(
+            platform, args, True, cpu)
+      result['Release_GN_' + cpu + '_sandbox'] = GetConfigArgsSandbox(
+          platform, args, False, cpu)
 
   return result
 
@@ -549,13 +570,13 @@ if __name__ == '__main__':
   if len(sys.argv) > 1:
     platform = sys.argv[1]
     if not platform in ('linux', 'macosx', 'windows'):
-      sys.stderr.write('Usage: %s <platform>' % sys.argv[0])
+      sys.stderr.write('Usage: %s <platform>\n' % sys.argv[0])
       sys.exit()
 
-  print 'Platform: %s' % platform
+  print('Platform: %s' % platform)
 
   # Dump the configuration based on platform and environment.
   configs = GetAllPlatformConfigs({})
   for dir, config in configs.items():
-    print '\n\nout/%s:\n' % dir
-    print GetConfigFileContents(config)
+    print('\n\nout/%s:\n' % dir)
+    print(GetConfigFileContents(config))

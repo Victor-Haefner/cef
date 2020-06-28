@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,10 +9,11 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=3980a914cf9a6be45acabff6e35c2849b51b27dd$
+// $hash=921314be850e42ffee64ca025993a732949bf123$
 //
 
 #include "libcef_dll/cpptoc/auth_callback_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -21,6 +22,8 @@ namespace {
 void CEF_CALLBACK auth_callback_cont(struct _cef_auth_callback_t* self,
                                      const cef_string_t* username,
                                      const cef_string_t* password) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -34,6 +37,8 @@ void CEF_CALLBACK auth_callback_cont(struct _cef_auth_callback_t* self,
 }
 
 void CEF_CALLBACK auth_callback_cancel(struct _cef_auth_callback_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -53,6 +58,12 @@ CefAuthCallbackCppToC::CefAuthCallbackCppToC() {
   GetStruct()->cancel = auth_callback_cancel;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefAuthCallbackCppToC::~CefAuthCallbackCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefAuthCallback> CefCppToCRefCounted<
     CefAuthCallbackCppToC,
@@ -60,16 +71,8 @@ CefRefPtr<CefAuthCallback> CefCppToCRefCounted<
     cef_auth_callback_t>::UnwrapDerived(CefWrapperType type,
                                         cef_auth_callback_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefAuthCallbackCppToC,
-                                         CefAuthCallback,
-                                         cef_auth_callback_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefAuthCallbackCppToC,

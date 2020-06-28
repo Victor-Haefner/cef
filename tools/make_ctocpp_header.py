@@ -2,6 +2,7 @@
 # reserved. Use of this source code is governed by a BSD-style license that
 # can be found in the LICENSE file.
 
+from __future__ import absolute_import
 from cef_parser import *
 
 
@@ -115,7 +116,8 @@ def make_ctocpp_header(header, clsname):
   result +=   'class '+clsname+'CToCpp\n'+ \
               '    : public ' + template_class + '<'+clsname+'CToCpp, '+clsname+', '+capiname+'> {\n'+ \
               ' public:\n'+ \
-              '  '+clsname+'CToCpp();\n\n'
+              '  '+clsname+'CToCpp();\n'+ \
+              '  virtual ~'+clsname+'CToCpp();\n\n'
 
   result += func_body
   result += '};\n\n'

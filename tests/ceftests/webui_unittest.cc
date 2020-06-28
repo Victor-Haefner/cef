@@ -39,11 +39,11 @@ class WebUITestHandler : public TestHandler {
   void NextNav() {
     base::Closure next_action;
 
-    if (++url_index_ == url_list_.size()) {
-      next_action = base::Bind(&WebUITestHandler::DestroyTest, this);
-    } else {
+    if (++url_index_ < url_list_.size()) {
       next_action =
           base::Bind(&WebUITestHandler::LoadURL, this, url_list_[url_index_]);
+    } else {
+      next_action = base::Bind(&WebUITestHandler::DestroyTest, this);
     }
 
     // Wait a bit for the WebUI content to finish loading before performing the
@@ -99,7 +99,7 @@ class WebUITestHandler : public TestHandler {
     if (done) {
       // Verify that we navigated to the expected URL.
       std::string expected_url = expected_url_;
-      if (expected_url.empty())
+      if (expected_url.empty() && url_index_ < url_list_.size())
         expected_url = url_list_[url_index_];
       EXPECT_STREQ(expected_url.c_str(), url.c_str());
 
@@ -122,16 +122,6 @@ class WebUITestHandler : public TestHandler {
 }  // namespace
 
 // Test hosts with special behaviors.
-
-// Non-existing URLs should redirect to chrome://version/.
-TEST(WebUITest, doesnotexist) {
-  UrlList url_list;
-  url_list.push_back("chrome://doesnotexist/");
-  CefRefPtr<WebUITestHandler> handler = new WebUITestHandler(url_list);
-  handler->set_expected_url("chrome://version/");
-  handler->ExecuteTest();
-  ReleaseAndWaitForDestructor(handler);
-}
 
 // about:* URIs should redirect to chrome://*.
 TEST(WebUITest, about) {
@@ -179,45 +169,33 @@ void RunWebUITest(const std::string& url) {
     RunWebUITest("chrome://" + name_str + "/");               \
   }
 
-WEBUI_TEST(appcache_internals);
-WEBUI_TEST(accessibility);
-WEBUI_TEST(blob_internals);
-WEBUI_TEST(credits);
-WEBUI_TEST(extensions_support);
-WEBUI_TEST(gpu);
-WEBUI_TEST(histograms);
-WEBUI_TEST(indexeddb_internals);
-WEBUI_TEST(license);
-WEBUI_TEST(media_internals);
-WEBUI_TEST(net_export);
-WEBUI_TEST(network_errors);
-WEBUI_TEST(serviceworker_internals);
-WEBUI_TEST(system);
-WEBUI_TEST(tracing);
-WEBUI_TEST(version);
-WEBUI_TEST(webrtc_internals);
-WEBUI_TEST(webui_hosts);
+WEBUI_TEST(appcache_internals)
+WEBUI_TEST(accessibility)
+WEBUI_TEST(blob_internals)
+WEBUI_TEST(extensions_support)
+WEBUI_TEST(gpu)
+WEBUI_TEST(histograms)
+WEBUI_TEST(indexeddb_internals)
+WEBUI_TEST(license)
+WEBUI_TEST(media_internals)
+WEBUI_TEST(net_export)
+WEBUI_TEST(network_errors)
+WEBUI_TEST(serviceworker_internals)
+WEBUI_TEST(system)
+WEBUI_TEST(tracing)
+WEBUI_TEST(version)
+WEBUI_TEST(webrtc_internals)
+WEBUI_TEST(webui_hosts)
 
 // Test hosts with multiple URLs.
 
 TEST(WebUITest, net_internals) {
   UrlList url_list;
-  url_list.push_back("chrome://net-internals/#capture");
-  url_list.push_back("chrome://net-internals/#import");
-  url_list.push_back("chrome://net-internals/#proxy");
   url_list.push_back("chrome://net-internals/#events");
-  url_list.push_back("chrome://net-internals/#timeline");
+  url_list.push_back("chrome://net-internals/#proxy");
   url_list.push_back("chrome://net-internals/#dns");
   url_list.push_back("chrome://net-internals/#sockets");
-  url_list.push_back("chrome://net-internals/#alt-svc");
-  url_list.push_back("chrome://net-internals/#http2");
-  url_list.push_back("chrome://net-internals/#quic");
-  url_list.push_back("chrome://net-internals/#sdch");
-  url_list.push_back("chrome://net-internals/#httpCache");
-  url_list.push_back("chrome://net-internals/#modules");
   url_list.push_back("chrome://net-internals/#hsts");
-  url_list.push_back("chrome://net-internals/#bandwidth");
-  url_list.push_back("chrome://net-internals/#prerender");
 
   RunWebUITest(url_list);
 }

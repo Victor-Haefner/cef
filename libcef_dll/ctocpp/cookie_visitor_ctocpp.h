@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=32c4900b6b30cbae7afff80e33806a343971c925$
+// $hash=6eb302aca9a6178b9418310105104f079830f4a0$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_COOKIE_VISITOR_CTOCPP_H_
@@ -32,6 +32,7 @@ class CefCookieVisitorCToCpp
                                  cef_cookie_visitor_t> {
  public:
   CefCookieVisitorCToCpp();
+  virtual ~CefCookieVisitorCToCpp();
 
   // CefCookieVisitor methods.
   bool Visit(const CefCookie& cookie,

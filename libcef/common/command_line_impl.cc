@@ -12,10 +12,10 @@ CefCommandLineImpl::CefCommandLineImpl(base::CommandLine* value,
                                        bool read_only)
     : CefValueBase<CefCommandLine, base::CommandLine>(
           value,
-          NULL,
+          nullptr,
           will_delete ? kOwnerWillDelete : kOwnerNoDelete,
           read_only,
-          NULL) {}
+          nullptr) {}
 
 bool CefCommandLineImpl::IsValid() {
   return !detached();
@@ -26,7 +26,7 @@ bool CefCommandLineImpl::IsReadOnly() {
 }
 
 CefRefPtr<CefCommandLine> CefCommandLineImpl::Copy() {
-  CEF_VALUE_VERIFY_RETURN(false, NULL);
+  CEF_VALUE_VERIFY_RETURN(false, nullptr);
   return new CefCommandLineImpl(new base::CommandLine(const_value().argv()),
                                 true, false);
 }
@@ -43,7 +43,8 @@ void CefCommandLineImpl::InitFromArgv(int argc, const char* const* argv) {
 void CefCommandLineImpl::InitFromString(const CefString& command_line) {
 #if defined(OS_WIN)
   CEF_VALUE_VERIFY_RETURN_VOID(true);
-  mutable_value()->ParseFromString(command_line);
+  const base::string16& str16 = command_line;
+  mutable_value()->ParseFromString(str16);
 #else
   NOTREACHED() << "method not supported on this platform";
 #endif

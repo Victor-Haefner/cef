@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=230b02b248b28adfacba20bad35d98f2997968fc$
+// $hash=e0f301338abe21b6d6ad6d38f6497d87fa3d9c91$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_DRAG_HANDLER_CTOCPP_H_
@@ -32,6 +32,7 @@ class CefDragHandlerCToCpp : public CefCToCppRefCounted<CefDragHandlerCToCpp,
                                                         cef_drag_handler_t> {
  public:
   CefDragHandlerCToCpp();
+  virtual ~CefDragHandlerCToCpp();
 
   // CefDragHandler methods.
   bool OnDragEnter(CefRefPtr<CefBrowser> browser,
@@ -39,6 +40,7 @@ class CefDragHandlerCToCpp : public CefCToCppRefCounted<CefDragHandlerCToCpp,
                    DragOperationsMask mask) override;
   void OnDraggableRegionsChanged(
       CefRefPtr<CefBrowser> browser,
+      CefRefPtr<CefFrame> frame,
       const std::vector<CefDraggableRegion>& regions) override;
 };
 

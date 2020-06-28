@@ -13,7 +13,7 @@ CefBrowserViewView::CefBrowserViewView(CefBrowserViewDelegate* cef_delegate,
 }
 
 void CefBrowserViewView::ViewHierarchyChanged(
-    const ViewHierarchyChangedDetails& details) {
+    const views::ViewHierarchyChangedDetails& details) {
   ParentClass::ViewHierarchyChanged(details);
   if (details.is_add && details.child == this) {
     gfx::Size size = GetPreferredSize();
@@ -31,4 +31,9 @@ void CefBrowserViewView::ViewHierarchyChanged(
 
     browser_view_delegate_->OnBrowserViewAdded();
   }
+}
+
+void CefBrowserViewView::OnBoundsChanged(const gfx::Rect& previous_bounds) {
+  ParentClass::OnBoundsChanged(previous_bounds);
+  browser_view_delegate_->OnBoundsChanged();
 }

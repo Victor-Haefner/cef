@@ -4,23 +4,33 @@
 
 #include "base/compiler_specific.h"
 
-// Enable deprecation warnings for MSVC. See http://crbug.com/585142.
+// Enable deprecation warnings on Windows. See http://crbug.com/585142.
 #if defined(OS_WIN)
+#if defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic error "-Wdeprecated-declarations"
+#else
 #pragma warning(push)
 #pragma warning(default : 4996)
+#endif
 #endif
 
 #include "libcef/renderer/render_frame_observer.h"
 
-#include "libcef/common/cef_messages.h"
 #include "libcef/common/content_client.h"
 #include "libcef/renderer/blink_glue.h"
-#include "libcef/renderer/content_renderer_client.h"
+#include "libcef/renderer/browser_impl.h"
+#include "libcef/renderer/dom_document_impl.h"
 #include "libcef/renderer/v8_impl.h"
 
 #include "content/public/renderer/render_frame.h"
+#include "content/public/renderer/render_view.h"
+#include "third_party/blink/public/common/associated_interfaces/associated_interface_provider.h"
+#include "third_party/blink/public/common/associated_interfaces/associated_interface_registry.h"
 #include "third_party/blink/public/web/blink.h"
+#include "third_party/blink/public/web/web_document.h"
 #include "third_party/blink/public/web/web_local_frame.h"
+#include "third_party/blink/public/web/web_node.h"
 
 CefRenderFrameObserver::CefRenderFrameObserver(
     content::RenderFrame* render_frame)
@@ -34,75 +44,104 @@ void CefRenderFrameObserver::OnInterfaceRequestForFrame(
   registry_.TryBindInterface(interface_name, interface_pipe);
 }
 
-void CefRenderFrameObserver::DidStartProvisionalLoad(
-    blink::WebDocumentLoader* document_loader) {
-  blink::WebLocalFrame* frame = render_frame()->GetWebFrame();
-  CefRefPtr<CefBrowserImpl> browserPtr =
-      CefBrowserImpl::GetBrowserForMainFrame(frame->Top());
-  if (!browserPtr.get())
+bool CefRenderFrameObserver::OnAssociatedInterfaceRequestForFrame(
+    const std::string& interface_name,
+    mojo::ScopedInterfaceEndpointHandle* handle) {
+  return associated_interfaces_.TryBindInterface(interface_name, handle);
+}
+
+void CefRenderFrameObserver::DidCommitProvisionalLoad(
+    bool is_same_document_navigation,
+    ui::PageTransition transition) {
+  if (!frame_)
     return;
 
-  browserPtr->DidStartProvisionalLoad(frame);
+  if (frame_->GetParent() == nullptr) {
+    blink::WebLocalFrame* frame = render_frame()->GetWebFrame();
+    CefRefPtr<CefBrowserImpl> browserPtr =
+        CefBrowserImpl::GetBrowserForMainFrame(frame->Top());
+    browserPtr->OnLoadingStateChange(true);
+  }
+  OnLoadStart();
+}
+
+void CefRenderFrameObserver::DidFailProvisionalLoad() {
+  if (frame_) {
+    OnLoadError();
+  }
 }
 
 void CefRenderFrameObserver::DidFinishLoad() {
-  blink::WebLocalFrame* frame = render_frame()->GetWebFrame();
-  CefRefPtr<CefBrowserImpl> browserPtr =
-      CefBrowserImpl::GetBrowserForMainFrame(frame->Top());
-  if (!browserPtr.get())
-    return;
-
-  browserPtr->DidFinishLoad(frame);
+  if (frame_) {
+    frame_->OnDidFinishLoad();
+  }
 }
 
 void CefRenderFrameObserver::FrameDetached() {
+  if (frame_) {
+    frame_->OnDetached();
+    frame_ = nullptr;
+  }
+}
+
+void CefRenderFrameObserver::FocusedElementChanged(
+    const blink::WebElement& element) {
+  if (!frame_)
+    return;
+
   blink::WebLocalFrame* frame = render_frame()->GetWebFrame();
   CefRefPtr<CefBrowserImpl> browserPtr =
       CefBrowserImpl::GetBrowserForMainFrame(frame->Top());
-  if (!browserPtr.get())
+  if (!browserPtr)
     return;
 
-  browserPtr->FrameDetached(frame);
-}
-
-void CefRenderFrameObserver::FrameFocused() {
-  Send(new CefHostMsg_FrameFocused(render_frame()->GetRoutingID()));
-}
-
-void CefRenderFrameObserver::FocusedNodeChanged(const blink::WebNode& node) {
-  blink::WebLocalFrame* frame = render_frame()->GetWebFrame();
-  CefRefPtr<CefBrowserImpl> browserPtr =
-      CefBrowserImpl::GetBrowserForMainFrame(frame->Top());
-  if (!browserPtr.get())
+  CefRefPtr<CefRenderProcessHandler> handler;
+  CefRefPtr<CefApp> application = CefContentClient::Get()->application();
+  if (application)
+    handler = application->GetRenderProcessHandler();
+  if (!handler)
     return;
 
-  browserPtr->FocusedNodeChanged(node);
+  CefRefPtr<CefFrameImpl> framePtr = browserPtr->GetWebFrameImpl(frame);
+
+  if (element.IsNull()) {
+    handler->OnFocusedNodeChanged(browserPtr.get(), framePtr.get(), nullptr);
+    return;
+  }
+
+  if (element.GetDocument().IsNull())
+    return;
+
+  CefRefPtr<CefDOMDocumentImpl> documentImpl =
+      new CefDOMDocumentImpl(browserPtr.get(), frame);
+  handler->OnFocusedNodeChanged(browserPtr.get(), framePtr.get(),
+                                documentImpl->GetOrCreateNode(element));
+  documentImpl->Detach();
 }
 
 void CefRenderFrameObserver::DraggableRegionsChanged() {
-  blink::WebLocalFrame* frame = render_frame()->GetWebFrame();
-  CefRefPtr<CefBrowserImpl> browserPtr =
-      CefBrowserImpl::GetBrowserForMainFrame(frame->Top());
-  if (!browserPtr.get())
-    return;
-
-  browserPtr->DraggableRegionsChanged(frame);
+  if (frame_) {
+    frame_->OnDraggableRegionsChanged();
+  }
 }
 
 void CefRenderFrameObserver::DidCreateScriptContext(
     v8::Handle<v8::Context> context,
     int world_id) {
+  if (!frame_)
+    return;
+
   blink::WebLocalFrame* frame = render_frame()->GetWebFrame();
   CefRefPtr<CefBrowserImpl> browserPtr =
       CefBrowserImpl::GetBrowserForMainFrame(frame->Top());
-  if (!browserPtr.get())
+  if (!browserPtr)
     return;
 
   CefRefPtr<CefRenderProcessHandler> handler;
   CefRefPtr<CefApp> application = CefContentClient::Get()->application();
-  if (application.get())
+  if (application)
     handler = application->GetRenderProcessHandler();
-  if (!handler.get())
+  if (!handler)
     return;
 
   CefRefPtr<CefFrameImpl> framePtr = browserPtr->GetWebFrameImpl(frame);
@@ -124,12 +163,12 @@ void CefRenderFrameObserver::WillReleaseScriptContext(
   blink::WebLocalFrame* frame = render_frame()->GetWebFrame();
   CefRefPtr<CefBrowserImpl> browserPtr =
       CefBrowserImpl::GetBrowserForMainFrame(frame->Top());
-  if (browserPtr.get()) {
+  if (browserPtr) {
     CefRefPtr<CefApp> application = CefContentClient::Get()->application();
-    if (application.get()) {
+    if (application) {
       CefRefPtr<CefRenderProcessHandler> handler =
           application->GetRenderProcessHandler();
-      if (handler.get()) {
+      if (handler) {
         CefRefPtr<CefFrameImpl> framePtr = browserPtr->GetWebFrameImpl(frame);
 
         v8::Isolate* isolate = blink::MainThreadIsolate();
@@ -156,7 +195,64 @@ void CefRenderFrameObserver::OnDestruct() {
   delete this;
 }
 
-// Enable deprecation warnings for MSVC. See http://crbug.com/585142.
+bool CefRenderFrameObserver::OnMessageReceived(const IPC::Message& message) {
+  if (frame_) {
+    return frame_->OnMessageReceived(message);
+  }
+  return false;
+}
+
+void CefRenderFrameObserver::AttachFrame(CefFrameImpl* frame) {
+  DCHECK(frame);
+  DCHECK(!frame_);
+  frame_ = frame;
+  frame_->OnAttached();
+}
+
+void CefRenderFrameObserver::OnLoadStart() {
+  CefRefPtr<CefApp> app = CefContentClient::Get()->application();
+  if (app.get()) {
+    CefRefPtr<CefRenderProcessHandler> handler = app->GetRenderProcessHandler();
+    if (handler.get()) {
+      CefRefPtr<CefLoadHandler> load_handler = handler->GetLoadHandler();
+      if (load_handler.get()) {
+        blink::WebLocalFrame* frame = render_frame()->GetWebFrame();
+        CefRefPtr<CefBrowserImpl> browserPtr =
+            CefBrowserImpl::GetBrowserForMainFrame(frame->Top());
+        load_handler->OnLoadStart(browserPtr.get(), frame_, TT_EXPLICIT);
+      }
+    }
+  }
+}
+
+void CefRenderFrameObserver::OnLoadError() {
+  CefRefPtr<CefApp> app = CefContentClient::Get()->application();
+  if (app.get()) {
+    CefRefPtr<CefRenderProcessHandler> handler = app->GetRenderProcessHandler();
+    if (handler.get()) {
+      CefRefPtr<CefLoadHandler> load_handler = handler->GetLoadHandler();
+      // Error codes were removed from DidFailProvisionalLoad() so we now always
+      // pass the same value.
+      if (load_handler.get()) {
+        const cef_errorcode_t errorCode =
+            static_cast<cef_errorcode_t>(net::ERR_ABORTED);
+        const std::string& errorText = net::ErrorToString(errorCode);
+        const GURL failedUrl(frame_->GetURL().c_str());
+        blink::WebLocalFrame* frame = render_frame()->GetWebFrame();
+        CefRefPtr<CefBrowserImpl> browserPtr =
+            CefBrowserImpl::GetBrowserForMainFrame(frame->Top());
+        load_handler->OnLoadError(browserPtr.get(), frame_, errorCode,
+                                  errorText, failedUrl.spec());
+      }
+    }
+  }
+}
+
+// Enable deprecation warnings on Windows. See http://crbug.com/585142.
 #if defined(OS_WIN)
+#if defined(__clang__)
+#pragma GCC diagnostic pop
+#else
 #pragma warning(pop)
+#endif
 #endif

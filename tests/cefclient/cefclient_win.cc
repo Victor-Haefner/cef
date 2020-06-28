@@ -25,8 +25,8 @@
 // #define CEF_USE_SANDBOX 1
 
 #if defined(CEF_USE_SANDBOX)
-// The cef_sandbox.lib static library is currently built with VS2015. It may not
-// link successfully with other VS versions.
+// The cef_sandbox.lib static library may not link successfully with all VS
+// versions.
 #pragma comment(lib, "cef_sandbox.lib")
 #endif
 
@@ -39,7 +39,7 @@ int RunMain(HINSTANCE hInstance, int nCmdShow) {
 
   CefMainArgs main_args(hInstance);
 
-  void* sandbox_info = NULL;
+  void* sandbox_info = nullptr;
 
 #if defined(CEF_USE_SANDBOX)
   // Manage the life span of the sandbox information object. This is necessary
@@ -76,6 +76,10 @@ int RunMain(HINSTANCE hInstance, int nCmdShow) {
   settings.no_sandbox = true;
 #endif
 
+  // Applications should specify a unique GUID here to enable trusted downloads.
+  CefString(&settings.application_client_id_for_file_scanning)
+      .FromString("9A8DE24D-B822-4C6C-8259-5A848FEA1E68");
+
   // Populate the settings based on command line arguments.
   context->PopulateSettings(&settings);
 
@@ -95,6 +99,7 @@ int RunMain(HINSTANCE hInstance, int nCmdShow) {
   test_runner::RegisterSchemeHandlers();
 
   RootWindowConfig window_config;
+  window_config.always_on_top = command_line->HasSwitch(switches::kAlwaysOnTop);
   window_config.with_controls =
       !command_line->HasSwitch(switches::kHideControls);
   window_config.with_osr = settings.windowless_rendering_enabled ? true : false;

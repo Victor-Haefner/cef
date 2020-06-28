@@ -76,7 +76,7 @@ CefRefPtr<CefMenuModel> ViewsMenuBar::CreateMenuModel(const CefString& label,
 
   // Create the new MenuButton.
   CefRefPtr<CefMenuButton> button =
-      CefMenuButton::CreateMenuButton(this, label, false, false);
+      CefMenuButton::CreateMenuButton(this, label);
   button->SetID(new_menu_id);
   views_style::ApplyTo(button.get());
   button->SetInkDropEnabled(true);
@@ -99,7 +99,7 @@ CefRefPtr<CefMenuModel> ViewsMenuBar::CreateMenuModel(const CefString& label,
 CefRefPtr<CefMenuModel> ViewsMenuBar::GetMenuModel(int menu_id) const {
   if (HasMenuId(menu_id))
     return models_[menu_id - id_start_];
-  return NULL;
+  return nullptr;
 }
 
 void ViewsMenuBar::SetMenuFocusable(bool focusable) {
@@ -141,7 +141,7 @@ bool ViewsMenuBar::OnKeyEvent(const CefKeyEvent& event) {
 }
 
 void ViewsMenuBar::Reset() {
-  panel_ = NULL;
+  panel_ = nullptr;
   models_.clear();
   mnemonics_.clear();
   id_next_ = id_start_;
@@ -239,7 +239,7 @@ void ViewsMenuBar::EnsureMenuPanel() {
   if (panel_)
     return;
 
-  panel_ = CefPanel::CreatePanel(NULL);
+  panel_ = CefPanel::CreatePanel(nullptr);
   views_style::ApplyTo(panel_);
 
   // Use a horizontal box layout.

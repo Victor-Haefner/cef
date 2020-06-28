@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=cc87e8febbd080a51cbce8125f5ac1d557297e4b$
+// $hash=3be29effc92de5236544395b9b513cf5e74ae194$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_CALLBACK_CPPTOC_H_
@@ -31,6 +31,7 @@ class CefCallbackCppToC : public CefCppToCRefCounted<CefCallbackCppToC,
                                                      cef_callback_t> {
  public:
   CefCallbackCppToC();
+  virtual ~CefCallbackCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_CALLBACK_CPPTOC_H_

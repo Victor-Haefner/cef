@@ -160,7 +160,7 @@ PERF_TEST_FUNC(V8FunctionExecuteWithContext) {
 
 PERF_TEST_FUNC(V8ObjectCreate) {
   PERF_ITERATIONS_START()
-  CefRefPtr<CefV8Value> value = CefV8Value::CreateObject(NULL, NULL);
+  CefRefPtr<CefV8Value> value = CefV8Value::CreateObject(nullptr, nullptr);
   PERF_ITERATIONS_END()
 }
 
@@ -186,7 +186,7 @@ PERF_TEST_FUNC(V8ObjectCreateWithAccessor) {
   CefRefPtr<CefV8Accessor> accessor = new Accessor();
 
   PERF_ITERATIONS_START()
-  CefRefPtr<CefV8Value> value = CefV8Value::CreateObject(accessor, NULL);
+  CefRefPtr<CefV8Value> value = CefV8Value::CreateObject(accessor, nullptr);
   PERF_ITERATIONS_END()
 }
 
@@ -224,14 +224,14 @@ PERF_TEST_FUNC(V8ObjectCreateWithInterceptor) {
   CefRefPtr<CefV8Interceptor> interceptor = new Interceptor();
 
   PERF_ITERATIONS_START()
-  CefRefPtr<CefV8Value> value = CefV8Value::CreateObject(NULL, interceptor);
+  CefRefPtr<CefV8Value> value = CefV8Value::CreateObject(nullptr, interceptor);
   PERF_ITERATIONS_END()
 }
 
 PERF_TEST_FUNC(V8ObjectSetValue) {
   CefString name = "name";
   CefRefPtr<CefV8Value> val = CefV8Value::CreateBool(true);
-  CefRefPtr<CefV8Value> obj = CefV8Value::CreateObject(NULL, NULL);
+  CefRefPtr<CefV8Value> obj = CefV8Value::CreateObject(nullptr, nullptr);
   obj->SetValue(name, val, V8_PROPERTY_ATTRIBUTE_NONE);
 
   PERF_ITERATIONS_START()
@@ -242,7 +242,7 @@ PERF_TEST_FUNC(V8ObjectSetValue) {
 PERF_TEST_FUNC(V8ObjectGetValue) {
   CefString name = "name";
   CefRefPtr<CefV8Value> val = CefV8Value::CreateBool(true);
-  CefRefPtr<CefV8Value> obj = CefV8Value::CreateObject(NULL, NULL);
+  CefRefPtr<CefV8Value> obj = CefV8Value::CreateObject(nullptr, nullptr);
   obj->SetValue(name, val, V8_PROPERTY_ATTRIBUTE_NONE);
 
   PERF_ITERATIONS_START()
@@ -275,7 +275,7 @@ PERF_TEST_FUNC(V8ObjectSetValueWithAccessor) {
 
   CefString name = "name";
   CefRefPtr<CefV8Value> val = CefV8Value::CreateBool(true);
-  CefRefPtr<CefV8Value> obj = CefV8Value::CreateObject(accessor, NULL);
+  CefRefPtr<CefV8Value> obj = CefV8Value::CreateObject(accessor, nullptr);
   obj->SetValue(name, V8_ACCESS_CONTROL_DEFAULT, V8_PROPERTY_ATTRIBUTE_NONE);
   obj->SetValue(name, val, V8_PROPERTY_ATTRIBUTE_NONE);
 
@@ -309,12 +309,30 @@ PERF_TEST_FUNC(V8ObjectGetValueWithAccessor) {
 
   CefString name = "name";
   CefRefPtr<CefV8Value> val = CefV8Value::CreateBool(true);
-  CefRefPtr<CefV8Value> obj = CefV8Value::CreateObject(accessor, NULL);
+  CefRefPtr<CefV8Value> obj = CefV8Value::CreateObject(accessor, nullptr);
   obj->SetValue(name, V8_ACCESS_CONTROL_DEFAULT, V8_PROPERTY_ATTRIBUTE_NONE);
   obj->SetValue(name, val, V8_PROPERTY_ATTRIBUTE_NONE);
 
   PERF_ITERATIONS_START()
   CefRefPtr<CefV8Value> ret = obj->GetValue(name);
+  PERF_ITERATIONS_END()
+}
+
+PERF_TEST_FUNC(V8ArrayBufferCreate) {
+  class ReleaseCallback : public CefV8ArrayBufferReleaseCallback {
+   public:
+    void ReleaseBuffer(void* buffer) override { std::free(buffer); }
+    IMPLEMENT_REFCOUNTING(ReleaseCallback);
+  };
+
+  size_t len = 1;
+  size_t byte_len = len * sizeof(float);
+  CefRefPtr<CefV8ArrayBufferReleaseCallback> callback = new ReleaseCallback();
+
+  PERF_ITERATIONS_START()
+  float* buffer = (float*)std::malloc(byte_len);
+  CefRefPtr<CefV8Value> ret =
+      CefV8Value::CreateArrayBuffer(buffer, byte_len, callback);
   PERF_ITERATIONS_END()
 }
 
@@ -363,6 +381,7 @@ const PerfTestEntry kPerfTests[] = {
     PERF_TEST_ENTRY(V8ObjectGetValue),
     PERF_TEST_ENTRY(V8ObjectSetValueWithAccessor),
     PERF_TEST_ENTRY(V8ObjectGetValueWithAccessor),
+    PERF_TEST_ENTRY(V8ArrayBufferCreate),
     PERF_TEST_ENTRY(V8ContextEnterExit),
     PERF_TEST_ENTRY(V8ContextEval),
 };

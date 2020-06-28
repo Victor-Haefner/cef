@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=d39de39fffda791814c155faa5f51107ff17ee13$
+// $hash=ef1484f9c3402407bb30e660f30223baa14ca978$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_DRAG_DATA_CPPTOC_H_
@@ -31,6 +31,7 @@ class CefDragDataCppToC : public CefCppToCRefCounted<CefDragDataCppToC,
                                                      cef_drag_data_t> {
  public:
   CefDragDataCppToC();
+  virtual ~CefDragDataCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_DRAG_DATA_CPPTOC_H_

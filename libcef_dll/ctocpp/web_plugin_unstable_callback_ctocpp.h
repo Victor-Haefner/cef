@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=cea1984e9efa96e573f533a4588c980b2db4e47a$
+// $hash=03d71fb933226f515bd852f98c1293b076bc9ec0$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_WEB_PLUGIN_UNSTABLE_CALLBACK_CTOCPP_H_
@@ -34,6 +34,7 @@ class CefWebPluginUnstableCallbackCToCpp
                                  cef_web_plugin_unstable_callback_t> {
  public:
   CefWebPluginUnstableCallbackCToCpp();
+  virtual ~CefWebPluginUnstableCallbackCToCpp();
 
   // CefWebPluginUnstableCallback methods.
   void IsUnstable(const CefString& path, bool unstable) override;

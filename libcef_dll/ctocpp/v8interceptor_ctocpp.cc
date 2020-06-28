@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=91bd2a97b65a5091af31d55117cf7889bbc39e45$
+// $hash=03d79fc410f4c1f268f34abf0e13483fe4c62172$
 //
 
 #include "libcef_dll/ctocpp/v8interceptor_ctocpp.h"
@@ -54,7 +54,7 @@ bool CefV8InterceptorCToCpp::Get(const CefString& name,
       retval = CefV8ValueCppToC::Unwrap(retvalStruct);
     }
   } else {
-    retval = NULL;
+    retval = nullptr;
   }
 
   // Return type: bool
@@ -98,7 +98,7 @@ bool CefV8InterceptorCToCpp::Get(int index,
       retval = CefV8ValueCppToC::Unwrap(retvalStruct);
     }
   } else {
-    retval = NULL;
+    retval = nullptr;
   }
 
   // Return type: bool
@@ -175,6 +175,10 @@ bool CefV8InterceptorCToCpp::Set(int index,
 
 CefV8InterceptorCToCpp::CefV8InterceptorCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefV8InterceptorCToCpp::~CefV8InterceptorCToCpp() {}
+
 template <>
 cef_v8interceptor_t*
 CefCToCppRefCounted<CefV8InterceptorCToCpp,
@@ -182,16 +186,8 @@ CefCToCppRefCounted<CefV8InterceptorCToCpp,
                     cef_v8interceptor_t>::UnwrapDerived(CefWrapperType type,
                                                         CefV8Interceptor* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefV8InterceptorCToCpp,
-                                         CefV8Interceptor,
-                                         cef_v8interceptor_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefV8InterceptorCToCpp,

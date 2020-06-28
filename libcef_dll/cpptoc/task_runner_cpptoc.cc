@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,15 +9,18 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=e7aba6db348ccda1ac40f91f6a7fb2a117a09c77$
+// $hash=8653934432648c7d636bc39d14a16a536352241c$
 //
 
 #include "libcef_dll/cpptoc/task_runner_cpptoc.h"
 #include "libcef_dll/ctocpp/task_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // GLOBAL FUNCTIONS - Body may be edited by hand.
 
 CEF_EXPORT cef_task_runner_t* cef_task_runner_get_for_current_thread() {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Execute
@@ -29,6 +32,8 @@ CEF_EXPORT cef_task_runner_t* cef_task_runner_get_for_current_thread() {
 
 CEF_EXPORT cef_task_runner_t* cef_task_runner_get_for_thread(
     cef_thread_id_t threadId) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Execute
@@ -44,6 +49,8 @@ namespace {
 
 int CEF_CALLBACK task_runner_is_same(struct _cef_task_runner_t* self,
                                      struct _cef_task_runner_t* that) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -64,6 +71,8 @@ int CEF_CALLBACK task_runner_is_same(struct _cef_task_runner_t* self,
 
 int CEF_CALLBACK
 task_runner_belongs_to_current_thread(struct _cef_task_runner_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -79,6 +88,8 @@ task_runner_belongs_to_current_thread(struct _cef_task_runner_t* self) {
 
 int CEF_CALLBACK task_runner_belongs_to_thread(struct _cef_task_runner_t* self,
                                                cef_thread_id_t threadId) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -94,6 +105,8 @@ int CEF_CALLBACK task_runner_belongs_to_thread(struct _cef_task_runner_t* self,
 
 int CEF_CALLBACK task_runner_post_task(struct _cef_task_runner_t* self,
                                        cef_task_t* task) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -115,6 +128,8 @@ int CEF_CALLBACK task_runner_post_task(struct _cef_task_runner_t* self,
 int CEF_CALLBACK task_runner_post_delayed_task(struct _cef_task_runner_t* self,
                                                cef_task_t* task,
                                                int64 delay_ms) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -146,20 +161,19 @@ CefTaskRunnerCppToC::CefTaskRunnerCppToC() {
   GetStruct()->post_delayed_task = task_runner_post_delayed_task;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefTaskRunnerCppToC::~CefTaskRunnerCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefTaskRunner>
 CefCppToCRefCounted<CefTaskRunnerCppToC, CefTaskRunner, cef_task_runner_t>::
     UnwrapDerived(CefWrapperType type, cef_task_runner_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefTaskRunnerCppToC, CefTaskRunner, cef_task_runner_t>::
-        DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefTaskRunnerCppToC,

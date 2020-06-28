@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=30438f9c15e75548f81c8e54d4d704008938b131$
+// $hash=50c2166b6a1c9699b480e7bcc1f0da7e4d5b938e$
 //
 
 #include "libcef_dll/cpptoc/request_cpptoc.h"
@@ -116,10 +116,7 @@ void CEF_CALLBACK request_set_referrer(struct _cef_request_t* self,
   DCHECK(self);
   if (!self)
     return;
-  // Verify param: referrer_url; type: string_byref_const
-  DCHECK(referrer_url);
-  if (!referrer_url)
-    return;
+  // Unverified params: referrer_url
 
   // Execute
   CefRequestCppToC::Get(self)->SetReferrer(CefString(referrer_url), policy);
@@ -231,6 +228,47 @@ void CEF_CALLBACK request_set_header_map(struct _cef_request_t* self,
   CefRequestCppToC::Get(self)->SetHeaderMap(headerMapMultimap);
 }
 
+cef_string_userfree_t CEF_CALLBACK
+request_get_header_by_name(struct _cef_request_t* self,
+                           const cef_string_t* name) {
+  // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
+
+  DCHECK(self);
+  if (!self)
+    return NULL;
+  // Verify param: name; type: string_byref_const
+  DCHECK(name);
+  if (!name)
+    return NULL;
+
+  // Execute
+  CefString _retval =
+      CefRequestCppToC::Get(self)->GetHeaderByName(CefString(name));
+
+  // Return type: string
+  return _retval.DetachToUserFree();
+}
+
+void CEF_CALLBACK request_set_header_by_name(struct _cef_request_t* self,
+                                             const cef_string_t* name,
+                                             const cef_string_t* value,
+                                             int overwrite) {
+  // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
+
+  DCHECK(self);
+  if (!self)
+    return;
+  // Verify param: name; type: string_byref_const
+  DCHECK(name);
+  if (!name)
+    return;
+  // Unverified params: value
+
+  // Execute
+  CefRequestCppToC::Get(self)->SetHeaderByName(
+      CefString(name), CefString(value), overwrite ? true : false);
+}
+
 void CEF_CALLBACK request_set(struct _cef_request_t* self,
                               const cef_string_t* url,
                               const cef_string_t* method,
@@ -313,10 +351,7 @@ request_set_first_party_for_cookies(struct _cef_request_t* self,
   DCHECK(self);
   if (!self)
     return;
-  // Verify param: url; type: string_byref_const
-  DCHECK(url);
-  if (!url)
-    return;
+  // Unverified params: url
 
   // Execute
   CefRequestCppToC::Get(self)->SetFirstPartyForCookies(CefString(url));
@@ -384,6 +419,8 @@ CefRequestCppToC::CefRequestCppToC() {
   GetStruct()->set_post_data = request_set_post_data;
   GetStruct()->get_header_map = request_get_header_map;
   GetStruct()->set_header_map = request_set_header_map;
+  GetStruct()->get_header_by_name = request_get_header_by_name;
+  GetStruct()->set_header_by_name = request_set_header_by_name;
   GetStruct()->set = request_set;
   GetStruct()->get_flags = request_get_flags;
   GetStruct()->set_flags = request_set_flags;
@@ -396,21 +433,18 @@ CefRequestCppToC::CefRequestCppToC() {
   GetStruct()->get_identifier = request_get_identifier;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefRequestCppToC::~CefRequestCppToC() {}
+
 template <>
 CefRefPtr<CefRequest>
 CefCppToCRefCounted<CefRequestCppToC, CefRequest, cef_request_t>::UnwrapDerived(
     CefWrapperType type,
     cef_request_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefRequestCppToC, CefRequest, cef_request_t>::DebugObjCt
-        ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefRequestCppToC,

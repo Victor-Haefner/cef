@@ -4,32 +4,42 @@
 
 #include "libcef/browser/prefs/browser_prefs.h"
 
+#include "libcef/browser/browser_context.h"
 #include "libcef/browser/media_capture_devices_dispatcher.h"
-#include "libcef/browser/net/url_request_context_getter_impl.h"
 #include "libcef/browser/prefs/pref_store.h"
 #include "libcef/browser/prefs/renderer_prefs.h"
 #include "libcef/common/cef_switches.h"
+#include "libcef/common/extensions/extensions_util.h"
 
 #include "base/command_line.h"
 #include "base/files/file_path.h"
 #include "base/strings/string_number_conversions.h"
-#include "base/task_scheduler/post_task.h"
+#include "base/task/post_task.h"
 #include "base/values.h"
+#include "chrome/browser/accessibility/accessibility_ui.h"
+#include "chrome/browser/download/download_prefs.h"
+#include "chrome/browser/media/router/media_router_feature.h"
 #include "chrome/browser/net/prediction_options.h"
+#include "chrome/browser/net/profile_network_context_service.h"
+#include "chrome/browser/net/system_network_context_manager.h"
 #include "chrome/browser/plugins/plugin_info_host_impl.h"
 #include "chrome/browser/prefs/chrome_command_line_pref_store.h"
+#include "chrome/browser/printing/print_preview_sticky_settings.h"
 #include "chrome/browser/renderer_host/pepper/device_id_fetcher.h"
-#include "chrome/browser/supervised_user/supervised_user_pref_store.h"
-#include "chrome/browser/supervised_user/supervised_user_settings_service.h"
-#include "chrome/browser/supervised_user/supervised_user_settings_service_factory.h"
+#include "chrome/browser/ssl/ssl_config_service_manager.h"
 #include "chrome/browser/themes/theme_service.h"
+#include "chrome/common/buildflags.h"
 #include "chrome/common/chrome_switches.h"
+#include "chrome/common/net/safe_search_util.h"
 #include "chrome/common/pref_names.h"
 #include "chrome/grit/locale_settings.h"
+#include "components/certificate_transparency/pref_names.h"
 #include "components/content_settings/core/browser/cookie_settings.h"
 #include "components/content_settings/core/browser/host_content_settings_map.h"
-#include "components/google/core/browser/google_url_tracker.h"
+#include "components/flags_ui/pref_service_flags_storage.h"
 #include "components/keyed_service/content/browser_context_dependency_manager.h"
+#include "components/language/core/browser/language_prefs.h"
+#include "components/language/core/browser/pref_names.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/json_pref_store.h"
 #include "components/prefs/pref_filter.h"
@@ -45,10 +55,35 @@
 #include "extensions/browser/extension_prefs.h"
 #include "extensions/buildflags/buildflags.h"
 #include "ui/base/l10n/l10n_util.h"
+#include "ui/base/ui_base_switches.h"
+
+#if defined(OS_WIN)
+#include "components/os_crypt/os_crypt.h"
+#endif
+
+#if BUILDFLAG(ENABLE_SUPERVISED_USERS)
+#include "chrome/browser/supervised_user/supervised_user_pref_store.h"
+#include "chrome/browser/supervised_user/supervised_user_settings_service.h"
+#include "chrome/browser/supervised_user/supervised_user_settings_service_factory.h"
+#endif
 
 namespace browser_prefs {
 
+namespace {
+
+std::string GetAcceptLanguageList(Profile* profile) {
+  const CefRequestContextSettings& context_settings =
+      static_cast<CefBrowserContext*>(profile)->GetSettings();
+  if (context_settings.accept_language_list.length > 0) {
+    return CefString(&context_settings.accept_language_list);
+  }
+  return std::string();
+}
+
+}  // namespace
+
 const char kUserPrefsFileName[] = "UserPrefs.json";
+const char kLocalPrefsFileName[] = "LocalPrefs.json";
 
 std::unique_ptr<PrefService> CreatePrefService(Profile* profile,
                                                const base::FilePath& cache_path,
@@ -76,17 +111,18 @@ std::unique_ptr<PrefService> CreatePrefService(Profile* profile,
     // Get sequenced task runner for making sure that file operations are
     // executed in expected order (what was previously assured by the FILE
     // thread).
-    sequenced_task_runner = base::CreateSequencedTaskRunnerWithTraits(
-        {base::MayBlock(), base::TaskShutdownBehavior::BLOCK_SHUTDOWN});
+    sequenced_task_runner = base::CreateSequencedTaskRunner(
+        {base::ThreadPool(), base::MayBlock(),
+         base::TaskShutdownBehavior::BLOCK_SHUTDOWN});
   }
 
   // Used to store user preferences.
   scoped_refptr<PersistentPrefStore> user_pref_store;
   if (store_on_disk) {
-    const base::FilePath& pref_path =
-        cache_path.AppendASCII(browser_prefs::kUserPrefsFileName);
+    const base::FilePath& pref_path = cache_path.AppendASCII(
+        profile ? kUserPrefsFileName : kLocalPrefsFileName);
     scoped_refptr<JsonPrefStore> json_pref_store = new JsonPrefStore(
-        pref_path, sequenced_task_runner, std::unique_ptr<PrefFilter>());
+        pref_path, std::unique_ptr<PrefFilter>(), sequenced_task_runner);
     factory.set_user_prefs(json_pref_store.get());
   } else {
     scoped_refptr<CefPrefStore> cef_pref_store = new CefPrefStore();
@@ -95,23 +131,26 @@ std::unique_ptr<PrefService> CreatePrefService(Profile* profile,
   }
 
 #if BUILDFLAG(ENABLE_SUPERVISED_USERS)
-  // Used to store supervised user preferences.
-  SupervisedUserSettingsService* supervised_user_settings =
-      SupervisedUserSettingsServiceFactory::GetForProfile(profile);
+  if (profile) {
+    // Used to store supervised user preferences.
+    SupervisedUserSettingsService* supervised_user_settings =
+        SupervisedUserSettingsServiceFactory::GetForKey(
+            profile->GetProfileKey());
 
-  if (store_on_disk) {
-    supervised_user_settings->Init(cache_path, sequenced_task_runner.get(),
-                                   true);
-  } else {
-    scoped_refptr<CefPrefStore> cef_pref_store = new CefPrefStore();
-    cef_pref_store->SetInitializationCompleted();
-    supervised_user_settings->Init(cef_pref_store);
+    if (store_on_disk) {
+      supervised_user_settings->Init(cache_path, sequenced_task_runner.get(),
+                                     true);
+    } else {
+      scoped_refptr<CefPrefStore> cef_pref_store = new CefPrefStore();
+      cef_pref_store->SetInitializationCompleted();
+      supervised_user_settings->Init(cef_pref_store);
+    }
+
+    scoped_refptr<PrefStore> supervised_user_prefs =
+        base::MakeRefCounted<SupervisedUserPrefStore>(supervised_user_settings);
+    DCHECK(supervised_user_prefs->IsInitializationComplete());
+    factory.set_supervised_user_prefs(supervised_user_prefs);
   }
-
-  scoped_refptr<PrefStore> supervised_user_prefs =
-      base::MakeRefCounted<SupervisedUserPrefStore>(supervised_user_settings);
-  DCHECK(supervised_user_prefs->IsInitializationComplete());
-  factory.set_supervised_user_prefs(supervised_user_prefs);
 #endif  // BUILDFLAG(ENABLE_SUPERVISED_USERS)
 
   // Registry that will be populated with all known preferences. Preferences
@@ -136,60 +175,35 @@ std::unique_ptr<PrefService> CreatePrefService(Profile* profile,
   //    use) then register the preferences directly instead of calling the
   //    existing registration method.
 
-  // Call RegisterProfilePrefs() for all services listed by
-  // EnsureBrowserContextKeyedServiceFactoriesBuilt().
-  BrowserContextDependencyManager::GetInstance()
-      ->RegisterProfilePrefsForServices(profile, registry.get());
-
   // Default preferences.
   CefMediaCaptureDevicesDispatcher::RegisterPrefs(registry.get());
-  CefURLRequestContextGetterImpl::RegisterPrefs(registry.get());
-  chrome_browser_net::RegisterPredictionOptionsProfilePrefs(registry.get());
-  DeviceIDFetcher::RegisterProfilePrefs(registry.get());
-  extensions::ExtensionPrefs::RegisterProfilePrefs(registry.get());
-  GoogleURLTracker::RegisterProfilePrefs(registry.get());
-  HostContentSettingsMap::RegisterProfilePrefs(registry.get());
+  certificate_transparency::prefs::RegisterPrefs(registry.get());
+  flags_ui::PrefServiceFlagsStorage::RegisterPrefs(registry.get());
+  media_router::RegisterLocalStatePrefs(registry.get());
   PluginInfoHostImpl::RegisterUserPrefs(registry.get());
   PrefProxyConfigTrackerImpl::RegisterPrefs(registry.get());
-  renderer_prefs::RegisterProfilePrefs(registry.get());
+  ProfileNetworkContextService::RegisterLocalStatePrefs(registry.get());
+  SSLConfigServiceManager::RegisterPrefs(registry.get());
   update_client::RegisterPrefs(registry.get());
 
-  // Print preferences.
-  // Based on ProfileImpl::RegisterProfilePrefs.
-  registry->RegisterBooleanPref(prefs::kPrintingEnabled, true);
-
-  // Spell checking preferences.
-  // Modify defaults from SpellcheckServiceFactory::RegisterProfilePrefs.
-  std::string spellcheck_lang =
-      command_line->GetSwitchValueASCII(switches::kOverrideSpellCheckLang);
-  if (!spellcheck_lang.empty()) {
-    registry->SetDefaultPrefValue(spellcheck::prefs::kSpellCheckDictionary,
-                                  base::Value(spellcheck_lang));
+  if (!profile) {
+    SystemNetworkContextManager::RegisterPrefs(registry.get());
+#if defined(OS_WIN)
+    OSCrypt::RegisterLocalPrefs(registry.get());
+#endif
   }
-  const bool enable_spelling_service_ =
-      command_line->HasSwitch(switches::kEnableSpellingService);
-  registry->SetDefaultPrefValue(
-      spellcheck::prefs::kSpellCheckUseSpellingService,
-      base::Value(enable_spelling_service_));
-  registry->SetDefaultPrefValue(spellcheck::prefs::kSpellCheckEnable,
-                                base::Value(!enable_spelling_service_));
 
-  // Pepper flash preferences.
-  // Modify defaults from DeviceIDFetcher::RegisterProfilePrefs.
-  registry->SetDefaultPrefValue(prefs::kEnableDRM, base::Value(false));
-
-  // Authentication preferences.
-  // Based on IOThread::RegisterPrefs.
-  registry->RegisterStringPref(prefs::kAuthServerWhitelist, "");
-  registry->RegisterStringPref(prefs::kAuthNegotiateDelegateWhitelist, "");
+  // Browser process preferences.
+  // Based on chrome/browser/browser_process_impl.cc RegisterPrefs.
+  registry->RegisterBooleanPref(prefs::kAllowCrossOriginAuthPrompt, false);
 
   // Browser UI preferences.
   // Based on chrome/browser/ui/browser_ui_prefs.cc RegisterBrowserPrefs.
   registry->RegisterBooleanPref(prefs::kAllowFileSelectionDialogs, true);
 
-  // DevTools preferences.
-  // Based on DevToolsWindow::RegisterProfilePrefs.
-  registry->RegisterDictionaryPref(prefs::kDevToolsPreferences);
+  // From Chrome::RegisterBrowserUserPrefs.
+  registry->RegisterBooleanPref(prefs::kPrintPreviewUseSystemDefaultPrinter,
+                                false);
 
   if (command_line->HasSwitch(switches::kEnablePreferenceTesting)) {
     // Preferences used with unit tests.
@@ -199,6 +213,82 @@ std::unique_ptr<PrefService> CreatePrefService(Profile* profile,
     registry->RegisterStringPref("test.string", "default");
     registry->RegisterListPref("test.list");
     registry->RegisterDictionaryPref("test.dict");
+  }
+
+  if (profile) {
+    // Call RegisterProfilePrefs() for all services listed by
+    // EnsureBrowserContextKeyedServiceFactoriesBuilt().
+    BrowserContextDependencyManager::GetInstance()
+        ->RegisterProfilePrefsForServices(registry.get());
+
+    // Default profile preferences.
+    AccessibilityUIMessageHandler::RegisterProfilePrefs(registry.get());
+    chrome_browser_net::RegisterPredictionOptionsProfilePrefs(registry.get());
+    DeviceIDFetcher::RegisterProfilePrefs(registry.get());
+    extensions::ExtensionPrefs::RegisterProfilePrefs(registry.get());
+    HostContentSettingsMap::RegisterProfilePrefs(registry.get());
+    language::LanguagePrefs::RegisterProfilePrefs(registry.get());
+    media_router::RegisterProfilePrefs(registry.get());
+    ProfileNetworkContextService::RegisterProfilePrefs(registry.get());
+
+    const std::string& locale =
+        command_line->GetSwitchValueASCII(switches::kLang);
+    DCHECK(!locale.empty());
+    renderer_prefs::RegisterProfilePrefs(registry.get(), locale);
+
+    // Print preferences.
+    // Based on ProfileImpl::RegisterProfilePrefs.
+    registry->RegisterBooleanPref(prefs::kForceGoogleSafeSearch, false);
+    registry->RegisterIntegerPref(prefs::kForceYouTubeRestrict,
+                                  safe_search_util::YOUTUBE_RESTRICT_OFF);
+    registry->RegisterStringPref(prefs::kAllowedDomainsForApps, std::string());
+    registry->RegisterBooleanPref(prefs::kPrintingEnabled, true);
+    registry->RegisterBooleanPref(prefs::kPrintPreviewDisabled,
+                                  !extensions::PrintPreviewEnabled());
+    registry->RegisterStringPref(
+        prefs::kPrintPreviewDefaultDestinationSelectionRules, std::string());
+    registry->RegisterBooleanPref(prefs::kCloudPrintSubmitEnabled, false);
+    printing::PrintPreviewStickySettings::RegisterProfilePrefs(registry.get());
+    DownloadPrefs::RegisterProfilePrefs(registry.get());
+
+    // Cache preferences.
+    // Based on ProfileImpl::RegisterProfilePrefs.
+    registry->RegisterFilePathPref(prefs::kDiskCacheDir, cache_path);
+    registry->RegisterIntegerPref(prefs::kDiskCacheSize, 0);
+
+    // Spell checking preferences.
+    // Modify defaults from SpellcheckServiceFactory::RegisterProfilePrefs.
+    std::string spellcheck_lang =
+        command_line->GetSwitchValueASCII(switches::kOverrideSpellCheckLang);
+    if (!spellcheck_lang.empty()) {
+      registry->SetDefaultPrefValue(spellcheck::prefs::kSpellCheckDictionary,
+                                    base::Value(spellcheck_lang));
+    }
+    const bool enable_spelling_service_ =
+        command_line->HasSwitch(switches::kEnableSpellingService);
+    registry->SetDefaultPrefValue(
+        spellcheck::prefs::kSpellCheckUseSpellingService,
+        base::Value(enable_spelling_service_));
+    registry->SetDefaultPrefValue(spellcheck::prefs::kSpellCheckEnable,
+                                  base::Value(!enable_spelling_service_));
+
+    // Pepper flash preferences.
+    // Modify defaults from DeviceIDFetcher::RegisterProfilePrefs.
+    registry->SetDefaultPrefValue(prefs::kEnableDRM, base::Value(false));
+
+    // DevTools preferences.
+    // Based on DevToolsWindow::RegisterProfilePrefs.
+    registry->RegisterDictionaryPref(prefs::kDevToolsPreferences);
+    registry->RegisterDictionaryPref(prefs::kDevToolsEditedFiles);
+
+    // Language preferences. Used by ProfileNetworkContextService and
+    // InterceptedRequestHandlerWrapper.
+    const std::string& accept_language_list = GetAcceptLanguageList(profile);
+    if (!accept_language_list.empty()) {
+      registry->SetDefaultPrefValue(language::prefs::kAcceptLanguages,
+                                    base::Value(accept_language_list));
+    }
+    registry->RegisterListPref(prefs::kWebRtcLocalIpsAllowedUrls);
   }
 
   // Build the PrefService that manages the PrefRegistry and PrefStores.

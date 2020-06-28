@@ -7,44 +7,47 @@
 
 #include "libcef/common/cef_messages.h"
 #include "libcef/common/net/net_resource_provider.h"
+#include "libcef/renderer/blink_glue.h"
 #include "libcef/renderer/content_renderer_client.h"
 
-#include "components/visitedlink/renderer/visitedlink_slave.h"
+#include "components/visitedlink/renderer/visitedlink_reader.h"
 #include "content/public/child/child_thread.h"
-#include "content/public/common/service_manager_connection.h"
-#include "content/public/common/simple_connection_filter.h"
 #include "content/public/renderer/render_thread.h"
+#include "mojo/public/cpp/bindings/strong_binding.h"
 #include "net/base/net_module.h"
-#include "services/service_manager/public/cpp/binder_registry.h"
+#include "services/service_manager/public/cpp/connector.h"
+#include "third_party/blink/public/common/associated_interfaces/associated_interface_registry.h"
 #include "third_party/blink/public/platform/web_string.h"
 #include "third_party/blink/public/platform/web_url.h"
 #include "third_party/blink/public/web/web_security_policy.h"
 
+namespace {
+
+chrome::mojom::DynamicParams* GetDynamicConfigParams() {
+  static base::NoDestructor<chrome::mojom::DynamicParams> dynamic_params;
+  return dynamic_params.get();
+}
+
+}  // namespace
+
 bool CefRenderThreadObserver::is_incognito_process_ = false;
 
-CefRenderThreadObserver::CefRenderThreadObserver()
-    : visited_link_slave_(new visitedlink::VisitedLinkSlave) {
+CefRenderThreadObserver::CefRenderThreadObserver() {
   net::NetModule::SetResourceProvider(NetResourceProvider);
-
-  auto registry = std::make_unique<service_manager::BinderRegistry>();
-  registry->AddInterface(visited_link_slave_->GetBindCallback(),
-                         base::ThreadTaskRunnerHandle::Get());
-  if (content::ChildThread::Get()) {
-    content::ChildThread::Get()
-        ->GetServiceManagerConnection()
-        ->AddConnectionFilter(std::make_unique<content::SimpleConnectionFilter>(
-            std::move(registry)));
-  }
 }
 
 CefRenderThreadObserver::~CefRenderThreadObserver() {}
+
+// static
+const chrome::mojom::DynamicParams&
+CefRenderThreadObserver::GetDynamicParams() {
+  return *GetDynamicConfigParams();
+}
 
 bool CefRenderThreadObserver::OnControlMessageReceived(
     const IPC::Message& message) {
   bool handled = true;
   IPC_BEGIN_MESSAGE_MAP(CefRenderThreadObserver, message)
-    IPC_MESSAGE_HANDLER(CefProcessMsg_SetIsIncognitoProcess,
-                        OnSetIsIncognitoProcess)
     IPC_MESSAGE_HANDLER(CefProcessMsg_ModifyCrossOriginWhitelistEntry,
                         OnModifyCrossOriginWhitelistEntry)
     IPC_MESSAGE_HANDLER(CefProcessMsg_ClearCrossOriginWhitelist,
@@ -54,9 +57,37 @@ bool CefRenderThreadObserver::OnControlMessageReceived(
   return handled;
 }
 
-void CefRenderThreadObserver::OnSetIsIncognitoProcess(
-    bool is_incognito_process) {
+void CefRenderThreadObserver::RegisterMojoInterfaces(
+    blink::AssociatedInterfaceRegistry* associated_interfaces) {
+  associated_interfaces->AddInterface(base::Bind(
+      &CefRenderThreadObserver::OnRendererConfigurationAssociatedRequest,
+      base::Unretained(this)));
+}
+
+void CefRenderThreadObserver::UnregisterMojoInterfaces(
+    blink::AssociatedInterfaceRegistry* associated_interfaces) {
+  associated_interfaces->RemoveInterface(
+      chrome::mojom::RendererConfiguration::Name_);
+}
+
+void CefRenderThreadObserver::SetInitialConfiguration(
+    bool is_incognito_process,
+    mojo::PendingReceiver<chrome::mojom::ChromeOSListener> chromeos_listener) {
   is_incognito_process_ = is_incognito_process;
+}
+
+void CefRenderThreadObserver::SetConfiguration(
+    chrome::mojom::DynamicParamsPtr params) {
+  *GetDynamicConfigParams() = std::move(*params);
+}
+
+void CefRenderThreadObserver::SetContentSettingRules(
+    const RendererContentSettingRules& rules) {}
+
+void CefRenderThreadObserver::OnRendererConfigurationAssociatedRequest(
+    mojo::PendingAssociatedReceiver<chrome::mojom::RendererConfiguration>
+        receiver) {
+  renderer_configuration_receivers_.Add(this, std::move(receiver));
 }
 
 void CefRenderThreadObserver::OnModifyCrossOriginWhitelistEntry(
@@ -64,18 +95,20 @@ void CefRenderThreadObserver::OnModifyCrossOriginWhitelistEntry(
     const Cef_CrossOriginWhiteListEntry_Params& params) {
   GURL gurl = GURL(params.source_origin);
   if (add) {
-    blink::WebSecurityPolicy::AddOriginAccessWhitelistEntry(
+    blink::WebSecurityPolicy::AddOriginAccessAllowListEntry(
         gurl, blink::WebString::FromUTF8(params.target_protocol),
         blink::WebString::FromUTF8(params.target_domain),
-        params.allow_target_subdomains);
+        /*destination_port=*/0,
+        params.allow_target_subdomains
+            ? network::mojom::CorsDomainMatchMode::kAllowSubdomains
+            : network::mojom::CorsDomainMatchMode::kDisallowSubdomains,
+        network::mojom::CorsPortMatchMode::kAllowAnyPort,
+        network::mojom::CorsOriginAccessMatchPriority::kDefaultPriority);
   } else {
-    blink::WebSecurityPolicy::RemoveOriginAccessWhitelistEntry(
-        gurl, blink::WebString::FromUTF8(params.target_protocol),
-        blink::WebString::FromUTF8(params.target_domain),
-        params.allow_target_subdomains);
+    blink::WebSecurityPolicy::ClearOriginAccessListForOrigin(gurl);
   }
 }
 
 void CefRenderThreadObserver::OnClearCrossOriginWhitelist() {
-  blink::WebSecurityPolicy::ResetOriginAccessWhitelists();
+  blink::WebSecurityPolicy::ClearOriginAccessList();
 }

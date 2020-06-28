@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,11 +9,12 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=5c88de7a076aec8b93ca430248ab0f903a105b98$
+// $hash=ec0d6a1abada255681087caf7a9db1bba5e90a7b$
 //
 
 #include "libcef_dll/ctocpp/download_image_callback_ctocpp.h"
 #include "libcef_dll/cpptoc/image_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
@@ -22,6 +23,8 @@ void CefDownloadImageCallbackCToCpp::OnDownloadImageFinished(
     const CefString& image_url,
     int http_status_code,
     CefRefPtr<CefImage> image) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_download_image_callback_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_download_image_finished))
     return;
@@ -44,6 +47,12 @@ void CefDownloadImageCallbackCToCpp::OnDownloadImageFinished(
 
 CefDownloadImageCallbackCToCpp::CefDownloadImageCallbackCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefDownloadImageCallbackCToCpp::~CefDownloadImageCallbackCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_download_image_callback_t* CefCToCppRefCounted<
     CefDownloadImageCallbackCToCpp,
@@ -51,16 +60,8 @@ cef_download_image_callback_t* CefCToCppRefCounted<
     cef_download_image_callback_t>::UnwrapDerived(CefWrapperType type,
                                                   CefDownloadImageCallback* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<
-    CefDownloadImageCallbackCToCpp,
-    CefDownloadImageCallback,
-    cef_download_image_callback_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

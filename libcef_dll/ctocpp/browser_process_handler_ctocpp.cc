@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=7a16f2cd80ae757de1e629fa2d4d58449f913d05$
+// $hash=622d56aec0a5d6485a586bd6d993df7af4fa2d62$
 //
 
 #include "libcef_dll/ctocpp/browser_process_handler_ctocpp.h"
@@ -73,7 +73,7 @@ NO_SANITIZE("cfi-icall")
 CefRefPtr<CefPrintHandler> CefBrowserProcessHandlerCToCpp::GetPrintHandler() {
   cef_browser_process_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_print_handler))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -100,6 +100,10 @@ void CefBrowserProcessHandlerCToCpp::OnScheduleMessagePumpWork(int64 delay_ms) {
 
 CefBrowserProcessHandlerCToCpp::CefBrowserProcessHandlerCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefBrowserProcessHandlerCToCpp::~CefBrowserProcessHandlerCToCpp() {}
+
 template <>
 cef_browser_process_handler_t* CefCToCppRefCounted<
     CefBrowserProcessHandlerCToCpp,
@@ -107,16 +111,8 @@ cef_browser_process_handler_t* CefCToCppRefCounted<
     cef_browser_process_handler_t>::UnwrapDerived(CefWrapperType type,
                                                   CefBrowserProcessHandler* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<
-    CefBrowserProcessHandlerCToCpp,
-    CefBrowserProcessHandler,
-    cef_browser_process_handler_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

@@ -1,9 +1,9 @@
-diff --git ui/base/dragdrop/os_exchange_data_provider_aurax11.cc ui/base/dragdrop/os_exchange_data_provider_aurax11.cc
-index 1a6e9a1c7892..08eb8007c5f7 100644
---- ui/base/dragdrop/os_exchange_data_provider_aurax11.cc
-+++ ui/base/dragdrop/os_exchange_data_provider_aurax11.cc
-@@ -141,7 +141,8 @@ void OSExchangeDataProviderAuraX11::SetURL(const GURL& url,
-     format_map_.Insert(gfx::GetAtom(Clipboard::kMimeTypeMozillaURL), mem);
+diff --git ui/base/x/x11_os_exchange_data_provider.cc ui/base/x/x11_os_exchange_data_provider.cc
+index 88a24bab57b5..d130fcc0eca8 100644
+--- ui/base/x/x11_os_exchange_data_provider.cc
++++ ui/base/x/x11_os_exchange_data_provider.cc
+@@ -134,7 +134,8 @@ void XOSExchangeDataProvider::SetURL(const GURL& url,
+     format_map_.Insert(gfx::GetAtom(kMimeTypeMozillaURL), mem);
  
      // Set a string fallback as well.
 -    SetString(spec);

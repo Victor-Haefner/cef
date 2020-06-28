@@ -9,18 +9,14 @@
 #include "base/base_paths.h"
 #include "base/command_line.h"
 #include "base/files/file_path.h"
+#include "base/mac/bundle_locations.h"
 #include "base/mac/foundation_util.h"
 #include "base/path_service.h"
+#include "base/strings/sys_string_conversions.h"
 
 namespace util_mac {
 
 namespace {
-
-// Returns the path to the top-level app bundle that contains the main process
-// executable.
-base::FilePath GetMainBundlePath() {
-  return base::mac::GetAppBundlePath(GetMainProcessPath());
-}
 
 // Returns the path to the Frameworks directory inside the top-level app bundle.
 base::FilePath GetFrameworksPath() {
@@ -66,6 +62,21 @@ base::FilePath GetMainProcessPath() {
   base::PathService::Get(base::FILE_EXE, &path);
   DCHECK(!path.empty());
   return path;
+}
+
+base::FilePath GetMainBundlePath() {
+  base::FilePath main_bundle_path =
+      base::CommandLine::ForCurrentProcess()->GetSwitchValuePath(
+          switches::kMainBundlePath);
+  if (!main_bundle_path.empty())
+    return main_bundle_path;
+
+  return base::mac::GetAppBundlePath(GetMainProcessPath());
+}
+
+std::string GetMainBundleID() {
+  NSBundle* bundle = base::mac::OuterBundle();
+  return base::SysNSStringToUTF8([bundle bundleIdentifier]);
 }
 
 base::FilePath GetMainResourcesDirectory() {

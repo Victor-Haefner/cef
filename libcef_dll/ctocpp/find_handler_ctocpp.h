@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=518d6b6afc75c3fbc0289cfb17f807e56324e314$
+// $hash=5af48b5e0fa05de0b6b7bc31e2f4b1b2fa4c045b$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_FIND_HANDLER_CTOCPP_H_
@@ -31,6 +31,7 @@ class CefFindHandlerCToCpp : public CefCToCppRefCounted<CefFindHandlerCToCpp,
                                                         cef_find_handler_t> {
  public:
   CefFindHandlerCToCpp();
+  virtual ~CefFindHandlerCToCpp();
 
   // CefFindHandler methods.
   void OnFindResult(CefRefPtr<CefBrowser> browser,

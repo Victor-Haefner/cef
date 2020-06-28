@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,17 +9,20 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=dde34894700dbc23a2a0df5d38e15187a875ccd8$
+// $hash=c36d12cf40153d3c86ee21e31a3b29a0f01146fc$
 //
 
 #include "libcef_dll/ctocpp/get_extension_resource_callback_ctocpp.h"
 #include "libcef_dll/ctocpp/stream_reader_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall")
 void CefGetExtensionResourceCallbackCToCpp::Continue(
     CefRefPtr<CefStreamReader> stream) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_get_extension_resource_callback_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, cont))
     return;
@@ -33,6 +36,8 @@ void CefGetExtensionResourceCallbackCToCpp::Continue(
 }
 
 NO_SANITIZE("cfi-icall") void CefGetExtensionResourceCallbackCToCpp::Cancel() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_get_extension_resource_callback_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, cancel))
     return;
@@ -48,6 +53,13 @@ NO_SANITIZE("cfi-icall") void CefGetExtensionResourceCallbackCToCpp::Cancel() {
 CefGetExtensionResourceCallbackCToCpp::CefGetExtensionResourceCallbackCToCpp() {
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefGetExtensionResourceCallbackCToCpp::
+    ~CefGetExtensionResourceCallbackCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_get_extension_resource_callback_t*
 CefCToCppRefCounted<CefGetExtensionResourceCallbackCToCpp,
@@ -55,16 +67,8 @@ CefCToCppRefCounted<CefGetExtensionResourceCallbackCToCpp,
                     cef_get_extension_resource_callback_t>::
     UnwrapDerived(CefWrapperType type, CefGetExtensionResourceCallback* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<
-    CefGetExtensionResourceCallbackCToCpp,
-    CefGetExtensionResourceCallback,
-    cef_get_extension_resource_callback_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

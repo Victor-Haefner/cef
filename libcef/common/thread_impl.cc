@@ -13,7 +13,7 @@ namespace {
 
 void StopAndDestroy(base::Thread* thread) {
   // Calling PlatformThread::Join() on the UI thread is otherwise disallowed.
-  base::ThreadRestrictions::ScopedAllowIO scoped_allow_io;
+  base::ScopedAllowBaseSyncPrimitivesForTesting scoped_allow_sync_primitives;
 
   // Deleting |thread| will implicitly stop and join it.
   delete thread;
@@ -86,10 +86,10 @@ bool CefThreadImpl::Create(const CefString& display_name,
 
   switch (message_loop_type) {
     case ML_TYPE_UI:
-      options.message_loop_type = base::MessageLoop::TYPE_UI;
+      options.message_pump_type = base::MessagePumpType::UI;
       break;
     case ML_TYPE_IO:
-      options.message_loop_type = base::MessageLoop::TYPE_IO;
+      options.message_pump_type = base::MessagePumpType::IO;
       break;
     default:
       break;
@@ -100,7 +100,7 @@ bool CefThreadImpl::Create(const CefString& display_name,
 #if defined(OS_WIN)
   if (com_init_mode != COM_INIT_MODE_NONE) {
     if (com_init_mode == COM_INIT_MODE_STA)
-      options.message_loop_type = base::MessageLoop::TYPE_UI;
+      options.message_pump_type = base::MessagePumpType::UI;
     thread_->init_com_with_mta(com_init_mode == COM_INIT_MODE_MTA);
   }
 #endif

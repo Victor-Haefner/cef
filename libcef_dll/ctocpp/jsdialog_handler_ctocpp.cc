@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,12 +9,13 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=e498c4bed5dd87d54da86181ace99b6b632dfa85$
+// $hash=c3d58fe1274c19d04eb2ef801747b1f2012b86ce$
 //
 
 #include "libcef_dll/ctocpp/jsdialog_handler_ctocpp.h"
 #include "libcef_dll/cpptoc/browser_cpptoc.h"
 #include "libcef_dll/cpptoc/jsdialog_callback_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
@@ -27,6 +28,8 @@ bool CefJSDialogHandlerCToCpp::OnJSDialog(
     const CefString& default_prompt_text,
     CefRefPtr<CefJSDialogCallback> callback,
     bool& suppress_message) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_jsdialog_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_jsdialog))
     return false;
@@ -65,6 +68,8 @@ bool CefJSDialogHandlerCToCpp::OnBeforeUnloadDialog(
     const CefString& message_text,
     bool is_reload,
     CefRefPtr<CefJSDialogCallback> callback) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_jsdialog_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_before_unload_dialog))
     return false;
@@ -93,6 +98,8 @@ bool CefJSDialogHandlerCToCpp::OnBeforeUnloadDialog(
 NO_SANITIZE("cfi-icall")
 void CefJSDialogHandlerCToCpp::OnResetDialogState(
     CefRefPtr<CefBrowser> browser) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_jsdialog_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_reset_dialog_state))
     return;
@@ -110,6 +117,8 @@ void CefJSDialogHandlerCToCpp::OnResetDialogState(
 
 NO_SANITIZE("cfi-icall")
 void CefJSDialogHandlerCToCpp::OnDialogClosed(CefRefPtr<CefBrowser> browser) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_jsdialog_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_dialog_closed))
     return;
@@ -129,6 +138,12 @@ void CefJSDialogHandlerCToCpp::OnDialogClosed(CefRefPtr<CefBrowser> browser) {
 
 CefJSDialogHandlerCToCpp::CefJSDialogHandlerCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefJSDialogHandlerCToCpp::~CefJSDialogHandlerCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_jsdialog_handler_t* CefCToCppRefCounted<
     CefJSDialogHandlerCToCpp,
@@ -136,16 +151,8 @@ cef_jsdialog_handler_t* CefCToCppRefCounted<
     cef_jsdialog_handler_t>::UnwrapDerived(CefWrapperType type,
                                            CefJSDialogHandler* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefJSDialogHandlerCToCpp,
-                                         CefJSDialogHandler,
-                                         cef_jsdialog_handler_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefJSDialogHandlerCToCpp,

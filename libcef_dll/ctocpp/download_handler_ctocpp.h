@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=cafc443f02dd7c4693faad0e2eda4f1f9062ab29$
+// $hash=52a2a7f06afb8a82f469cb96b3c49aa914a2a87f$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_DOWNLOAD_HANDLER_CTOCPP_H_
@@ -32,6 +32,7 @@ class CefDownloadHandlerCToCpp
                                  cef_download_handler_t> {
  public:
   CefDownloadHandlerCToCpp();
+  virtual ~CefDownloadHandlerCToCpp();
 
   // CefDownloadHandler methods.
   void OnBeforeDownload(CefRefPtr<CefBrowser> browser,

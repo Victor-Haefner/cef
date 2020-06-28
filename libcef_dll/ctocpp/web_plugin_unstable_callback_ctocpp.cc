@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,16 +9,19 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=59a7e35ffba274e172c06cd280ce2c5265a21645$
+// $hash=7d4c6744f017df70be4318f1f61b140b4ee40ed5$
 //
 
 #include "libcef_dll/ctocpp/web_plugin_unstable_callback_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall")
 void CefWebPluginUnstableCallbackCToCpp::IsUnstable(const CefString& path,
                                                     bool unstable) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_web_plugin_unstable_callback_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, is_unstable))
     return;
@@ -38,6 +41,12 @@ void CefWebPluginUnstableCallbackCToCpp::IsUnstable(const CefString& path,
 
 CefWebPluginUnstableCallbackCToCpp::CefWebPluginUnstableCallbackCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefWebPluginUnstableCallbackCToCpp::~CefWebPluginUnstableCallbackCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_web_plugin_unstable_callback_t*
 CefCToCppRefCounted<CefWebPluginUnstableCallbackCToCpp,
@@ -45,16 +54,8 @@ CefCToCppRefCounted<CefWebPluginUnstableCallbackCToCpp,
                     cef_web_plugin_unstable_callback_t>::
     UnwrapDerived(CefWrapperType type, CefWebPluginUnstableCallback* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<
-    CefWebPluginUnstableCallbackCToCpp,
-    CefWebPluginUnstableCallback,
-    cef_web_plugin_unstable_callback_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,14 +9,17 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=14df1b4e62bc8d726d2d2b2546a1a9ce944beed3$
+// $hash=f317870833b17779de0a9cb0f0516aface361613$
 //
 
 #include "libcef_dll/ctocpp/response_filter_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall") bool CefResponseFilterCToCpp::InitFilter() {
+  shutdown_checker::AssertNotShutdown();
+
   cef_response_filter_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, init_filter))
     return false;
@@ -38,6 +41,8 @@ CefResponseFilter::FilterStatus CefResponseFilterCToCpp::Filter(
     void* data_out,
     size_t data_out_size,
     size_t& data_out_written) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_response_filter_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, filter))
     return RESPONSE_FILTER_ERROR;
@@ -63,6 +68,12 @@ CefResponseFilter::FilterStatus CefResponseFilterCToCpp::Filter(
 
 CefResponseFilterCToCpp::CefResponseFilterCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefResponseFilterCToCpp::~CefResponseFilterCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_response_filter_t* CefCToCppRefCounted<
     CefResponseFilterCToCpp,
@@ -70,16 +81,8 @@ cef_response_filter_t* CefCToCppRefCounted<
     cef_response_filter_t>::UnwrapDerived(CefWrapperType type,
                                           CefResponseFilter* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefResponseFilterCToCpp,
-                                         CefResponseFilter,
-                                         cef_response_filter_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefResponseFilterCToCpp,

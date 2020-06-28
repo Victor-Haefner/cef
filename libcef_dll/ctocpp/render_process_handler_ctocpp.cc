@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,11 +9,12 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=2aac87f7b6c15081a57dda5a56afa67dfca2e5af$
+// $hash=084106863bdaf595427b0d121362e207b15c66bf$
 //
 
 #include "libcef_dll/ctocpp/render_process_handler_ctocpp.h"
 #include "libcef_dll/cpptoc/browser_cpptoc.h"
+#include "libcef_dll/cpptoc/dictionary_value_cpptoc.h"
 #include "libcef_dll/cpptoc/domnode_cpptoc.h"
 #include "libcef_dll/cpptoc/frame_cpptoc.h"
 #include "libcef_dll/cpptoc/list_value_cpptoc.h"
@@ -58,7 +59,8 @@ void CefRenderProcessHandlerCToCpp::OnWebKitInitialized() {
 
 NO_SANITIZE("cfi-icall")
 void CefRenderProcessHandlerCToCpp::OnBrowserCreated(
-    CefRefPtr<CefBrowser> browser) {
+    CefRefPtr<CefBrowser> browser,
+    CefRefPtr<CefDictionaryValue> extra_info) {
   cef_render_process_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_browser_created))
     return;
@@ -69,9 +71,14 @@ void CefRenderProcessHandlerCToCpp::OnBrowserCreated(
   DCHECK(browser.get());
   if (!browser.get())
     return;
+  // Verify param: extra_info; type: refptr_diff
+  DCHECK(extra_info.get());
+  if (!extra_info.get())
+    return;
 
   // Execute
-  _struct->on_browser_created(_struct, CefBrowserCppToC::Wrap(browser));
+  _struct->on_browser_created(_struct, CefBrowserCppToC::Wrap(browser),
+                              CefDictionaryValueCppToC::Wrap(extra_info));
 }
 
 NO_SANITIZE("cfi-icall")
@@ -96,7 +103,7 @@ NO_SANITIZE("cfi-icall")
 CefRefPtr<CefLoadHandler> CefRenderProcessHandlerCToCpp::GetLoadHandler() {
   cef_render_process_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_load_handler))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -234,6 +241,7 @@ void CefRenderProcessHandlerCToCpp::OnFocusedNodeChanged(
 NO_SANITIZE("cfi-icall")
 bool CefRenderProcessHandlerCToCpp::OnProcessMessageReceived(
     CefRefPtr<CefBrowser> browser,
+    CefRefPtr<CefFrame> frame,
     CefProcessId source_process,
     CefRefPtr<CefProcessMessage> message) {
   cef_render_process_handler_t* _struct = GetStruct();
@@ -246,6 +254,10 @@ bool CefRenderProcessHandlerCToCpp::OnProcessMessageReceived(
   DCHECK(browser.get());
   if (!browser.get())
     return false;
+  // Verify param: frame; type: refptr_diff
+  DCHECK(frame.get());
+  if (!frame.get())
+    return false;
   // Verify param: message; type: refptr_diff
   DCHECK(message.get());
   if (!message.get())
@@ -253,8 +265,8 @@ bool CefRenderProcessHandlerCToCpp::OnProcessMessageReceived(
 
   // Execute
   int _retval = _struct->on_process_message_received(
-      _struct, CefBrowserCppToC::Wrap(browser), source_process,
-      CefProcessMessageCppToC::Wrap(message));
+      _struct, CefBrowserCppToC::Wrap(browser), CefFrameCppToC::Wrap(frame),
+      source_process, CefProcessMessageCppToC::Wrap(message));
 
   // Return type: bool
   return _retval ? true : false;
@@ -264,6 +276,10 @@ bool CefRenderProcessHandlerCToCpp::OnProcessMessageReceived(
 
 CefRenderProcessHandlerCToCpp::CefRenderProcessHandlerCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefRenderProcessHandlerCToCpp::~CefRenderProcessHandlerCToCpp() {}
+
 template <>
 cef_render_process_handler_t* CefCToCppRefCounted<
     CefRenderProcessHandlerCToCpp,
@@ -271,16 +287,8 @@ cef_render_process_handler_t* CefCToCppRefCounted<
     cef_render_process_handler_t>::UnwrapDerived(CefWrapperType type,
                                                  CefRenderProcessHandler* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<
-    CefRenderProcessHandlerCToCpp,
-    CefRenderProcessHandler,
-    cef_render_process_handler_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefRenderProcessHandlerCToCpp,

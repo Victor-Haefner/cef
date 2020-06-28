@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Marshall A. Greenblatt. All rights reserved.
+// Copyright (c) 2020 Marshall A. Greenblatt. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -33,7 +33,7 @@
 // by hand. See the translator.README.txt file in the tools directory for
 // more information.
 //
-// $hash=9f1c8c065c1604c5d09435e0869b45fd3f51aa31$
+// $hash=14cf03e02d8ca3416e65f756470afd8185c7bc78$
 //
 
 #ifndef CEF_INCLUDE_CAPI_CEF_PARSER_CAPI_H_
@@ -138,6 +138,16 @@ cef_uridecode(const cef_string_t* text,
 ///
 CEF_EXPORT struct _cef_value_t* cef_parse_json(
     const cef_string_t* json_string,
+    cef_json_parser_options_t options);
+
+///
+// Parses the specified UTF8-encoded |json| buffer of size |json_size| and
+// returns a dictionary or list representation. If JSON parsing fails this
+// function returns NULL.
+///
+CEF_EXPORT struct _cef_value_t* cef_parse_json_buffer(
+    const void* json,
+    size_t json_size,
     cef_json_parser_options_t options);
 
 ///

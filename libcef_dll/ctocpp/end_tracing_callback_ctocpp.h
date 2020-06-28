@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=3f9951910dd52f99332de4d9d54f9b089d711536$
+// $hash=78fcf71ee6c9b5eb813286bb6b9ab3474c6ee1b4$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_END_TRACING_CALLBACK_CTOCPP_H_
@@ -32,6 +32,7 @@ class CefEndTracingCallbackCToCpp
                                  cef_end_tracing_callback_t> {
  public:
   CefEndTracingCallbackCToCpp();
+  virtual ~CefEndTracingCallbackCToCpp();
 
   // CefEndTracingCallback methods.
   void OnEndTracingComplete(const CefString& tracing_file) override;

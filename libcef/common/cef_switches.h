@@ -17,12 +17,14 @@ extern const char kLogSeverity_Verbose[];
 extern const char kLogSeverity_Info[];
 extern const char kLogSeverity_Warning[];
 extern const char kLogSeverity_Error[];
+extern const char kLogSeverity_Fatal[];
 extern const char kLogSeverity_Disable[];
 extern const char kResourcesDirPath[];
 extern const char kLocalesDirPath[];
 extern const char kDisablePackLoading[];
 extern const char kUncaughtExceptionStackSize[];
 extern const char kDefaultEncoding[];
+extern const char kDisableJavascript[];
 extern const char kDisableJavascriptCloseWindows[];
 extern const char kDisableJavascriptAccessClipboard[];
 extern const char kDisableJavascriptDomPaste[];
@@ -49,10 +51,13 @@ extern const char kPluginPolicy_Allow[];
 extern const char kPluginPolicy_Detect[];
 extern const char kPluginPolicy_Block[];
 extern const char kEnablePreferenceTesting[];
-extern const char kEnableNetSecurityExpiration[];
+extern const char kEnablePrintPreview[];
+extern const char kDisableNewBrowserInfoTimeout[];
+extern const char kDevToolsProtocolLogFile[];
 
 #if defined(OS_MACOSX)
 extern const char kFrameworkDirPath[];
+extern const char kMainBundlePath[];
 #endif
 
 }  // namespace switches

@@ -27,8 +27,7 @@ void CefScrollViewImpl::SetContentView(CefRefPtr<CefView> view) {
   if (!view.get() || !view->IsValid() || view->IsAttached())
     return;
 
-  std::unique_ptr<views::View> view_ptr = view_util::PassOwnership(view);
-  root_view()->SetContents(view_ptr.release());
+  root_view()->SetContents(view_util::PassOwnership(view));
 }
 
 CefRefPtr<CefView> CefScrollViewImpl::GetContentView() {
@@ -45,7 +44,7 @@ CefRect CefScrollViewImpl::GetVisibleContentRect() {
 bool CefScrollViewImpl::HasHorizontalScrollbar() {
   CEF_REQUIRE_VALID_RETURN(false);
   const views::ScrollBar* scrollbar = root_view()->horizontal_scroll_bar();
-  return scrollbar && scrollbar->visible();
+  return scrollbar && scrollbar->GetVisible();
 }
 
 int CefScrollViewImpl::GetHorizontalScrollbarHeight() {
@@ -56,7 +55,7 @@ int CefScrollViewImpl::GetHorizontalScrollbarHeight() {
 bool CefScrollViewImpl::HasVerticalScrollbar() {
   CEF_REQUIRE_VALID_RETURN(false);
   const views::ScrollBar* scrollbar = root_view()->vertical_scroll_bar();
-  return scrollbar && scrollbar->visible();
+  return scrollbar && scrollbar->GetVisible();
 }
 
 int CefScrollViewImpl::GetVerticalScrollbarWidth() {

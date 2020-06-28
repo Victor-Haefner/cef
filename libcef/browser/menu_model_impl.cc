@@ -15,7 +15,9 @@
 #include "base/message_loop/message_loop.h"
 #include "content/public/common/menu_item.h"
 #include "ui/base/accelerators/accelerator.h"
+#include "ui/base/models/image_model.h"
 #include "ui/gfx/geometry/point.h"
+#include "ui/gfx/image/image.h"
 
 namespace {
 
@@ -30,8 +32,7 @@ class CefSimpleMenuModel : public ui::MenuModel {
  public:
   // The Delegate can be NULL, though if it is items can't be checked or
   // disabled.
-  explicit CefSimpleMenuModel(CefMenuModelImpl* impl)
-      : impl_(impl), menu_model_delegate_(NULL) {}
+  explicit CefSimpleMenuModel(CefMenuModelImpl* impl) : impl_(impl) {}
 
   // MenuModel methods.
   bool HasIcons() const override { return false; }
@@ -105,10 +106,12 @@ class CefSimpleMenuModel : public ui::MenuModel {
     return impl_->GetGroupIdAt(index);
   }
 
-  bool GetIconAt(int index, gfx::Image* icon) override { return false; }
+  ui::ImageModel GetIconAt(int index) const override {
+    return ui::ImageModel();
+  }
 
   ui::ButtonMenuItemModel* GetButtonMenuItemAt(int index) const override {
-    return NULL;
+    return nullptr;
   }
 
   bool IsEnabledAt(int index) const override {
@@ -118,8 +121,6 @@ class CefSimpleMenuModel : public ui::MenuModel {
   bool IsVisibleAt(int index) const override {
     return impl_->IsVisibleAt(index);
   }
-
-  void HighlightChangedTo(int index) override {}
 
   void ActivatedAt(int index) override { ActivatedAt(index, 0); }
 
@@ -131,7 +132,7 @@ class CefSimpleMenuModel : public ui::MenuModel {
     CefRefPtr<CefMenuModel> submenu = impl_->GetSubMenuAt(index);
     if (submenu.get())
       return static_cast<CefMenuModelImpl*>(submenu.get())->model();
-    return NULL;
+    return nullptr;
   }
 
   void MouseOutsideMenu(const gfx::Point& screen_point) override {
@@ -163,18 +164,8 @@ class CefSimpleMenuModel : public ui::MenuModel {
 
   void MenuWillClose() override { impl_->MenuWillClose(); }
 
-  void SetMenuModelDelegate(
-      ui::MenuModelDelegate* menu_model_delegate) override {
-    menu_model_delegate_ = menu_model_delegate;
-  }
-
-  ui::MenuModelDelegate* GetMenuModelDelegate() const override {
-    return menu_model_delegate_;
-  }
-
  private:
   CefMenuModelImpl* impl_;
-  ui::MenuModelDelegate* menu_model_delegate_;
 
   DISALLOW_COPY_AND_ASSIGN(CefSimpleMenuModel);
 };
@@ -317,7 +308,7 @@ bool CefMenuModelImpl::AddRadioItem(int command_id,
 CefRefPtr<CefMenuModel> CefMenuModelImpl::AddSubMenu(int command_id,
                                                      const CefString& label) {
   if (!VerifyContext())
-    return NULL;
+    return nullptr;
 
   Item item(MENUITEMTYPE_SUBMENU, command_id, label, kInvalidGroupId);
   item.submenu_ = new CefMenuModelImpl(delegate_, menu_model_delegate_, true);
@@ -373,7 +364,7 @@ CefRefPtr<CefMenuModel> CefMenuModelImpl::InsertSubMenuAt(
     int command_id,
     const CefString& label) {
   if (!VerifyContext())
-    return NULL;
+    return nullptr;
 
   Item item(MENUITEMTYPE_SUBMENU, command_id, label, kInvalidGroupId);
   item.submenu_ = new CefMenuModelImpl(delegate_, menu_model_delegate_, true);
@@ -503,11 +494,11 @@ CefRefPtr<CefMenuModel> CefMenuModelImpl::GetSubMenu(int command_id) {
 
 CefRefPtr<CefMenuModel> CefMenuModelImpl::GetSubMenuAt(int index) {
   if (!VerifyContext())
-    return NULL;
+    return nullptr;
 
   if (index >= 0 && index < static_cast<int>(items_.size()))
     return items_[index].submenu_.get();
-  return NULL;
+  return nullptr;
 }
 
 bool CefMenuModelImpl::IsVisible(int command_id) {

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,15 +9,18 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=767c89cc3d2f8472326c4e11e55cb812d19fae35$
+// $hash=39ca29830cc55c7ebbb4786e811d20fa675156af$
 //
 
 #include "libcef_dll/cpptoc/v8stack_trace_cpptoc.h"
 #include "libcef_dll/cpptoc/v8stack_frame_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // GLOBAL FUNCTIONS - Body may be edited by hand.
 
 CEF_EXPORT cef_v8stack_trace_t* cef_v8stack_trace_get_current(int frame_limit) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Execute
@@ -32,6 +35,8 @@ namespace {
 // MEMBER FUNCTIONS - Body may be edited by hand.
 
 int CEF_CALLBACK v8stack_trace_is_valid(struct _cef_v8stack_trace_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -47,6 +52,8 @@ int CEF_CALLBACK v8stack_trace_is_valid(struct _cef_v8stack_trace_t* self) {
 
 int CEF_CALLBACK
 v8stack_trace_get_frame_count(struct _cef_v8stack_trace_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -62,6 +69,8 @@ v8stack_trace_get_frame_count(struct _cef_v8stack_trace_t* self) {
 
 struct _cef_v8stack_frame_t* CEF_CALLBACK
 v8stack_trace_get_frame(struct _cef_v8stack_trace_t* self, int index) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -86,6 +95,12 @@ CefV8StackTraceCppToC::CefV8StackTraceCppToC() {
   GetStruct()->get_frame = v8stack_trace_get_frame;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefV8StackTraceCppToC::~CefV8StackTraceCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefV8StackTrace> CefCppToCRefCounted<
     CefV8StackTraceCppToC,
@@ -93,16 +108,8 @@ CefRefPtr<CefV8StackTrace> CefCppToCRefCounted<
     cef_v8stack_trace_t>::UnwrapDerived(CefWrapperType type,
                                         cef_v8stack_trace_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefV8StackTraceCppToC,
-                                         CefV8StackTrace,
-                                         cef_v8stack_trace_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefV8StackTraceCppToC,

@@ -5,110 +5,124 @@
 
 #include "libcef/browser/osr/render_widget_host_view_osr.h"
 
+#if defined(USE_X11)
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>
 #undef Status  // Avoid conflicts with url_request_status.h
 
 #include "libcef/browser/native/window_x11.h"
 
-#include "third_party/blink/public/platform/web_cursor_info.h"
 #include "ui/base/x/x11_util.h"
 #include "ui/gfx/x/x11_types.h"
+#endif  // defined(USE_X11)
 
+#if defined(USE_X11)
 namespace {
 
 // Based on ui/base/cursor/cursor_loader_x11.cc.
 
-using blink::WebCursorInfo;
-
-int ToCursorID(WebCursorInfo::Type type) {
+int ToCursorID(ui::mojom::CursorType type) {
   switch (type) {
-    case WebCursorInfo::kTypePointer:
+    case ui::mojom::CursorType::kPointer:
       return XC_left_ptr;
-    case WebCursorInfo::kTypeCross:
+    case ui::mojom::CursorType::kCross:
       return XC_crosshair;
-    case WebCursorInfo::kTypeHand:
+    case ui::mojom::CursorType::kHand:
       return XC_hand2;
-    case WebCursorInfo::kTypeIBeam:
+    case ui::mojom::CursorType::kIBeam:
       return XC_xterm;
-    case WebCursorInfo::kTypeWait:
+    case ui::mojom::CursorType::kWait:
       return XC_watch;
-    case WebCursorInfo::kTypeHelp:
+    case ui::mojom::CursorType::kHelp:
       return XC_question_arrow;
-    case WebCursorInfo::kTypeEastResize:
+    case ui::mojom::CursorType::kEastResize:
       return XC_right_side;
-    case WebCursorInfo::kTypeNorthResize:
+    case ui::mojom::CursorType::kNorthResize:
       return XC_top_side;
-    case WebCursorInfo::kTypeNorthEastResize:
+    case ui::mojom::CursorType::kNorthEastResize:
       return XC_top_right_corner;
-    case WebCursorInfo::kTypeNorthWestResize:
+    case ui::mojom::CursorType::kNorthWestResize:
       return XC_top_left_corner;
-    case WebCursorInfo::kTypeSouthResize:
+    case ui::mojom::CursorType::kSouthResize:
       return XC_bottom_side;
-    case WebCursorInfo::kTypeSouthEastResize:
+    case ui::mojom::CursorType::kSouthEastResize:
       return XC_bottom_right_corner;
-    case WebCursorInfo::kTypeSouthWestResize:
+    case ui::mojom::CursorType::kSouthWestResize:
       return XC_bottom_left_corner;
-    case WebCursorInfo::kTypeWestResize:
+    case ui::mojom::CursorType::kWestResize:
       return XC_left_side;
-    case WebCursorInfo::kTypeNorthSouthResize:
+    case ui::mojom::CursorType::kNorthSouthResize:
       return XC_sb_v_double_arrow;
-    case WebCursorInfo::kTypeEastWestResize:
+    case ui::mojom::CursorType::kEastWestResize:
       return XC_sb_h_double_arrow;
-    case WebCursorInfo::kTypeNorthEastSouthWestResize:
+    case ui::mojom::CursorType::kNorthEastSouthWestResize:
       return XC_left_ptr;
-    case WebCursorInfo::kTypeNorthWestSouthEastResize:
+    case ui::mojom::CursorType::kNorthWestSouthEastResize:
       return XC_left_ptr;
-    case WebCursorInfo::kTypeColumnResize:
+    case ui::mojom::CursorType::kColumnResize:
       return XC_sb_h_double_arrow;
-    case WebCursorInfo::kTypeRowResize:
+    case ui::mojom::CursorType::kRowResize:
       return XC_sb_v_double_arrow;
-    case WebCursorInfo::kTypeMiddlePanning:
+    case ui::mojom::CursorType::kMiddlePanning:
       return XC_fleur;
-    case WebCursorInfo::kTypeEastPanning:
+    case ui::mojom::CursorType::kEastPanning:
       return XC_sb_right_arrow;
-    case WebCursorInfo::kTypeNorthPanning:
+    case ui::mojom::CursorType::kNorthPanning:
       return XC_sb_up_arrow;
-    case WebCursorInfo::kTypeNorthEastPanning:
+    case ui::mojom::CursorType::kNorthEastPanning:
       return XC_top_right_corner;
-    case WebCursorInfo::kTypeNorthWestPanning:
+    case ui::mojom::CursorType::kNorthWestPanning:
       return XC_top_left_corner;
-    case WebCursorInfo::kTypeSouthPanning:
+    case ui::mojom::CursorType::kSouthPanning:
       return XC_sb_down_arrow;
-    case WebCursorInfo::kTypeSouthEastPanning:
+    case ui::mojom::CursorType::kSouthEastPanning:
       return XC_bottom_right_corner;
-    case WebCursorInfo::kTypeSouthWestPanning:
+    case ui::mojom::CursorType::kSouthWestPanning:
       return XC_bottom_left_corner;
-    case WebCursorInfo::kTypeWestPanning:
+    case ui::mojom::CursorType::kWestPanning:
       return XC_sb_left_arrow;
-    case WebCursorInfo::kTypeMove:
+    case ui::mojom::CursorType::kMove:
       return XC_fleur;
-    case WebCursorInfo::kTypeVerticalText:
+    case ui::mojom::CursorType::kVerticalText:
       return XC_left_ptr;
-    case WebCursorInfo::kTypeCell:
+    case ui::mojom::CursorType::kCell:
       return XC_left_ptr;
-    case WebCursorInfo::kTypeContextMenu:
+    case ui::mojom::CursorType::kContextMenu:
       return XC_left_ptr;
-    case WebCursorInfo::kTypeAlias:
+    case ui::mojom::CursorType::kAlias:
       return XC_left_ptr;
-    case WebCursorInfo::kTypeProgress:
+    case ui::mojom::CursorType::kProgress:
       return XC_left_ptr;
-    case WebCursorInfo::kTypeNoDrop:
+    case ui::mojom::CursorType::kNoDrop:
       return XC_left_ptr;
-    case WebCursorInfo::kTypeCopy:
+    case ui::mojom::CursorType::kCopy:
       return XC_left_ptr;
-    case WebCursorInfo::kTypeNotAllowed:
+    case ui::mojom::CursorType::kNotAllowed:
       return XC_left_ptr;
-    case WebCursorInfo::kTypeZoomIn:
+    case ui::mojom::CursorType::kZoomIn:
       return XC_left_ptr;
-    case WebCursorInfo::kTypeZoomOut:
+    case ui::mojom::CursorType::kZoomOut:
       return XC_left_ptr;
-    case WebCursorInfo::kTypeGrab:
+    case ui::mojom::CursorType::kGrab:
       return XC_left_ptr;
-    case WebCursorInfo::kTypeGrabbing:
+    case ui::mojom::CursorType::kGrabbing:
       return XC_left_ptr;
-    case WebCursorInfo::kTypeCustom:
-    case WebCursorInfo::kTypeNone:
+    case ui::mojom::CursorType::kMiddlePanningVertical:
+      return XC_left_ptr;
+    case ui::mojom::CursorType::kMiddlePanningHorizontal:
+      return XC_left_ptr;
+    case ui::mojom::CursorType::kDndNone:
+      return XC_left_ptr;
+    case ui::mojom::CursorType::kDndMove:
+      return XC_left_ptr;
+    case ui::mojom::CursorType::kDndCopy:
+      return XC_left_ptr;
+    case ui::mojom::CursorType::kDndLink:
+      return XC_left_ptr;
+    case ui::mojom::CursorType::kNull:
+      return XC_left_ptr;
+    case ui::mojom::CursorType::kCustom:
+    case ui::mojom::CursorType::kNone:
       break;
   }
   NOTREACHED();
@@ -163,26 +177,12 @@ XCursorCache* cursor_cache = nullptr;
 }
 
 }  // namespace
-
-void CefRenderWidgetHostViewOSR::PlatformCreateCompositorWidget(
-    bool is_guest_view_hack) {
-  // Create a hidden 1x1 window. It will delete itself on close.
-  window_ = new CefWindowX11(NULL, None, gfx::Rect(0, 0, 1, 1));
-  compositor_widget_ = window_->xwindow();
-}
-
-void CefRenderWidgetHostViewOSR::PlatformResizeCompositorWidget(
-    const gfx::Size&) {}
-
-void CefRenderWidgetHostViewOSR::PlatformDestroyCompositorWidget() {
-  DCHECK(window_);
-  window_->Close();
-  compositor_widget_ = gfx::kNullAcceleratedWidget;
-}
+#endif  // defined(USE_X11)
 
 ui::PlatformCursor CefRenderWidgetHostViewOSR::GetPlatformCursor(
-    blink::WebCursorInfo::Type type) {
-  if (type == WebCursorInfo::kTypeNone) {
+    ui::mojom::CursorType type) {
+#if defined(USE_X11)
+  if (type == ui::mojom::CursorType::kNone) {
     if (!invisible_cursor_) {
       invisible_cursor_.reset(new ui::XScopedCursor(ui::CreateInvisibleCursor(),
                                                     gfx::GetXDisplay()));
@@ -191,4 +191,6 @@ ui::PlatformCursor CefRenderWidgetHostViewOSR::GetPlatformCursor(
   } else {
     return GetXCursor(ToCursorID(type));
   }
+#endif  // defined(USE_X11)
+  return 0;
 }

@@ -17,22 +17,9 @@
 
 namespace extensions {
 
-namespace {
-
-CefRefPtr<CefBrowserHostImpl> GetOwnerBrowser(
-    extensions::MimeHandlerViewGuest* guest) {
-  content::WebContents* owner_web_contents = guest->owner_web_contents();
-  CefRefPtr<CefBrowserHostImpl> owner_browser =
-      CefBrowserHostImpl::GetBrowserForContents(owner_web_contents);
-  DCHECK(owner_browser);
-  return owner_browser;
-}
-
-}  // namespace
-
 CefMimeHandlerViewGuestDelegate::CefMimeHandlerViewGuestDelegate(
     MimeHandlerViewGuest* guest)
-    : guest_(guest) {}
+    : guest_(guest), owner_web_contents_(guest_->owner_web_contents()) {}
 
 CefMimeHandlerViewGuestDelegate::~CefMimeHandlerViewGuestDelegate() {}
 
@@ -40,63 +27,41 @@ void CefMimeHandlerViewGuestDelegate::OverrideWebContentsCreateParams(
     content::WebContents::CreateParams* params) {
   DCHECK(params->guest_delegate);
 
-  CefRefPtr<CefBrowserHostImpl> owner_browser = GetOwnerBrowser(guest_);
+  CefRefPtr<CefBrowserHostImpl> owner_browser =
+      CefBrowserHostImpl::GetBrowserForContents(owner_web_contents_);
+  DCHECK(owner_browser);
+
   if (owner_browser->IsWindowless()) {
-    CefWebContentsViewOSR* view_osr =
-        new CefWebContentsViewOSR(owner_browser->GetBackgroundColor());
+    CefWebContentsViewOSR* view_osr = new CefWebContentsViewOSR(
+        owner_browser->GetBackgroundColor(), false, false);
     params->view = view_osr;
     params->delegate_view = view_osr;
   }
 }
 
-void CefMimeHandlerViewGuestDelegate::OnGuestAttached(
-    content::WebContentsView* parent_view) {
+void CefMimeHandlerViewGuestDelegate::OnGuestAttached() {
   content::WebContents* web_contents = guest_->web_contents();
   DCHECK(web_contents);
 
-  CefRefPtr<CefBrowserHostImpl> owner_browser = GetOwnerBrowser(guest_);
+  CefRefPtr<CefBrowserHostImpl> owner_browser =
+      CefBrowserHostImpl::GetBrowserForContents(owner_web_contents_);
+  DCHECK(owner_browser);
 
   // Associate guest state information with the owner browser.
-  scoped_refptr<CefBrowserInfo> info = owner_browser->browser_info();
-  content::RenderFrameHost* main_frame_host = web_contents->GetMainFrame();
-
-  const int render_process_id = main_frame_host->GetProcess()->GetID();
-  const int render_frame_id = main_frame_host->GetRoutingID();
-  info->guest_render_id_manager()->add_render_frame_id(render_process_id,
-                                                       render_frame_id);
-
-  const int frame_tree_node_id = main_frame_host->GetFrameTreeNodeId();
-  info->frame_tree_node_id_manager()->add_frame_tree_node_id(
-      frame_tree_node_id);
+  owner_browser->browser_info()->MaybeCreateFrame(web_contents->GetMainFrame(),
+                                                  true /* is_guest_view */);
 }
 
-void CefMimeHandlerViewGuestDelegate::OnGuestDetached(
-    content::WebContentsView* parent_view) {
+void CefMimeHandlerViewGuestDelegate::OnGuestDetached() {
   content::WebContents* web_contents = guest_->web_contents();
   DCHECK(web_contents);
 
-  CefRefPtr<CefBrowserHostImpl> owner_browser = GetOwnerBrowser(guest_);
+  CefRefPtr<CefBrowserHostImpl> owner_browser =
+      CefBrowserHostImpl::GetBrowserForContents(owner_web_contents_);
+  DCHECK(owner_browser);
 
   // Disassociate guest state information with the owner browser.
-  scoped_refptr<CefBrowserInfo> info = owner_browser->browser_info();
-  content::RenderFrameHost* main_frame_host = web_contents->GetMainFrame();
-
-  const int render_process_id = main_frame_host->GetProcess()->GetID();
-  const int render_frame_id = main_frame_host->GetRoutingID();
-  info->guest_render_id_manager()->remove_render_frame_id(render_process_id,
-                                                          render_frame_id);
-
-  const int frame_tree_node_id = main_frame_host->GetFrameTreeNodeId();
-  info->frame_tree_node_id_manager()->remove_frame_tree_node_id(
-      frame_tree_node_id);
-
-  CefBrowserContext* context =
-      static_cast<CefBrowserContext*>(web_contents->GetBrowserContext());
-  if (context) {
-    const bool is_main_frame = (main_frame_host->GetParent() == nullptr);
-    context->OnRenderFrameDeleted(render_process_id, render_frame_id,
-                                  is_main_frame, true);
-  }
+  owner_browser->browser_info()->RemoveFrame(web_contents->GetMainFrame());
 }
 
 bool CefMimeHandlerViewGuestDelegate::HandleContextMenu(
@@ -113,7 +78,11 @@ bool CefMimeHandlerViewGuestDelegate::HandleContextMenu(
   new_params.x += guest_coordinates.x();
   new_params.y += guest_coordinates.y();
 
-  return GetOwnerBrowser(guest_)->HandleContextMenu(web_contents, new_params);
+  CefRefPtr<CefBrowserHostImpl> owner_browser =
+      CefBrowserHostImpl::GetBrowserForContents(owner_web_contents_);
+  DCHECK(owner_browser);
+
+  return owner_browser->HandleContextMenu(web_contents, new_params);
 }
 
 }  // namespace extensions

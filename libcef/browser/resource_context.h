@@ -8,88 +8,63 @@
 
 #include "include/cef_request_context.h"
 #include "include/cef_request_context_handler.h"
+#include "include/cef_scheme.h"
 
-#include "base/files/file_path.h"
-#include "chrome/common/plugin.mojom.h"
+#include "libcef/browser/request_context_handler_map.h"
+
 #include "content/public/browser/resource_context.h"
-#include "extensions/browser/info_map.h"
-#include "net/ssl/client_cert_store.h"
-#include "url/origin.h"
 
-class CefURLRequestContextGetter;
+class GURL;
 
 // Acts as a bridge for resource loading. Life span is controlled by
 // CefBrowserContext. Created on the UI thread but accessed and destroyed on the
-// IO thread. URLRequest objects are associated with the ResourceContext via
-// ResourceDispatcherHost. When the ResourceContext is destroyed all outstanding
-// URLRequest objects will be deleted via the ResourceLoader that owns them and
-// removed from the associated URLRequestContext. Other URLRequest objects may
-// be created via URLFetcher that are not associated with a RequestContext.
+// IO thread. Network request objects are associated with the ResourceContext
+// via ProxyURLLoaderFactory. When the ResourceContext is destroyed all
+// outstanding network request objects will be canceled.
 // See browser_context.h for an object relationship diagram.
 class CefResourceContext : public content::ResourceContext {
  public:
-  CefResourceContext(bool is_off_the_record,
-                     CefRefPtr<CefRequestContextHandler> handler);
+  explicit CefResourceContext(bool is_off_the_record);
   ~CefResourceContext() override;
 
-  // SupportsUserData implementation.
-  Data* GetUserData(const void* key) const override;
-  void SetUserData(const void* key, std::unique_ptr<Data> data) override;
-  void RemoveUserData(const void* key) override;
+  // See comments in CefRequestContextHandlerMap.
+  void AddHandler(int render_process_id,
+                  int render_frame_id,
+                  int frame_tree_node_id,
+                  CefRefPtr<CefRequestContextHandler> handler);
+  void RemoveHandler(int render_process_id,
+                     int render_frame_id,
+                     int frame_tree_node_id);
+  CefRefPtr<CefRequestContextHandler> GetHandler(
+      int render_process_id,
+      int render_frame_id,
+      int frame_tree_node_id,
+      bool require_frame_match) const;
 
-  // ResourceContext implementation.
-  net::URLRequestContext* GetRequestContext() override;
-
-  std::unique_ptr<net::ClientCertStore> CreateClientCertStore();
-
-  void set_extensions_info_map(extensions::InfoMap* extensions_info_map);
-  void set_url_request_context_getter(CefURLRequestContextGetter* getter);
-  void set_parent(CefResourceContext* parent);
-
-  // Remember the plugin load decision for plugin status requests that arrive
-  // via CefPluginServiceFilter::IsPluginAvailable.
-  void AddPluginLoadDecision(int render_process_id,
-                             const base::FilePath& plugin_path,
-                             bool is_main_frame,
-                             const url::Origin& main_frame_origin,
-                             chrome::mojom::PluginStatus status);
-  bool HasPluginLoadDecision(int render_process_id,
-                             const base::FilePath& plugin_path,
-                             bool is_main_frame,
-                             const url::Origin& main_frame_origin,
-                             chrome::mojom::PluginStatus* status) const;
-
-  // Clear the plugin load decisions associated with |render_process_id|, or all
-  // plugin load decisions if |render_process_id| is -1.
-  void ClearPluginLoadDecision(int render_process_id);
+  // Manage scheme handler factories associated with this context.
+  void RegisterSchemeHandlerFactory(const std::string& scheme_name,
+                                    const std::string& domain_name,
+                                    CefRefPtr<CefSchemeHandlerFactory> factory);
+  void ClearSchemeHandlerFactories();
+  CefRefPtr<CefSchemeHandlerFactory> GetSchemeHandlerFactory(const GURL& url);
 
   // State transferred from the BrowserContext for use on the IO thread.
   bool IsOffTheRecord() const { return is_off_the_record_; }
-  const extensions::InfoMap* GetExtensionInfoMap() const {
-    return extension_info_map_.get();
-  }
-  CefRefPtr<CefRequestContextHandler> GetHandler() const { return handler_; }
 
  private:
-  scoped_refptr<CefURLRequestContextGetter> getter_;
-
-  // Non-NULL when this object is owned by a CefBrowserContextProxy. |parent_|
-  // is guaranteed to outlive this object because CefBrowserContextProxy has a
-  // refptr to the CefBrowserContextImpl that owns |parent_|.
-  CefResourceContext* parent_;
+  void InitOnIOThread();
 
   // Only accessed on the IO thread.
-  bool is_off_the_record_;
-  scoped_refptr<extensions::InfoMap> extension_info_map_;
-  CefRefPtr<CefRequestContextHandler> handler_;
+  const bool is_off_the_record_;
 
-  // Map (render_process_id, plugin_path, is_main_frame, main_frame_origin) to
-  // plugin load decision.
-  typedef std::map<
-      std::pair<std::pair<int, base::FilePath>, std::pair<bool, url::Origin>>,
-      chrome::mojom::PluginStatus>
-      PluginLoadDecisionMap;
-  PluginLoadDecisionMap plugin_load_decision_map_;
+  // Map IDs to CefRequestContextHandler objects.
+  CefRequestContextHandlerMap handler_map_;
+
+  // Map (scheme, domain) to factories.
+  typedef std::map<std::pair<std::string, std::string>,
+                   CefRefPtr<CefSchemeHandlerFactory>>
+      SchemeHandlerFactoryMap;
+  SchemeHandlerFactoryMap scheme_handler_factory_map_;
 
   DISALLOW_COPY_AND_ASSIGN(CefResourceContext);
 };

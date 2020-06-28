@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=82b495b11a2564be98ffb520fefe8b2ea941c977$
+// $hash=3ab70d366cf2fe9f3c1bf296445a16225f18a20e$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_URLREQUEST_CTOCPP_H_
@@ -31,6 +31,7 @@ class CefURLRequestCToCpp : public CefCToCppRefCounted<CefURLRequestCToCpp,
                                                        cef_urlrequest_t> {
  public:
   CefURLRequestCToCpp();
+  virtual ~CefURLRequestCToCpp();
 
   // CefURLRequest methods.
   CefRefPtr<CefRequest> GetRequest() OVERRIDE;

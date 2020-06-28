@@ -1,21 +1,21 @@
 diff --git content/browser/renderer_host/browser_compositor_view_mac.h content/browser/renderer_host/browser_compositor_view_mac.h
-index 513e70d2b738..f821043e0a4e 100644
+index af7b3249d421..1483a48f9074 100644
 --- content/browser/renderer_host/browser_compositor_view_mac.h
 +++ content/browser/renderer_host/browser_compositor_view_mac.h
-@@ -59,6 +59,8 @@ class CONTENT_EXPORT BrowserCompositorMac : public DelegatedFrameHostClient,
+@@ -58,6 +58,8 @@ class CONTENT_EXPORT BrowserCompositorMac : public DelegatedFrameHostClient,
  
    // These will not return nullptr until Destroy is called.
    DelegatedFrameHost* GetDelegatedFrameHost();
 +  ui::Layer* GetRootLayer() { return root_layer_.get(); }
 +  ui::Compositor* GetCompositor();
  
-   // Ensure that the currect compositor frame be cleared (even if it is
-   // potentially visible).
+   // Force a new surface id to be allocated. Returns true if the
+   // RenderWidgetHostImpl sent the resulting surface id to the renderer.
 diff --git content/browser/renderer_host/browser_compositor_view_mac.mm content/browser/renderer_host/browser_compositor_view_mac.mm
-index 72ad272b4d1a..0b4cd87019bf 100644
+index ac9fdebbc87d..ebb2556ad908 100644
 --- content/browser/renderer_host/browser_compositor_view_mac.mm
 +++ content/browser/renderer_host/browser_compositor_view_mac.mm
-@@ -87,6 +87,12 @@ DelegatedFrameHost* BrowserCompositorMac::GetDelegatedFrameHost() {
+@@ -85,6 +85,12 @@ DelegatedFrameHost* BrowserCompositorMac::GetDelegatedFrameHost() {
    return delegated_frame_host_.get();
  }
  
@@ -25,6 +25,6 @@ index 72ad272b4d1a..0b4cd87019bf 100644
 +  return nullptr;
 +}
 +
- void BrowserCompositorMac::ClearCompositorFrame() {
-   // Make sure that we no longer hold a compositor lock by un-suspending the
-   // compositor. This ensures that we are able to swap in a new blank frame to
+ bool BrowserCompositorMac::ForceNewSurfaceId() {
+   dfh_local_surface_id_allocator_.GenerateId();
+   delegated_frame_host_->EmbedSurface(

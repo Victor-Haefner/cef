@@ -6,32 +6,28 @@
 #include "libcef/browser/native/window_x11.h"
 #include "libcef/browser/thread_util.h"
 
+#include "ui/base/x/x11_util.h"
+#include "ui/events/platform/platform_event_source.h"
+#include "ui/events/x/x11_event_translation.h"
+#include "ui/platform_window/x11/x11_topmost_window_finder.h"
+#include "ui/views/widget/desktop_aura/desktop_window_tree_host_x11.h"
+
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/XInput2.h>
-
-#include "ui/base/x/x11_util.h"
-#include "ui/events/platform/platform_event_source.h"
-#include "ui/views/widget/desktop_aura/desktop_window_tree_host_x11.h"
-#include "ui/views/widget/desktop_aura/x11_topmost_window_finder.h"
 
 namespace {
 
 const char kAtom[] = "ATOM";
 const char kWMDeleteWindow[] = "WM_DELETE_WINDOW";
 const char kWMProtocols[] = "WM_PROTOCOLS";
+const char kNetWMName[] = "_NET_WM_NAME";
 const char kNetWMPid[] = "_NET_WM_PID";
 const char kNetWMPing[] = "_NET_WM_PING";
 const char kNetWMState[] = "_NET_WM_STATE";
 const char kXdndProxy[] = "XdndProxy";
-
-::Window FindEventTarget(const ui::PlatformEvent& xev) {
-  ::Window target = xev->xany.window;
-  if (xev->type == GenericEvent)
-    target = static_cast<XIDeviceEvent*>(xev->xcookie.data)->event;
-  return target;
-}
+const char kUTF8String[] = "UTF8_STRING";
 
 ::Window FindChild(::Display* display, ::Window window) {
   ::Window root;
@@ -39,8 +35,8 @@ const char kXdndProxy[] = "XdndProxy";
   ::Window* children;
   ::Window child_window = x11::None;
   unsigned int nchildren;
-  if (XQueryTree(display, window, &root, &parent, &children, &nchildren)) {
-    DCHECK_EQ(1U, nchildren);
+  if (XQueryTree(display, window, &root, &parent, &children, &nchildren) &&
+      nchildren == 1) {
     child_window = children[0];
     XFree(children);
   }
@@ -51,7 +47,7 @@ const char kXdndProxy[] = "XdndProxy";
   ::Window top_level_window = window;
   ::Window root = x11::None;
   ::Window parent = x11::None;
-  ::Window* children = NULL;
+  ::Window* children = nullptr;
   unsigned int nchildren = 0;
   // Enumerate all parents of "window" to find the highest level window
   // that either:
@@ -75,13 +71,14 @@ const char kXdndProxy[] = "XdndProxy";
 
 CEF_EXPORT XDisplay* cef_get_xdisplay() {
   if (!CEF_CURRENTLY_ON(CEF_UIT))
-    return NULL;
+    return nullptr;
   return gfx::GetXDisplay();
 }
 
 CefWindowX11::CefWindowX11(CefRefPtr<CefBrowserHostImpl> browser,
                            ::Window parent_xwindow,
-                           const gfx::Rect& bounds)
+                           const gfx::Rect& bounds,
+                           const std::string& title)
     : browser_(browser),
       xdisplay_(gfx::GetXDisplay()),
       parent_xwindow_(parent_xwindow),
@@ -104,9 +101,10 @@ CefWindowX11::CefWindowX11(CefRefPtr<CefBrowserHostImpl> browser,
                            InputOutput,
                            CopyFromParent,  // visual
                            CWBackPixmap | CWOverrideRedirect, &swa);
+  CHECK(xwindow_);
 
-  if (ui::PlatformEventSource::GetInstance())
-    ui::PlatformEventSource::GetInstance()->AddPlatformEventDispatcher(this);
+  DCHECK(ui::X11EventSource::HasInstance());
+  ui::X11EventSource::GetInstance()->AddXEventDispatcher(this);
 
   long event_mask = FocusChangeMask | StructureNotifyMask | PropertyChangeMask;
   XSelectInput(xdisplay_, xwindow_, event_mask);
@@ -132,12 +130,20 @@ CefWindowX11::CefWindowX11(CefRefPtr<CefBrowserHostImpl> browser,
   long pid = getpid();
   XChangeProperty(xdisplay_, xwindow_, gfx::GetAtom(kNetWMPid), XA_CARDINAL, 32,
                   PropModeReplace, reinterpret_cast<unsigned char*>(&pid), 1);
+
+  // Set the initial window name, if provided.
+  if (!title.empty()) {
+    XChangeProperty(xdisplay_, xwindow_, gfx::GetAtom(kNetWMName),
+                    gfx::GetAtom(kUTF8String), 8, PropModeReplace,
+                    reinterpret_cast<const unsigned char*>(title.c_str()),
+                    title.size());
+  }
 }
 
 CefWindowX11::~CefWindowX11() {
   DCHECK(!xwindow_);
-  if (ui::PlatformEventSource::GetInstance())
-    ui::PlatformEventSource::GetInstance()->RemovePlatformEventDispatcher(this);
+  DCHECK(ui::X11EventSource::HasInstance());
+  ui::X11EventSource::GetInstance()->RemoveXEventDispatcher(this);
 }
 
 void CefWindowX11::Close() {
@@ -149,6 +155,10 @@ void CefWindowX11::Close() {
   ev.xclient.data.l[0] = gfx::GetAtom(kWMDeleteWindow);
   ev.xclient.data.l[1] = x11::CurrentTime;
   XSendEvent(xdisplay_, xwindow_, false, NoEventMask, &ev);
+
+  auto host = GetHost();
+  if (host)
+    host->Close();
 }
 
 void CefWindowX11::Show() {
@@ -263,19 +273,97 @@ gfx::Rect CefWindowX11::GetBoundsInScreen() {
 views::DesktopWindowTreeHostX11* CefWindowX11::GetHost() {
   if (browser_.get()) {
     ::Window child = FindChild(xdisplay_, xwindow_);
-    if (child)
-      return views::DesktopWindowTreeHostX11::GetHostForXID(child);
+    if (child) {
+      return static_cast<views::DesktopWindowTreeHostX11*>(
+          views::DesktopWindowTreeHostLinux::GetHostForWidget(child));
+    }
   }
-  return NULL;
+  return nullptr;
 }
 
 bool CefWindowX11::CanDispatchEvent(const ui::PlatformEvent& event) {
-  ::Window target = FindEventTarget(event);
-  return target == xwindow_;
+  DCHECK_NE(xwindow_, x11::None);
+  return !!current_xevent_;
 }
 
 uint32_t CefWindowX11::DispatchEvent(const ui::PlatformEvent& event) {
-  XEvent* xev = event;
+  DCHECK_NE(xwindow_, x11::None);
+  DCHECK(event);
+  DCHECK(current_xevent_);
+
+  ProcessXEvent(current_xevent_);
+  return ui::POST_DISPATCH_STOP_PROPAGATION;
+}
+
+// Called by X11EventSourceLibevent to determine whether this XEventDispatcher
+// implementation is able to process the next translated event sent by it.
+void CefWindowX11::CheckCanDispatchNextPlatformEvent(XEvent* xev) {
+  current_xevent_ = IsTargetedBy(*xev) ? xev : nullptr;
+}
+
+void CefWindowX11::PlatformEventDispatchFinished() {
+  current_xevent_ = nullptr;
+}
+
+ui::PlatformEventDispatcher* CefWindowX11::GetPlatformEventDispatcher() {
+  return this;
+}
+
+bool CefWindowX11::DispatchXEvent(XEvent* xev) {
+  if (!IsTargetedBy(*xev))
+    return false;
+  ProcessXEvent(xev);
+  return true;
+}
+
+void CefWindowX11::ContinueFocus() {
+  if (!focus_pending_)
+    return;
+  if (browser_.get())
+    browser_->SetFocus(true);
+  focus_pending_ = false;
+}
+
+bool CefWindowX11::TopLevelAlwaysOnTop() const {
+  ::Window toplevel_window = FindToplevelParent(xdisplay_, xwindow_);
+
+  Atom state_atom = gfx::GetAtom("_NET_WM_STATE");
+  Atom state_keep_above = gfx::GetAtom("_NET_WM_STATE_KEEP_ABOVE");
+  Atom* states;
+
+  Atom actual_type;
+  int actual_format;
+  unsigned long num_items;
+  unsigned long bytes_after;
+
+  XGetWindowProperty(xdisplay_, toplevel_window, state_atom, 0, 1024,
+                     x11::False, XA_ATOM, &actual_type, &actual_format,
+                     &num_items, &bytes_after,
+                     reinterpret_cast<unsigned char**>(&states));
+
+  bool always_on_top = false;
+
+  for (unsigned long i = 0; i < num_items; ++i) {
+    if (states[i] == state_keep_above) {
+      always_on_top = true;
+      break;
+    }
+  }
+
+  XFree(states);
+
+  return always_on_top;
+}
+
+bool CefWindowX11::IsTargetedBy(const XEvent& xev) const {
+  ::Window target_window =
+      (xev.type == GenericEvent)
+          ? static_cast<XIDeviceEvent*>(xev.xcookie.data)->event
+          : xev.xany.window;
+  return target_window == xwindow_;
+}
+
+void CefWindowX11::ProcessXEvent(XEvent* xev) {
   switch (xev->type) {
     case ConfigureNotify: {
       DCHECK_EQ(xwindow_, xev->xconfigure.event);
@@ -384,14 +472,4 @@ uint32_t CefWindowX11::DispatchEvent(const ui::PlatformEvent& event) {
       break;
     }
   }
-
-  return ui::POST_DISPATCH_STOP_PROPAGATION;
-}
-
-void CefWindowX11::ContinueFocus() {
-  if (!focus_pending_)
-    return;
-  if (browser_.get())
-    browser_->SetFocus(true);
-  focus_pending_ = false;
 }

@@ -26,8 +26,8 @@ bool CefMenuRunnerLinux::RunContextMenu(
   if (!browser->IsWindowless())
     parent_widget = browser->GetWindowWidget();
 
-  menu_->RunMenuAt(parent_widget, NULL, gfx::Rect(screen_point, gfx::Size()),
-                   views::MENU_ANCHOR_TOPRIGHT, ui::MENU_SOURCE_NONE);
+  menu_->RunMenuAt(parent_widget, nullptr, gfx::Rect(screen_point, gfx::Size()),
+                   views::MenuAnchorPosition::kTopRight, ui::MENU_SOURCE_NONE);
 
   return true;
 }

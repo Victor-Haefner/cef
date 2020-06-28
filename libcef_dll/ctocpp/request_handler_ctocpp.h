@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=f8849fecaa6e2a36280b9c71b37bdfbe1600fb06$
+// $hash=be2bb80e8816f0eaad34382f05e2bec59dfe7fa7$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_REQUEST_HANDLER_CTOCPP_H_
@@ -32,6 +32,7 @@ class CefRequestHandlerCToCpp
                                  cef_request_handler_t> {
  public:
   CefRequestHandlerCToCpp();
+  virtual ~CefRequestHandlerCToCpp();
 
   // CefRequestHandler methods.
   bool OnBeforeBrowse(CefRefPtr<CefBrowser> browser,
@@ -44,57 +45,26 @@ class CefRequestHandlerCToCpp
                         const CefString& target_url,
                         WindowOpenDisposition target_disposition,
                         bool user_gesture) override;
-  ReturnValue OnBeforeResourceLoad(
+  CefRefPtr<CefResourceRequestHandler> GetResourceRequestHandler(
       CefRefPtr<CefBrowser> browser,
       CefRefPtr<CefFrame> frame,
       CefRefPtr<CefRequest> request,
-      CefRefPtr<CefRequestCallback> callback) override;
-  CefRefPtr<CefResourceHandler> GetResourceHandler(
-      CefRefPtr<CefBrowser> browser,
-      CefRefPtr<CefFrame> frame,
-      CefRefPtr<CefRequest> request) override;
-  void OnResourceRedirect(CefRefPtr<CefBrowser> browser,
-                          CefRefPtr<CefFrame> frame,
-                          CefRefPtr<CefRequest> request,
-                          CefRefPtr<CefResponse> response,
-                          CefString& new_url) override;
-  bool OnResourceResponse(CefRefPtr<CefBrowser> browser,
-                          CefRefPtr<CefFrame> frame,
-                          CefRefPtr<CefRequest> request,
-                          CefRefPtr<CefResponse> response) override;
-  CefRefPtr<CefResponseFilter> GetResourceResponseFilter(
-      CefRefPtr<CefBrowser> browser,
-      CefRefPtr<CefFrame> frame,
-      CefRefPtr<CefRequest> request,
-      CefRefPtr<CefResponse> response) override;
-  void OnResourceLoadComplete(CefRefPtr<CefBrowser> browser,
-                              CefRefPtr<CefFrame> frame,
-                              CefRefPtr<CefRequest> request,
-                              CefRefPtr<CefResponse> response,
-                              URLRequestStatus status,
-                              int64 received_content_length) override;
+      bool is_navigation,
+      bool is_download,
+      const CefString& request_initiator,
+      bool& disable_default_handling) override;
   bool GetAuthCredentials(CefRefPtr<CefBrowser> browser,
-                          CefRefPtr<CefFrame> frame,
+                          const CefString& origin_url,
                           bool isProxy,
                           const CefString& host,
                           int port,
                           const CefString& realm,
                           const CefString& scheme,
                           CefRefPtr<CefAuthCallback> callback) override;
-  bool CanGetCookies(CefRefPtr<CefBrowser> browser,
-                     CefRefPtr<CefFrame> frame,
-                     CefRefPtr<CefRequest> request) override;
-  bool CanSetCookie(CefRefPtr<CefBrowser> browser,
-                    CefRefPtr<CefFrame> frame,
-                    CefRefPtr<CefRequest> request,
-                    const CefCookie& cookie) override;
   bool OnQuotaRequest(CefRefPtr<CefBrowser> browser,
                       const CefString& origin_url,
                       int64 new_size,
                       CefRefPtr<CefRequestCallback> callback) override;
-  void OnProtocolExecution(CefRefPtr<CefBrowser> browser,
-                           const CefString& url,
-                           bool& allow_os_execution) override;
   bool OnCertificateError(CefRefPtr<CefBrowser> browser,
                           cef_errorcode_t cert_error,
                           const CefString& request_url,
@@ -112,6 +82,7 @@ class CefRequestHandlerCToCpp
   void OnRenderViewReady(CefRefPtr<CefBrowser> browser) override;
   void OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser,
                                  TerminationStatus status) override;
+  void OnDocumentAvailableInMainFrame(CefRefPtr<CefBrowser> browser) override;
 };
 
 #endif  // CEF_LIBCEF_DLL_CTOCPP_REQUEST_HANDLER_CTOCPP_H_

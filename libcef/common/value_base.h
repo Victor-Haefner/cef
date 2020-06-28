@@ -13,6 +13,7 @@
 #include "base/logging.h"
 #include "base/memory/ref_counted.h"
 #include "base/synchronization/lock.h"
+#include "base/thread_annotations.h"
 #include "base/threading/platform_thread.h"
 
 // Controller implementation base class.
@@ -142,11 +143,11 @@ class CefValueControllerThreadSafe : public CefValueController {
   // CefValueController methods.
   bool thread_safe() override { return true; }
   bool on_correct_thread() override { return true; }
-  void lock() override {
+  void lock() override NO_THREAD_SAFETY_ANALYSIS {
     lock_.Acquire();
     locked_thread_id_ = base::PlatformThread::CurrentId();
   }
-  void unlock() override {
+  void unlock() override NO_THREAD_SAFETY_ANALYSIS {
     locked_thread_id_ = 0;
     lock_.Release();
   }
@@ -301,15 +302,15 @@ class CefValueBase : public CefType, public CefValueController::Object {
       DeleteValue(value_);
     }
 
-    controller_ = NULL;
-    value_ = NULL;
+    controller_ = nullptr;
+    value_ = nullptr;
   }
 
   // Detaches the underlying value and returns a pointer to it. If this is an
   // owner and a |new_controller| value is specified any existing references
   // will be passed to the new controller.
   ValueType* Detach(CefValueController* new_controller) {
-    CEF_VALUE_VERIFY_RETURN(false, NULL);
+    CEF_VALUE_VERIFY_RETURN(false, nullptr);
 
     // A |new_controller| value is required for mode kOwnerWillDelete.
     DCHECK(!will_delete() || new_controller);
@@ -323,11 +324,11 @@ class CefValueBase : public CefType, public CefValueController::Object {
     // Remove the object from the controller. If this is the owner object any
     // references will be detached.
     controller()->Remove(value_, false);
-    controller_ = NULL;
+    controller_ = nullptr;
 
     // Return the old value.
     ValueType* old_val = value_;
-    value_ = NULL;
+    value_ = nullptr;
     return old_val;
   }
 
@@ -349,8 +350,8 @@ class CefValueBase : public CefType, public CefValueController::Object {
     // Only references should be removed in this manner.
     DCHECK(reference());
 
-    controller_ = NULL;
-    value_ = NULL;
+    controller_ = nullptr;
+    value_ = nullptr;
   }
 
   // Override to customize value deletion.

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=7271a84136af44b538f48ab78b2560fcc61b994a$
+// $hash=25c5eda0e5265f5905b144e5b23951fe7d11cf80$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_COOKIE_MANAGER_CPPTOC_H_
@@ -32,6 +32,7 @@ class CefCookieManagerCppToC
                                  cef_cookie_manager_t> {
  public:
   CefCookieManagerCppToC();
+  virtual ~CefCookieManagerCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_COOKIE_MANAGER_CPPTOC_H_

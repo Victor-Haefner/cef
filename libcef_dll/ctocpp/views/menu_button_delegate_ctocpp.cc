@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=cfef0967ef54c02a681c9430ae38dbe879f4920e$
+// $hash=e22af57f1e6505996368140760d9a249bf9189e9$
 //
 
 #include "libcef_dll/ctocpp/views/menu_button_delegate_ctocpp.h"
@@ -17,6 +17,7 @@
 #include "libcef_dll/cpptoc/views/menu_button_cpptoc.h"
 #include "libcef_dll/cpptoc/views/menu_button_pressed_lock_cpptoc.h"
 #include "libcef_dll/cpptoc/views/view_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
@@ -25,6 +26,8 @@ void CefMenuButtonDelegateCToCpp::OnMenuButtonPressed(
     CefRefPtr<CefMenuButton> menu_button,
     const CefPoint& screen_point,
     CefRefPtr<CefMenuButtonPressedLock> button_pressed_lock) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_menu_button_delegate_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_menu_button_pressed))
     return;
@@ -48,6 +51,8 @@ void CefMenuButtonDelegateCToCpp::OnMenuButtonPressed(
 
 NO_SANITIZE("cfi-icall")
 void CefMenuButtonDelegateCToCpp::OnButtonPressed(CefRefPtr<CefButton> button) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_button_delegate_t* _struct =
       reinterpret_cast<cef_button_delegate_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, on_button_pressed))
@@ -67,6 +72,8 @@ void CefMenuButtonDelegateCToCpp::OnButtonPressed(CefRefPtr<CefButton> button) {
 NO_SANITIZE("cfi-icall")
 void CefMenuButtonDelegateCToCpp::OnButtonStateChanged(
     CefRefPtr<CefButton> button) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_button_delegate_t* _struct =
       reinterpret_cast<cef_button_delegate_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, on_button_state_changed))
@@ -85,6 +92,8 @@ void CefMenuButtonDelegateCToCpp::OnButtonStateChanged(
 
 NO_SANITIZE("cfi-icall")
 CefSize CefMenuButtonDelegateCToCpp::GetPreferredSize(CefRefPtr<CefView> view) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_delegate_t* _struct =
       reinterpret_cast<cef_view_delegate_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_preferred_size))
@@ -107,6 +116,8 @@ CefSize CefMenuButtonDelegateCToCpp::GetPreferredSize(CefRefPtr<CefView> view) {
 
 NO_SANITIZE("cfi-icall")
 CefSize CefMenuButtonDelegateCToCpp::GetMinimumSize(CefRefPtr<CefView> view) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_delegate_t* _struct =
       reinterpret_cast<cef_view_delegate_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_minimum_size))
@@ -129,6 +140,8 @@ CefSize CefMenuButtonDelegateCToCpp::GetMinimumSize(CefRefPtr<CefView> view) {
 
 NO_SANITIZE("cfi-icall")
 CefSize CefMenuButtonDelegateCToCpp::GetMaximumSize(CefRefPtr<CefView> view) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_delegate_t* _struct =
       reinterpret_cast<cef_view_delegate_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_maximum_size))
@@ -152,6 +165,8 @@ CefSize CefMenuButtonDelegateCToCpp::GetMaximumSize(CefRefPtr<CefView> view) {
 NO_SANITIZE("cfi-icall")
 int CefMenuButtonDelegateCToCpp::GetHeightForWidth(CefRefPtr<CefView> view,
                                                    int width) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_delegate_t* _struct =
       reinterpret_cast<cef_view_delegate_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, get_height_for_width))
@@ -177,6 +192,8 @@ void CefMenuButtonDelegateCToCpp::OnParentViewChanged(
     CefRefPtr<CefView> view,
     bool added,
     CefRefPtr<CefView> parent) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_delegate_t* _struct =
       reinterpret_cast<cef_view_delegate_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, on_parent_view_changed))
@@ -202,6 +219,8 @@ NO_SANITIZE("cfi-icall")
 void CefMenuButtonDelegateCToCpp::OnChildViewChanged(CefRefPtr<CefView> view,
                                                      bool added,
                                                      CefRefPtr<CefView> child) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_delegate_t* _struct =
       reinterpret_cast<cef_view_delegate_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, on_child_view_changed))
@@ -225,6 +244,8 @@ void CefMenuButtonDelegateCToCpp::OnChildViewChanged(CefRefPtr<CefView> view,
 
 NO_SANITIZE("cfi-icall")
 void CefMenuButtonDelegateCToCpp::OnFocus(CefRefPtr<CefView> view) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_delegate_t* _struct =
       reinterpret_cast<cef_view_delegate_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, on_focus))
@@ -243,6 +264,8 @@ void CefMenuButtonDelegateCToCpp::OnFocus(CefRefPtr<CefView> view) {
 
 NO_SANITIZE("cfi-icall")
 void CefMenuButtonDelegateCToCpp::OnBlur(CefRefPtr<CefView> view) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_view_delegate_t* _struct =
       reinterpret_cast<cef_view_delegate_t*>(GetStruct());
   if (CEF_MEMBER_MISSING(_struct, on_blur))
@@ -263,6 +286,12 @@ void CefMenuButtonDelegateCToCpp::OnBlur(CefRefPtr<CefView> view) {
 
 CefMenuButtonDelegateCToCpp::CefMenuButtonDelegateCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefMenuButtonDelegateCToCpp::~CefMenuButtonDelegateCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_menu_button_delegate_t* CefCToCppRefCounted<
     CefMenuButtonDelegateCToCpp,
@@ -270,16 +299,8 @@ cef_menu_button_delegate_t* CefCToCppRefCounted<
     cef_menu_button_delegate_t>::UnwrapDerived(CefWrapperType type,
                                                CefMenuButtonDelegate* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefMenuButtonDelegateCToCpp,
-                                         CefMenuButtonDelegate,
-                                         cef_menu_button_delegate_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefMenuButtonDelegateCToCpp,

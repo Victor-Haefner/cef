@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,12 +9,13 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=71e592e2a858b569e642d689caf7648f89853da5$
+// $hash=0a1970879ddc0bd40f5a564542ab8b11414a6b0a$
 //
 
 #include "libcef_dll/cpptoc/server_cpptoc.h"
 #include "libcef_dll/cpptoc/task_runner_cpptoc.h"
 #include "libcef_dll/ctocpp/server_handler_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 #include "libcef_dll/transfer_util.h"
 
 // GLOBAL FUNCTIONS - Body may be edited by hand.
@@ -23,6 +24,8 @@ CEF_EXPORT void cef_server_create(const cef_string_t* address,
                                   uint16 port,
                                   int backlog,
                                   struct _cef_server_handler_t* handler) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Verify param: address; type: string_byref_const
@@ -45,6 +48,8 @@ namespace {
 
 struct _cef_task_runner_t* CEF_CALLBACK
 server_get_task_runner(struct _cef_server_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -60,6 +65,8 @@ server_get_task_runner(struct _cef_server_t* self) {
 }
 
 void CEF_CALLBACK server_shutdown(struct _cef_server_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -71,6 +78,8 @@ void CEF_CALLBACK server_shutdown(struct _cef_server_t* self) {
 }
 
 int CEF_CALLBACK server_is_running(struct _cef_server_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -86,6 +95,8 @@ int CEF_CALLBACK server_is_running(struct _cef_server_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 server_get_address(struct _cef_server_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -100,6 +111,8 @@ server_get_address(struct _cef_server_t* self) {
 }
 
 int CEF_CALLBACK server_has_connection(struct _cef_server_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -115,6 +128,8 @@ int CEF_CALLBACK server_has_connection(struct _cef_server_t* self) {
 
 int CEF_CALLBACK server_is_valid_connection(struct _cef_server_t* self,
                                             int connection_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -133,6 +148,8 @@ void CEF_CALLBACK server_send_http200response(struct _cef_server_t* self,
                                               const cef_string_t* content_type,
                                               const void* data,
                                               size_t data_size) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -154,6 +171,8 @@ void CEF_CALLBACK server_send_http200response(struct _cef_server_t* self,
 
 void CEF_CALLBACK server_send_http404response(struct _cef_server_t* self,
                                               int connection_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -168,6 +187,8 @@ void CEF_CALLBACK
 server_send_http500response(struct _cef_server_t* self,
                             int connection_id,
                             const cef_string_t* error_message) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -190,6 +211,8 @@ server_send_http_response(struct _cef_server_t* self,
                           const cef_string_t* content_type,
                           int64 content_length,
                           cef_string_multimap_t extra_headers) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -215,6 +238,8 @@ void CEF_CALLBACK server_send_raw_data(struct _cef_server_t* self,
                                        int connection_id,
                                        const void* data,
                                        size_t data_size) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -231,6 +256,8 @@ void CEF_CALLBACK server_send_raw_data(struct _cef_server_t* self,
 
 void CEF_CALLBACK server_close_connection(struct _cef_server_t* self,
                                           int connection_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -245,6 +272,8 @@ void CEF_CALLBACK server_send_web_socket_message(struct _cef_server_t* self,
                                                  int connection_id,
                                                  const void* data,
                                                  size_t data_size) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -280,21 +309,20 @@ CefServerCppToC::CefServerCppToC() {
   GetStruct()->send_web_socket_message = server_send_web_socket_message;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefServerCppToC::~CefServerCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefServer>
 CefCppToCRefCounted<CefServerCppToC, CefServer, cef_server_t>::UnwrapDerived(
     CefWrapperType type,
     cef_server_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefServerCppToC, CefServer, cef_server_t>::DebugObjCt
-        ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefServerCppToC, CefServer, cef_server_t>::

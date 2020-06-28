@@ -4,11 +4,13 @@
 
 #include "libcef/browser/extensions/browser_extensions_util.h"
 
-#include "libcef/browser/browser_context_impl.h"
+#include "libcef/browser/browser_context.h"
 #include "libcef/browser/browser_info_manager.h"
 #include "libcef/browser/thread_util.h"
 #include "libcef/common/extensions/extensions_util.h"
 
+#include "chrome/browser/browser_process.h"
+#include "chrome/browser/printing/print_preview_dialog_controller.h"
 #include "content/browser/browser_plugin/browser_plugin_embedder.h"
 #include "content/browser/browser_plugin/browser_plugin_guest.h"
 #include "content/browser/web_contents/web_contents_impl.h"
@@ -40,7 +42,7 @@ content::WebContents* GetFullPageGuestForOwnerContents(
     if (plugin_guest)
       return plugin_guest->web_contents();
   }
-  return NULL;
+  return nullptr;
 }
 
 void GetAllGuestsForOwnerContents(content::WebContents* owner,
@@ -56,25 +58,32 @@ content::WebContents* GetOwnerForGuestContents(content::WebContents* guest) {
       static_cast<content::WebContentsImpl*>(guest);
   content::BrowserPluginGuest* plugin_guest =
       guest_impl->GetBrowserPluginGuest();
-  if (plugin_guest)
-    return plugin_guest->embedder_web_contents();
-  return NULL;
+  if (plugin_guest) {
+    return content::WebContents::FromRenderFrameHost(
+        plugin_guest->GetEmbedderFrame());
+  }
+
+  // Maybe it's a print preview dialog.
+  auto print_preview_controller =
+      g_browser_process->print_preview_dialog_controller();
+  return print_preview_controller->GetInitiator(guest);
 }
 
-CefRefPtr<CefBrowserHostImpl> GetOwnerBrowserForFrame(int render_process_id,
-                                                      int render_routing_id,
-                                                      bool* is_guest_view) {
+CefRefPtr<CefBrowserHostImpl> GetOwnerBrowserForFrameRoute(
+    int render_process_id,
+    int render_routing_id,
+    bool* is_guest_view) {
   if (CEF_CURRENTLY_ON_UIT()) {
     // Use the non-thread-safe but potentially faster approach.
     content::RenderFrameHost* host =
         content::RenderFrameHost::FromID(render_process_id, render_routing_id);
     if (host)
       return GetOwnerBrowserForHost(host, is_guest_view);
-    return NULL;
+    return nullptr;
   } else {
     // Use the thread-safe approach.
     scoped_refptr<CefBrowserInfo> info =
-        CefBrowserInfoManager::GetInstance()->GetBrowserInfoForFrame(
+        CefBrowserInfoManager::GetInstance()->GetBrowserInfoForFrameRoute(
             render_process_id, render_routing_id, is_guest_view);
     if (info.get()) {
       CefRefPtr<CefBrowserHostImpl> browser = info->browser();
@@ -86,7 +95,7 @@ CefRefPtr<CefBrowserHostImpl> GetOwnerBrowserForFrame(int render_process_id,
       }
       return browser;
     }
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -140,16 +149,15 @@ CefRefPtr<CefBrowserHostImpl> GetBrowserForTabId(
   if (tab_id < 0 || !browser_context)
     return nullptr;
 
-  CefBrowserContextImpl* browser_context_impl =
-      CefBrowserContextImpl::GetForContext(browser_context);
+  CefBrowserContext* browser_context_impl =
+      CefBrowserContext::GetForContext(browser_context);
 
-  CefBrowserInfoManager::BrowserInfoList list;
-  CefBrowserInfoManager::GetInstance()->GetBrowserInfoList(list);
-  for (auto browser_info : list) {
+  for (const auto& browser_info :
+       CefBrowserInfoManager::GetInstance()->GetBrowserInfoList()) {
     CefRefPtr<CefBrowserHostImpl> current_browser = browser_info->browser();
     if (current_browser && current_browser->GetIdentifier() == tab_id) {
       // Make sure we're operating in the same BrowserContextImpl.
-      if (CefBrowserContextImpl::GetForContext(
+      if (CefBrowserContext::GetForContext(
               current_browser->GetBrowserContext()) == browser_context_impl) {
         return current_browser;
       } else {

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=1792fbb45d19fc9cd7280b6f35e75a7cad4c1732$
+// $hash=3a86994454947714f641ccc5c318b4afc9841cca$
 //
 
 #include "libcef_dll/ctocpp/task_ctocpp.h"
@@ -31,21 +31,18 @@ NO_SANITIZE("cfi-icall") void CefTaskCToCpp::Execute() {
 
 CefTaskCToCpp::CefTaskCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefTaskCToCpp::~CefTaskCToCpp() {}
+
 template <>
 cef_task_t*
 CefCToCppRefCounted<CefTaskCToCpp, CefTask, cef_task_t>::UnwrapDerived(
     CefWrapperType type,
     CefTask* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCToCppRefCounted<CefTaskCToCpp, CefTask, cef_task_t>::DebugObjCt
-        ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

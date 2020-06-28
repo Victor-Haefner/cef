@@ -2,6 +2,7 @@
 # reserved. Use of this source code is governed by a BSD-style license that
 # can be found in the LICENSE file.
 
+from __future__ import absolute_import
 from date_util import *
 from file_util import *
 import os
@@ -49,10 +50,10 @@ def get_capi_name(cppname, isclassname, prefix=None):
     # add an underscore if the current character is an upper case letter
     # and the last character was a lower case letter
     if len(result) > 0 and not chr.isdigit() \
-        and string.upper(chr) == chr \
-        and not string.upper(lastchr) == lastchr:
+        and chr.upper() == chr \
+        and not lastchr.upper() == lastchr:
       result += '_'
-    result += string.lower(chr)
+    result += chr.lower()
     lastchr = chr
 
   if isclassname:
@@ -81,7 +82,7 @@ def get_prev_line(body, pos):
   """ Retrieve the start and end positions and value for the line immediately
     before the line containing the specified position.
     """
-  end = string.rfind(body, '\n', 0, pos)
+  end = body.rfind('\n', 0, pos)
   start = body.rfind('\n', 0, end) + 1
   line = body[start:end]
   return {'start': start, 'end': end, 'line': line}
@@ -92,19 +93,31 @@ def get_comment(body, name):
   result = []
 
   pos = body.find(name)
+  in_block_comment = False
   while pos > 0:
     data = get_prev_line(body, pos)
-    line = string.strip(data['line'])
+    line = data['line'].strip()
     pos = data['start']
     if len(line) == 0:
       # check if the next previous line is a comment
       prevdata = get_prev_line(body, pos)
-      prevline = string.strip(prevdata['line'])
+      prevline = prevdata['line'].strip()
       if prevline[0:2] == '//' and prevline[0:3] != '///':
         result.append(None)
       else:
         break
-    elif line[0:2] == '/*' or line[-2:] == '*/':
+    # single line /*--cef()--*/
+    elif line[0:2] == '/*' and line[-2:] == '*/':
+      continue
+    # start of multi line /*--cef()--*/
+    elif in_block_comment and line[0:2] == '/*':
+      in_block_comment = False
+      continue
+    # end of multi line /*--cef()--*/
+    elif not in_block_comment and line[-2:] == '*/':
+      in_block_comment = True
+      continue
+    elif in_block_comment:
       continue
     elif line[0:2] == '//':
       # keep the comment line including any leading spaces
@@ -134,6 +147,11 @@ def validate_comment(file, name, comment):
 
 def format_comment(comment, indent, translate_map=None, maxchars=80):
   """ Return the comments array as a formatted string. """
+  if not translate_map is None:
+    # Replace longest keys first in translation.
+    translate_keys = sorted(
+        translate_map.keys(), key=lambda item: (-len(item), item))
+
   result = ''
   wrapme = ''
   hasemptyline = False
@@ -151,7 +169,7 @@ def format_comment(comment, indent, translate_map=None, maxchars=80):
       if len(wrapme) > 0:
         if not translate_map is None:
           # apply the translation
-          for key in translate_map.keys():
+          for key in translate_keys:
             wrapme = wrapme.replace(key, translate_map[key])
         # output the previous paragraph
         result += wrap_text(wrapme, indent + '// ', maxchars)
@@ -246,7 +264,7 @@ def format_translation_includes(header, body):
     result += '#include <algorithm>\n'
 
   if body.find('cef_api_hash(') > 0:
-    result += '#include "include/cef_version.h"\n'
+    result += '#include "include/cef_api_hash.h"\n'
 
   # identify what CppToC classes are being used
   p = re.compile('([A-Za-z0-9_]{1,})CppToC')
@@ -274,6 +292,9 @@ def format_translation_includes(header, body):
     result += '#include "libcef_dll/ctocpp/'+directory+ \
               get_capi_name(item[3:], False)+'_ctocpp.h"\n'
 
+  if body.find('shutdown_checker') > 0:
+    result += '#include "libcef_dll/shutdown_checker.h"\n'
+
   if body.find('transfer_') > 0:
     result += '#include "libcef_dll/transfer_util.h"\n'
 
@@ -284,17 +305,17 @@ def str_to_dict(str):
   """ Convert a string to a dictionary. If the same key has multiple values
         the values will be stored in a list. """
   dict = {}
-  parts = string.split(str, ',')
+  parts = str.split(',')
   for part in parts:
-    part = string.strip(part)
+    part = part.strip()
     if len(part) == 0:
       continue
-    sparts = string.split(part, '=')
+    sparts = part.split('=')
     if len(sparts) > 2:
       raise Exception('Invalid dictionary pair format: ' + part)
-    name = string.strip(sparts[0])
+    name = sparts[0].strip()
     if len(sparts) == 2:
-      val = string.strip(sparts[1])
+      val = sparts[1].strip()
     else:
       val = True
     if name in dict:
@@ -324,7 +345,7 @@ def dict_to_str(dict):
       # currently a list value
       for val in dict[name]:
         str.append(name + '=' + val)
-  return string.join(str, ',')
+  return ','.join(str)
 
 
 # regex for matching comment-formatted attributes
@@ -360,6 +381,7 @@ _simpletypes = {
     'uint64': ['uint64', '0'],
     'double': ['double', '0'],
     'float': ['float', '0'],
+    'float*': ['float*', 'NULL'],
     'long': ['long', '0'],
     'unsigned long': ['unsigned long', '0'],
     'long long': ['long long', '0'],
@@ -383,18 +405,22 @@ _simpletypes = {
     'CefDraggableRegion': ['cef_draggable_region_t', 'CefDraggableRegion()'],
     'CefThreadId': ['cef_thread_id_t', 'TID_UI'],
     'CefTime': ['cef_time_t', 'CefTime()'],
+    'CefAudioParameters': ['cef_audio_parameters_t', 'CefAudioParameters()']
 }
 
 
-def get_function_impls(content, ident):
+def get_function_impls(content, ident, has_impl=True):
   """ Retrieve the function parts from the specified contents as a set of
     return value, name, arguments and body. Ident must occur somewhere in
     the value.
     """
   # extract the functions
-  p = re.compile(
-      '\n' + _cre_func + '\((.*?)\)([A-Za-z0-9_\s]{0,})' + '\{(.*?)\n\}',
-      re.MULTILINE | re.DOTALL)
+  find_regex = '\n' + _cre_func + '\((.*?)\)([A-Za-z0-9_\s]{0,})'
+  if has_impl:
+    find_regex += '\{(.*?)\n\}'
+  else:
+    find_regex += '(;)'
+  p = re.compile(find_regex, re.MULTILINE | re.DOTALL)
   list = p.findall(content)
 
   # build the function map with the function name as the key
@@ -405,28 +431,31 @@ def get_function_impls(content, ident):
       continue
 
     # remove the identifier
-    retval = string.replace(retval, ident, '')
-    retval = string.strip(retval)
+    retval = retval.replace(ident, '')
+    retval = retval.strip()
+
+    # Normalize the delimiter.
+    retval = retval.replace('\n', ' ')
 
     # retrieve the function name
-    parts = string.split(retval, ' ')
+    parts = retval.split(' ')
     name = parts[-1]
     del parts[-1]
-    retval = string.join(parts, ' ')
+    retval = ' '.join(parts)
 
     # parse the arguments
     args = []
-    for v in string.split(argval, ','):
-      v = string.strip(v)
+    for v in argval.split(','):
+      v = v.strip()
       if len(v) > 0:
         args.append(v)
 
     result.append({
-        'retval': string.strip(retval),
+        'retval': retval.strip(),
         'name': name,
         'args': args,
-        'vfmod': string.strip(vfmod),
-        'body': body
+        'vfmod': vfmod.strip(),
+        'body': body if has_impl else '',
     })
 
   return result
@@ -442,12 +471,48 @@ def get_next_function_impl(existing, name):
   return result
 
 
-def get_copyright():
-  result = \
+def get_copyright(full=False, translator=True):
+  if full:
+    result = \
+"""// Copyright (c) $YEAR$ Marshall A. Greenblatt. All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//    * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//    * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+//    * Neither the name of Google Inc. nor the name Chromium Embedded
+// Framework nor the names of its contributors may be used to endorse
+// or promote products derived from this software without specific prior
+// written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+  else:
+    result = \
 """// Copyright (c) $YEAR$ The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
-//
+"""
+
+  if translator:
+    result += \
+"""//
 // ---------------------------------------------------------------------------
 //
 // This file was generated by the CEF translator tool. If making changes by
@@ -459,6 +524,7 @@ def get_copyright():
 //
 
 """
+
   # add the copyright year
   return result.replace('$YEAR$', get_year())
 
@@ -476,6 +542,10 @@ class obj_header:
   def set_root_directory(self, root_directory):
     """ Set the root directory. """
     self.root_directory = root_directory
+
+  def get_root_directory(self):
+    """ Get the root directory. """
+    return self.root_directory
 
   def add_directory(self, directory, excluded_files=[]):
     """ Add all header files from the specified directory. """
@@ -596,19 +666,19 @@ class obj_header:
       strlist = []
       for cls in self.typedefs:
         strlist.append(str(cls))
-      result += string.join(strlist, "\n") + "\n\n"
+      result += "\n".join(strlist) + "\n\n"
 
     if len(self.funcs) > 0:
       strlist = []
       for cls in self.funcs:
         strlist.append(str(cls))
-      result += string.join(strlist, "\n") + "\n\n"
+      result += "\n".join(strlist) + "\n\n"
 
     if len(self.classes) > 0:
       strlist = []
       for cls in self.classes:
         strlist.append(str(cls))
-      result += string.join(strlist, "\n")
+      result += "\n".join(strlist)
 
     return result
 
@@ -808,21 +878,21 @@ class obj_class:
       strlist = []
       for cls in self.typedefs:
         strlist.append(str(cls))
-      result += string.join(strlist, "\n\t")
+      result += "\n\t".join(strlist)
 
     if len(self.staticfuncs) > 0:
       result += "\n\t"
       strlist = []
       for cls in self.staticfuncs:
         strlist.append(str(cls))
-      result += string.join(strlist, "\n\t")
+      result += "\n\t".join(strlist)
 
     if len(self.virtualfuncs) > 0:
       result += "\n\t"
       strlist = []
       for cls in self.virtualfuncs:
         strlist.append(str(cls))
-      result += string.join(strlist, "\n\t")
+      result += "\n\t".join(strlist)
 
     result += "\n};\n"
     return result
@@ -1030,7 +1100,7 @@ class obj_function:
 
     # build the argument objects
     self.arguments = []
-    arglist = string.split(argval, ',')
+    arglist = argval.split(',')
     argindex = 0
     while argindex < len(arglist):
       arg = arglist[argindex]
@@ -1040,7 +1110,7 @@ class obj_function:
         argindex += 1
         arg += ',' + arglist[argindex]
 
-      arg = string.strip(arg)
+      arg = arg.strip()
       if len(arg) > 0:
         argument = obj_argument(self, arg)
         if argument.needs_attrib_count_func() and \
@@ -1175,7 +1245,7 @@ class obj_function:
     """ Return the prototype of the C API function. """
     parts = self.get_capi_parts(defined_structs, prefix)
     result = parts['retval']+' '+parts['name']+ \
-             '('+string.join(parts['args'], ', ')+')'
+             '('+', '.join(parts['args'])+')'
     return result
 
   def get_cpp_parts(self, isimpl=False):
@@ -1204,7 +1274,7 @@ class obj_function:
     result = parts['retval'] + ' '
     if not classname is None:
       result += classname + '::'
-    result += parts['name'] + '(' + string.join(parts['args'], ', ') + ')'
+    result += parts['name'] + '(' + ', '.join(parts['args']) + ')'
     if isinstance(self, obj_function_virtual) and self.is_const():
       result += ' const'
     return result
@@ -1335,12 +1405,12 @@ class obj_argument:
     name = self.type.get_name()
     vals = self.parent.get_attrib_list('count_func')
     for val in vals:
-      parts = string.split(val, ':')
+      parts = val.split(':')
       if len(parts) != 2:
         raise Exception("Invalid 'count_func' attribute value for "+ \
                         self.parent.get_qualified_name()+': '+val)
-      if string.strip(parts[0]) == name:
-        return string.strip(parts[1])
+      if parts[0].strip() == name:
+        return parts[1].strip()
     return None
 
   def needs_attrib_default_retval(self):
@@ -1520,12 +1590,13 @@ class obj_argument:
       return 'CefString()'
     elif type == 'refptr_same' or type == 'refptr_diff' or \
          type == 'rawptr_same' or type == 'rawptr_diff':
-      return 'NULL'
+      if for_capi:
+        return 'NULL'
+      return 'nullptr'
     elif type == 'ownptr_same' or type == 'ownptr_diff':
       if for_capi:
         return 'NULL'
-      else:
-        return 'CefOwnPtr<' + self.type.get_ptr_type() + '>()'
+      return 'CefOwnPtr<' + self.type.get_ptr_type() + '>()'
 
     return ''
 
@@ -1541,7 +1612,7 @@ class obj_analysis:
     self.ptr_type = None
 
     # parse the argument string
-    partlist = string.split(string.strip(value))
+    partlist = value.strip().split()
 
     if named == True:
       # extract the name value
@@ -1564,7 +1635,7 @@ class obj_analysis:
       raise Exception('Invalid argument value: ' + value)
 
     # combine the data type
-    self.type = string.join(partlist, ' ')
+    self.type = ' '.join(partlist)
 
     # extract the last character of the data type
     endchar = self.type[-1]
@@ -1608,7 +1679,7 @@ class obj_analysis:
     # check for vectors
     if value.find('std::vector') == 0:
       self.result_type = 'vector'
-      val = string.strip(value[12:-1])
+      val = value[12:-1].strip()
       self.result_value = [self._get_basic(val)]
       self.result_value[0]['vector_type'] = val
       return True
@@ -1616,22 +1687,22 @@ class obj_analysis:
     # check for maps
     if value.find('std::map') == 0:
       self.result_type = 'map'
-      vals = string.split(value[9:-1], ',')
+      vals = value[9:-1].split(',')
       if len(vals) == 2:
         self.result_value = [
-            self._get_basic(string.strip(vals[0])),
-            self._get_basic(string.strip(vals[1]))
+            self._get_basic(vals[0].strip()),
+            self._get_basic(vals[1].strip())
         ]
         return True
 
     # check for multimaps
     if value.find('std::multimap') == 0:
       self.result_type = 'multimap'
-      vals = string.split(value[14:-1], ',')
+      vals = value[14:-1].split(',')
       if len(vals) == 2:
         self.result_value = [
-            self._get_basic(string.strip(vals[0])),
-            self._get_basic(string.strip(vals[1]))
+            self._get_basic(vals[0].strip()),
+            self._get_basic(vals[1].strip())
         ]
         return True
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=90a6b9d077bbd7df7675b3898d64e3e164531cc3$
+// $hash=89f51160ee669abdfee47c627c7b7fec0b034b2b$
 //
 
 #include "libcef_dll/ctocpp/post_data_element_ctocpp.h"
@@ -157,6 +157,10 @@ size_t CefPostDataElementCToCpp::GetBytes(size_t size, void* bytes) {
 
 CefPostDataElementCToCpp::CefPostDataElementCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefPostDataElementCToCpp::~CefPostDataElementCToCpp() {}
+
 template <>
 cef_post_data_element_t* CefCToCppRefCounted<
     CefPostDataElementCToCpp,
@@ -164,16 +168,8 @@ cef_post_data_element_t* CefCToCppRefCounted<
     cef_post_data_element_t>::UnwrapDerived(CefWrapperType type,
                                             CefPostDataElement* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefPostDataElementCToCpp,
-                                         CefPostDataElement,
-                                         cef_post_data_element_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefPostDataElementCToCpp,

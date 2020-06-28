@@ -13,7 +13,7 @@
 
 // Helper object that receives the notification that the dialog/sheet is
 // going away. Is responsible for cleaning itself up.
-@interface CefJavaScriptDialogHelper : NSObject<NSAlertDelegate> {
+@interface CefJavaScriptDialogHelper : NSObject <NSAlertDelegate> {
  @private
   base::scoped_nsobject<NSAlert> alert_;
   NSTextField* textField_;  // WEAK; owned by alert_
@@ -38,7 +38,7 @@
 - (id)initHelperWithCallback:
     (CefJavaScriptDialogRunner::DialogClosedCallback)callback {
   if (self = [super init])
-    callback_ = callback;
+    callback_ = std::move(callback);
 
   return self;
 }
@@ -61,7 +61,7 @@
 - (void)alertDidEnd:(NSAlert*)alert
          returnCode:(int)returnCode
         contextInfo:(void*)contextInfo {
-  if (returnCode == NSRunStoppedResponse)
+  if (returnCode == NSModalResponseStop)
     return;
 
   bool success = returnCode == NSAlertFirstButtonReturn;
@@ -69,7 +69,7 @@
   if (textField_)
     input = base::SysNSStringToUTF16([textField_ stringValue]);
 
-  callback_.Run(success, input);
+  std::move(callback_).Run(success, input);
 }
 
 - (void)cancel {
@@ -92,15 +92,15 @@ void CefJavaScriptDialogRunnerMac::Run(
     const base::string16& display_url,
     const base::string16& message_text,
     const base::string16& default_prompt_text,
-    const DialogClosedCallback& callback) {
+    DialogClosedCallback callback) {
   DCHECK(!helper_.get());
-  callback_ = callback;
+  callback_ = std::move(callback);
 
   bool text_field = message_type == content::JAVASCRIPT_DIALOG_TYPE_PROMPT;
   bool one_button = message_type == content::JAVASCRIPT_DIALOG_TYPE_ALERT;
 
   helper_.reset([[CefJavaScriptDialogHelper alloc]
-      initHelperWithCallback:base::Bind(
+      initHelperWithCallback:base::BindOnce(
                                  &CefJavaScriptDialogRunnerMac::DialogClosed,
                                  weak_ptr_factory_.GetWeakPtr())]);
 
@@ -141,11 +141,16 @@ void CefJavaScriptDialogRunnerMac::Run(
   // around the "callee requires a non-null argument" error that occurs when
   // building with the 10.11 SDK. See http://crbug.com/383820 for related
   // discussion.
+  // We can't use the newer beginSheetModalForWindow:completionHandler: variant
+  // because it fails silently when passed a nil argument (see issue #2726).
   id nilArg = nil;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   [alert beginSheetModalForWindow:nilArg  // nil here makes it app-modal
                     modalDelegate:helper_
                    didEndSelector:@selector(alertDidEnd:returnCode:contextInfo:)
                       contextInfo:this];
+#pragma clang diagnostic pop
 
   if ([alert accessoryView])
     [[alert window] makeFirstResponder:[alert accessoryView]];
@@ -162,5 +167,5 @@ void CefJavaScriptDialogRunnerMac::DialogClosed(
     bool success,
     const base::string16& user_input) {
   helper_.reset(nil);
-  callback_.Run(success, user_input);
+  std::move(callback_).Run(success, user_input);
 }

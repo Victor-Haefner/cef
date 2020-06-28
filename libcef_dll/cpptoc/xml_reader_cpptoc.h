@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=ede5f9dde38817e8e38534425e11e413b041e346$
+// $hash=c0156e6e184a530e6be658669a46f918ca301ab5$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_XML_READER_CPPTOC_H_
@@ -31,6 +31,7 @@ class CefXmlReaderCppToC : public CefCppToCRefCounted<CefXmlReaderCppToC,
                                                       cef_xml_reader_t> {
  public:
   CefXmlReaderCppToC();
+  virtual ~CefXmlReaderCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_XML_READER_CPPTOC_H_

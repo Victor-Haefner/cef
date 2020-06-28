@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=1be90060dd5a1f9afab01750c042b6afd800a19a$
+// $hash=48bb19280dc30b73274f95d7e144ceb7439f859a$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_SELECT_CLIENT_CERTIFICATE_CALLBACK_CPPTOC_H_
@@ -32,6 +32,7 @@ class CefSelectClientCertificateCallbackCppToC
                                  cef_select_client_certificate_callback_t> {
  public:
   CefSelectClientCertificateCallbackCppToC();
+  virtual ~CefSelectClientCertificateCallbackCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_SELECT_CLIENT_CERTIFICATE_CALLBACK_CPPTOC_H_

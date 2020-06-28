@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,21 +9,27 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=561bc49a3431b23adee94199e912304142d55590$
+// $hash=11321a717870d88eef5252908ef9816af632664e$
 //
 
 #include "libcef_dll/cpptoc/frame_cpptoc.h"
 #include "libcef_dll/cpptoc/browser_cpptoc.h"
+#include "libcef_dll/cpptoc/process_message_cpptoc.h"
 #include "libcef_dll/cpptoc/request_cpptoc.h"
+#include "libcef_dll/cpptoc/urlrequest_cpptoc.h"
 #include "libcef_dll/cpptoc/v8context_cpptoc.h"
 #include "libcef_dll/ctocpp/domvisitor_ctocpp.h"
 #include "libcef_dll/ctocpp/string_visitor_ctocpp.h"
+#include "libcef_dll/ctocpp/urlrequest_client_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
 // MEMBER FUNCTIONS - Body may be edited by hand.
 
 int CEF_CALLBACK frame_is_valid(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -38,6 +44,8 @@ int CEF_CALLBACK frame_is_valid(struct _cef_frame_t* self) {
 }
 
 void CEF_CALLBACK frame_undo(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -49,6 +57,8 @@ void CEF_CALLBACK frame_undo(struct _cef_frame_t* self) {
 }
 
 void CEF_CALLBACK frame_redo(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -60,6 +70,8 @@ void CEF_CALLBACK frame_redo(struct _cef_frame_t* self) {
 }
 
 void CEF_CALLBACK frame_cut(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -71,6 +83,8 @@ void CEF_CALLBACK frame_cut(struct _cef_frame_t* self) {
 }
 
 void CEF_CALLBACK frame_copy(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -82,6 +96,8 @@ void CEF_CALLBACK frame_copy(struct _cef_frame_t* self) {
 }
 
 void CEF_CALLBACK frame_paste(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -93,6 +109,8 @@ void CEF_CALLBACK frame_paste(struct _cef_frame_t* self) {
 }
 
 void CEF_CALLBACK frame_del(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -104,6 +122,8 @@ void CEF_CALLBACK frame_del(struct _cef_frame_t* self) {
 }
 
 void CEF_CALLBACK frame_select_all(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -115,6 +135,8 @@ void CEF_CALLBACK frame_select_all(struct _cef_frame_t* self) {
 }
 
 void CEF_CALLBACK frame_view_source(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -127,6 +149,8 @@ void CEF_CALLBACK frame_view_source(struct _cef_frame_t* self) {
 
 void CEF_CALLBACK frame_get_source(struct _cef_frame_t* self,
                                    struct _cef_string_visitor_t* visitor) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -143,6 +167,8 @@ void CEF_CALLBACK frame_get_source(struct _cef_frame_t* self,
 
 void CEF_CALLBACK frame_get_text(struct _cef_frame_t* self,
                                  struct _cef_string_visitor_t* visitor) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -159,6 +185,8 @@ void CEF_CALLBACK frame_get_text(struct _cef_frame_t* self,
 
 void CEF_CALLBACK frame_load_request(struct _cef_frame_t* self,
                                      struct _cef_request_t* request) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -175,6 +203,8 @@ void CEF_CALLBACK frame_load_request(struct _cef_frame_t* self,
 
 void CEF_CALLBACK frame_load_url(struct _cef_frame_t* self,
                                  const cef_string_t* url) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -189,31 +219,12 @@ void CEF_CALLBACK frame_load_url(struct _cef_frame_t* self,
   CefFrameCppToC::Get(self)->LoadURL(CefString(url));
 }
 
-void CEF_CALLBACK frame_load_string(struct _cef_frame_t* self,
-                                    const cef_string_t* string_val,
-                                    const cef_string_t* url) {
-  // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
-
-  DCHECK(self);
-  if (!self)
-    return;
-  // Verify param: string_val; type: string_byref_const
-  DCHECK(string_val);
-  if (!string_val)
-    return;
-  // Verify param: url; type: string_byref_const
-  DCHECK(url);
-  if (!url)
-    return;
-
-  // Execute
-  CefFrameCppToC::Get(self)->LoadString(CefString(string_val), CefString(url));
-}
-
 void CEF_CALLBACK frame_execute_java_script(struct _cef_frame_t* self,
                                             const cef_string_t* code,
                                             const cef_string_t* script_url,
                                             int start_line) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -231,6 +242,8 @@ void CEF_CALLBACK frame_execute_java_script(struct _cef_frame_t* self,
 }
 
 int CEF_CALLBACK frame_is_main(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -245,6 +258,8 @@ int CEF_CALLBACK frame_is_main(struct _cef_frame_t* self) {
 }
 
 int CEF_CALLBACK frame_is_focused(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -259,6 +274,8 @@ int CEF_CALLBACK frame_is_focused(struct _cef_frame_t* self) {
 }
 
 cef_string_userfree_t CEF_CALLBACK frame_get_name(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -273,6 +290,8 @@ cef_string_userfree_t CEF_CALLBACK frame_get_name(struct _cef_frame_t* self) {
 }
 
 int64 CEF_CALLBACK frame_get_identifier(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -287,6 +306,8 @@ int64 CEF_CALLBACK frame_get_identifier(struct _cef_frame_t* self) {
 }
 
 struct _cef_frame_t* CEF_CALLBACK frame_get_parent(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -301,6 +322,8 @@ struct _cef_frame_t* CEF_CALLBACK frame_get_parent(struct _cef_frame_t* self) {
 }
 
 cef_string_userfree_t CEF_CALLBACK frame_get_url(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -315,6 +338,8 @@ cef_string_userfree_t CEF_CALLBACK frame_get_url(struct _cef_frame_t* self) {
 }
 
 cef_browser_t* CEF_CALLBACK frame_get_browser(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -330,6 +355,8 @@ cef_browser_t* CEF_CALLBACK frame_get_browser(struct _cef_frame_t* self) {
 
 struct _cef_v8context_t* CEF_CALLBACK
 frame_get_v8context(struct _cef_frame_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -345,6 +372,8 @@ frame_get_v8context(struct _cef_frame_t* self) {
 
 void CEF_CALLBACK frame_visit_dom(struct _cef_frame_t* self,
                                   cef_domvisitor_t* visitor) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -357,6 +386,57 @@ void CEF_CALLBACK frame_visit_dom(struct _cef_frame_t* self,
 
   // Execute
   CefFrameCppToC::Get(self)->VisitDOM(CefDOMVisitorCToCpp::Wrap(visitor));
+}
+
+struct _cef_urlrequest_t* CEF_CALLBACK
+frame_create_urlrequest(struct _cef_frame_t* self,
+                        struct _cef_request_t* request,
+                        struct _cef_urlrequest_client_t* client) {
+  shutdown_checker::AssertNotShutdown();
+
+  // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
+
+  DCHECK(self);
+  if (!self)
+    return NULL;
+  // Verify param: request; type: refptr_same
+  DCHECK(request);
+  if (!request)
+    return NULL;
+  // Verify param: client; type: refptr_diff
+  DCHECK(client);
+  if (!client)
+    return NULL;
+
+  // Execute
+  CefRefPtr<CefURLRequest> _retval =
+      CefFrameCppToC::Get(self)->CreateURLRequest(
+          CefRequestCppToC::Unwrap(request),
+          CefURLRequestClientCToCpp::Wrap(client));
+
+  // Return type: refptr_same
+  return CefURLRequestCppToC::Wrap(_retval);
+}
+
+void CEF_CALLBACK
+frame_send_process_message(struct _cef_frame_t* self,
+                           cef_process_id_t target_process,
+                           struct _cef_process_message_t* message) {
+  shutdown_checker::AssertNotShutdown();
+
+  // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
+
+  DCHECK(self);
+  if (!self)
+    return;
+  // Verify param: message; type: refptr_same
+  DCHECK(message);
+  if (!message)
+    return;
+
+  // Execute
+  CefFrameCppToC::Get(self)->SendProcessMessage(
+      target_process, CefProcessMessageCppToC::Unwrap(message));
 }
 
 }  // namespace
@@ -377,7 +457,6 @@ CefFrameCppToC::CefFrameCppToC() {
   GetStruct()->get_text = frame_get_text;
   GetStruct()->load_request = frame_load_request;
   GetStruct()->load_url = frame_load_url;
-  GetStruct()->load_string = frame_load_string;
   GetStruct()->execute_java_script = frame_execute_java_script;
   GetStruct()->is_main = frame_is_main;
   GetStruct()->is_focused = frame_is_focused;
@@ -388,6 +467,14 @@ CefFrameCppToC::CefFrameCppToC() {
   GetStruct()->get_browser = frame_get_browser;
   GetStruct()->get_v8context = frame_get_v8context;
   GetStruct()->visit_dom = frame_visit_dom;
+  GetStruct()->create_urlrequest = frame_create_urlrequest;
+  GetStruct()->send_process_message = frame_send_process_message;
+}
+
+// DESTRUCTOR - Do not edit by hand.
+
+CefFrameCppToC::~CefFrameCppToC() {
+  shutdown_checker::AssertNotShutdown();
 }
 
 template <>
@@ -396,15 +483,8 @@ CefCppToCRefCounted<CefFrameCppToC, CefFrame, cef_frame_t>::UnwrapDerived(
     CefWrapperType type,
     cef_frame_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefFrameCppToC, CefFrame, cef_frame_t>::DebugObjCt
-        ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

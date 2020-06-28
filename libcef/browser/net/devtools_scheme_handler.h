@@ -6,14 +6,14 @@
 #define CEF_LIBCEF_BROWSER_NET_DEVTOOLS_SCHEME_HANDLER_H_
 #pragma once
 
-class CefURLRequestManager;
+class CefResourceContext;
 
 namespace scheme {
 
 extern const char kChromeDevToolsHost[];
 
 // Register the chrome-devtools scheme handler.
-void RegisterChromeDevToolsHandler(CefURLRequestManager* request_manager);
+void RegisterChromeDevToolsHandler(CefResourceContext* resource_context);
 
 }  // namespace scheme
 

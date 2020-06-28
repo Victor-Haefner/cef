@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=0943d30705c52e00856c4ad9afb9f9fe5a20d538$
+// $hash=6e5e0048a9472dd5ac056b81abaf08c0d58dead2$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_PDF_PRINT_CALLBACK_CTOCPP_H_
@@ -34,6 +34,7 @@ class CefPdfPrintCallbackCToCpp
                                  cef_pdf_print_callback_t> {
  public:
   CefPdfPrintCallbackCToCpp();
+  virtual ~CefPdfPrintCallbackCToCpp();
 
   // CefPdfPrintCallback methods.
   void OnPdfPrintFinished(const CefString& path, bool ok) override;

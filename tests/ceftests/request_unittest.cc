@@ -18,10 +18,10 @@ using client::ClientAppRenderer;
 TEST(RequestTest, SetGet) {
   // CefRequest CreateRequest
   CefRefPtr<CefRequest> request(CefRequest::Create());
-  EXPECT_TRUE(request.get() != NULL);
+  EXPECT_TRUE(request.get() != nullptr);
   EXPECT_EQ(0U, request->GetIdentifier());
 
-  CefString url = "http://tests/run.html";
+  CefString url = "http://tests.com/run.html";
   CefString method = "POST";
   CefRequest::HeaderMap setHeaders, getHeaders;
   setHeaders.insert(std::make_pair("HeaderA", "ValueA"));
@@ -29,13 +29,13 @@ TEST(RequestTest, SetGet) {
 
   // CefPostData CreatePostData
   CefRefPtr<CefPostData> postData(CefPostData::Create());
-  EXPECT_TRUE(postData.get() != NULL);
+  EXPECT_TRUE(postData.get() != nullptr);
 
   // CefPostDataElement CreatePostDataElement
   CefRefPtr<CefPostDataElement> element1(CefPostDataElement::Create());
-  EXPECT_TRUE(element1.get() != NULL);
+  EXPECT_TRUE(element1.get() != nullptr);
   CefRefPtr<CefPostDataElement> element2(CefPostDataElement::Create());
-  EXPECT_TRUE(element2.get() != NULL);
+  EXPECT_TRUE(element2.get() != nullptr);
 
   // CefPostDataElement SetToFile
   CefString file = "c:\\path\\to\\file.ext";
@@ -90,7 +90,8 @@ TEST(RequestTest, SetGet) {
   CefString referrer = "http://tests.com/referrer.html";
   CefRequest::ReferrerPolicy policy = REFERRER_POLICY_ORIGIN;
   request->SetReferrer(referrer, policy);
-  EXPECT_EQ(referrer, request->GetReferrerURL());
+  EXPECT_STREQ("http://tests.com/",
+               request->GetReferrerURL().ToString().c_str());
   EXPECT_EQ(policy, request->GetReferrerPolicy());
 
   // CefRequest SetHeaderMap
@@ -106,7 +107,7 @@ TEST(RequestTest, SetGet) {
   EXPECT_EQ(0U, request->GetIdentifier());
 
   request = CefRequest::Create();
-  EXPECT_TRUE(request.get() != NULL);
+  EXPECT_TRUE(request.get() != nullptr);
   EXPECT_EQ(0U, request->GetIdentifier());
 
   // CefRequest Set
@@ -120,13 +121,77 @@ TEST(RequestTest, SetGet) {
   TestPostDataEqual(postData, request->GetPostData());
 }
 
+TEST(RequestTest, SetGetHeaderByName) {
+  CefRefPtr<CefRequest> request(CefRequest::Create());
+  EXPECT_TRUE(request.get() != nullptr);
+
+  CefRequest::HeaderMap headers, expectedHeaders;
+
+  request->SetHeaderByName("HeaderA", "ValueA", false);
+  request->SetHeaderByName("HeaderB", "ValueB", false);
+
+  expectedHeaders.insert(std::make_pair("HeaderA", "ValueA"));
+  expectedHeaders.insert(std::make_pair("HeaderB", "ValueB"));
+
+  // Case insensitive retrieval.
+  EXPECT_STREQ("ValueA",
+               request->GetHeaderByName("headera").ToString().c_str());
+  EXPECT_STREQ("ValueB",
+               request->GetHeaderByName("headerb").ToString().c_str());
+  EXPECT_STREQ("", request->GetHeaderByName("noexist").ToString().c_str());
+
+  request->GetHeaderMap(headers);
+  TestMapEqual(expectedHeaders, headers, false);
+
+  // Replace an existing value.
+  request->SetHeaderByName("HeaderA", "ValueANew", true);
+
+  expectedHeaders.clear();
+  expectedHeaders.insert(std::make_pair("HeaderA", "ValueANew"));
+  expectedHeaders.insert(std::make_pair("HeaderB", "ValueB"));
+
+  // Case insensitive retrieval.
+  EXPECT_STREQ("ValueANew",
+               request->GetHeaderByName("headerA").ToString().c_str());
+
+  request->GetHeaderMap(headers);
+  TestMapEqual(expectedHeaders, headers, false);
+
+  // Header with multiple values.
+  expectedHeaders.clear();
+  expectedHeaders.insert(std::make_pair("HeaderA", "ValueA1"));
+  expectedHeaders.insert(std::make_pair("HeaderA", "ValueA2"));
+  expectedHeaders.insert(std::make_pair("HeaderB", "ValueB"));
+  request->SetHeaderMap(expectedHeaders);
+
+  // When there are multiple values only the first is returned.
+  EXPECT_STREQ("ValueA1",
+               request->GetHeaderByName("headera").ToString().c_str());
+
+  // Don't overwrite the value.
+  request->SetHeaderByName("HeaderA", "ValueANew", false);
+
+  request->GetHeaderMap(headers);
+  TestMapEqual(expectedHeaders, headers, false);
+
+  // Overwrite the value (remove the duplicates).
+  request->SetHeaderByName("HeaderA", "ValueANew", true);
+
+  expectedHeaders.clear();
+  expectedHeaders.insert(std::make_pair("HeaderA", "ValueANew"));
+  expectedHeaders.insert(std::make_pair("HeaderB", "ValueB"));
+
+  request->GetHeaderMap(headers);
+  TestMapEqual(expectedHeaders, headers, false);
+}
+
 namespace {
 
 const char kTestUrl[] = "http://tests.com/run.html";
 
 void CreateRequest(CefRefPtr<CefRequest>& request) {
   request = CefRequest::Create();
-  EXPECT_TRUE(request.get() != NULL);
+  EXPECT_TRUE(request.get() != nullptr);
 
   request->SetURL(kTestUrl);
   request->SetMethod("POST");
@@ -139,10 +204,10 @@ void CreateRequest(CefRefPtr<CefRequest>& request) {
   request->SetHeaderMap(headers);
 
   CefRefPtr<CefPostData> postData(CefPostData::Create());
-  EXPECT_TRUE(postData.get() != NULL);
+  EXPECT_TRUE(postData.get() != nullptr);
 
   CefRefPtr<CefPostDataElement> element1(CefPostDataElement::Create());
-  EXPECT_TRUE(element1.get() != NULL);
+  EXPECT_TRUE(element1.get() != nullptr);
   char bytes[] = "Test Bytes";
   element1->SetToBytes(sizeof(bytes), bytes);
   postData->AddElement(element1);
@@ -201,7 +266,7 @@ class RequestSendRecvTestHandler : public TestHandler {
     EXPECT_IO_THREAD();
 
     TestRequest(request);
-    EXPECT_FALSE(request->IsReadOnly());
+    EXPECT_TRUE(request->IsReadOnly());
 
     got_resource_handler_.yes();
 
@@ -237,7 +302,7 @@ class RequestSendRecvTestHandler : public TestHandler {
     EXPECT_TRUE(response->IsReadOnly());
 
     got_resource_response_filter_.yes();
-    return NULL;
+    return nullptr;
   }
 
   void OnResourceLoadComplete(CefRefPtr<CefBrowser> browser,
@@ -265,7 +330,7 @@ class RequestSendRecvTestHandler : public TestHandler {
     TestRequestEqual(request_, request, true);
     EXPECT_EQ(request_id_, request->GetIdentifier());
     EXPECT_EQ(RT_MAIN_FRAME, request->GetResourceType());
-    EXPECT_EQ(TT_LINK, request->GetTransitionType());
+    EXPECT_EQ(TT_FORM_SUBMIT, request->GetTransitionType());
   }
 
   void TestResponse(CefRefPtr<CefResponse> response) {
@@ -310,6 +375,8 @@ TEST(RequestTest, SendRecv) {
 namespace {
 
 const char kTypeTestOrigin[] = "http://tests-requesttt.com/";
+const cef_transition_type_t kTransitionExplicitLoad =
+    static_cast<cef_transition_type_t>(TT_EXPLICIT | TT_DIRECT_LOAD_FLAG);
 
 static struct TypeExpected {
   const char* file;
@@ -319,10 +386,10 @@ static struct TypeExpected {
   int expected_count;
 } g_type_expected[] = {
     // Initial main frame load due to browser creation.
-    {"main.html", true, TT_EXPLICIT, RT_MAIN_FRAME, 1},
+    {"main.html", true, kTransitionExplicitLoad, RT_MAIN_FRAME, 1},
 
     // Sub frame load.
-    {"sub.html", true, TT_LINK, RT_SUB_FRAME, 1},
+    {"sub.html", true, TT_AUTO_SUBFRAME, RT_SUB_FRAME, 1},
 
     // Stylesheet load.
     {"style.css", false, TT_LINK, RT_STYLESHEET, 1},
@@ -477,6 +544,8 @@ class TypeTestHandler : public TestHandler {
                 "font/ttf");
     AddResource(std::string(kTypeTestOrigin) + "xhr.html", "<html>XHR</html>",
                 "text/html");
+    AddResource(std::string(kTypeTestOrigin) + "fetch.html",
+                "<html>Fetch</html>", "text/html");
 
     CreateBrowser(std::string(kTypeTestOrigin) + "main.html");
 

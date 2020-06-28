@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,15 +9,18 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=6fe136b2858060850c59a23445513ecead1b5b55$
+// $hash=d83e342a1d94a14e39b1eba174e0b8892fd52728$
 //
 
 #include "libcef_dll/cpptoc/binary_value_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // GLOBAL FUNCTIONS - Body may be edited by hand.
 
 CEF_EXPORT cef_binary_value_t* cef_binary_value_create(const void* data,
                                                        size_t data_size) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Verify param: data; type: simple_byaddr
@@ -37,6 +40,8 @@ namespace {
 // MEMBER FUNCTIONS - Body may be edited by hand.
 
 int CEF_CALLBACK binary_value_is_valid(struct _cef_binary_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -51,6 +56,8 @@ int CEF_CALLBACK binary_value_is_valid(struct _cef_binary_value_t* self) {
 }
 
 int CEF_CALLBACK binary_value_is_owned(struct _cef_binary_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -66,6 +73,8 @@ int CEF_CALLBACK binary_value_is_owned(struct _cef_binary_value_t* self) {
 
 int CEF_CALLBACK binary_value_is_same(struct _cef_binary_value_t* self,
                                       struct _cef_binary_value_t* that) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -86,6 +95,8 @@ int CEF_CALLBACK binary_value_is_same(struct _cef_binary_value_t* self,
 
 int CEF_CALLBACK binary_value_is_equal(struct _cef_binary_value_t* self,
                                        struct _cef_binary_value_t* that) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -106,6 +117,8 @@ int CEF_CALLBACK binary_value_is_equal(struct _cef_binary_value_t* self,
 
 struct _cef_binary_value_t* CEF_CALLBACK
 binary_value_copy(struct _cef_binary_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -120,6 +133,8 @@ binary_value_copy(struct _cef_binary_value_t* self) {
 }
 
 size_t CEF_CALLBACK binary_value_get_size(struct _cef_binary_value_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -137,6 +152,8 @@ size_t CEF_CALLBACK binary_value_get_data(struct _cef_binary_value_t* self,
                                           void* buffer,
                                           size_t buffer_size,
                                           size_t data_offset) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -169,21 +186,19 @@ CefBinaryValueCppToC::CefBinaryValueCppToC() {
   GetStruct()->get_data = binary_value_get_data;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefBinaryValueCppToC::~CefBinaryValueCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefBinaryValue>
 CefCppToCRefCounted<CefBinaryValueCppToC, CefBinaryValue, cef_binary_value_t>::
     UnwrapDerived(CefWrapperType type, cef_binary_value_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefBinaryValueCppToC,
-                                         CefBinaryValue,
-                                         cef_binary_value_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefBinaryValueCppToC,

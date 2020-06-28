@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,11 +9,12 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=637fdbea06087e12bd1a899699bf9005c11eda2c$
+// $hash=898e5c53161716e6fb4d14a28ca19ab66c7342b8$
 //
 
 #include "libcef_dll/cpptoc/sslinfo_cpptoc.h"
 #include "libcef_dll/cpptoc/x509certificate_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -21,6 +22,8 @@ namespace {
 
 cef_cert_status_t CEF_CALLBACK
 sslinfo_get_cert_status(struct _cef_sslinfo_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -36,6 +39,8 @@ sslinfo_get_cert_status(struct _cef_sslinfo_t* self) {
 
 struct _cef_x509certificate_t* CEF_CALLBACK
 sslinfo_get_x509certificate(struct _cef_sslinfo_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -59,21 +64,20 @@ CefSSLInfoCppToC::CefSSLInfoCppToC() {
   GetStruct()->get_x509certificate = sslinfo_get_x509certificate;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefSSLInfoCppToC::~CefSSLInfoCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefSSLInfo>
 CefCppToCRefCounted<CefSSLInfoCppToC, CefSSLInfo, cef_sslinfo_t>::UnwrapDerived(
     CefWrapperType type,
     cef_sslinfo_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefSSLInfoCppToC, CefSSLInfo, cef_sslinfo_t>::DebugObjCt
-        ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefSSLInfoCppToC,

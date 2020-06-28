@@ -237,7 +237,7 @@ void CefServerImpl::SendHttp404Response(int connection_id) {
     return;
   }
 
-  server_->Send404(connection_id, NO_TRAFFIC_ANNOTATION_YET);
+  server_->Send404(connection_id, MISSING_TRAFFIC_ANNOTATION);
   server_->Close(connection_id);
 }
 
@@ -262,7 +262,7 @@ void CefServerImpl::SendHttp500Response(int connection_id,
     return;
   }
 
-  server_->Send500(connection_id, error_message, NO_TRAFFIC_ANNOTATION_YET);
+  server_->Send500(connection_id, error_message, MISSING_TRAFFIC_ANNOTATION);
   server_->Close(connection_id);
 }
 
@@ -305,7 +305,7 @@ void CefServerImpl::SendHttpResponse(int connection_id,
         base::StringPrintf("%" PRIuS, static_cast<size_t>(content_length)));
   }
 
-  server_->SendResponse(connection_id, response, NO_TRAFFIC_ANNOTATION_YET);
+  server_->SendResponse(connection_id, response, MISSING_TRAFFIC_ANNOTATION);
   if (content_length == 0) {
     server_->Close(connection_id);
   }
@@ -367,7 +367,7 @@ void CefServerImpl::ContinueWebSocketRequest(
 
   if (allow) {
     server_->AcceptWebSocket(connection_id, request_info,
-                             NO_TRAFFIC_ANNOTATION_YET);
+                             MISSING_TRAFFIC_ANNOTATION);
     handler_->OnWebSocketConnected(this, connection_id);
   } else {
     server_->Close(connection_id);
@@ -381,7 +381,7 @@ void CefServerImpl::SendHttp200ResponseInternal(
   if (!CEF_CURRENTLY_ON_HT()) {
     CEF_POST_TASK_HT(base::BindOnce(&CefServerImpl::SendHttp200ResponseInternal,
                                     this, connection_id, content_type,
-                                    base::Passed(std::move(data))));
+                                    std::move(data)));
     return;
   }
 
@@ -399,7 +399,7 @@ void CefServerImpl::SendHttp200ResponseInternal(
   }
 
   server_->Send200(connection_id, *data, content_type,
-                   NO_TRAFFIC_ANNOTATION_YET);
+                   MISSING_TRAFFIC_ANNOTATION);
   server_->Close(connection_id);
 }
 
@@ -407,8 +407,7 @@ void CefServerImpl::SendRawDataInternal(int connection_id,
                                         std::unique_ptr<std::string> data) {
   if (!CEF_CURRENTLY_ON_HT()) {
     CEF_POST_TASK_HT(base::BindOnce(&CefServerImpl::SendRawDataInternal, this,
-                                    connection_id,
-                                    base::Passed(std::move(data))));
+                                    connection_id, std::move(data)));
     return;
   }
 
@@ -418,7 +417,7 @@ void CefServerImpl::SendRawDataInternal(int connection_id,
   if (!GetConnectionInfo(connection_id))
     return;
 
-  server_->SendRaw(connection_id, *data, NO_TRAFFIC_ANNOTATION_YET);
+  server_->SendRaw(connection_id, *data, MISSING_TRAFFIC_ANNOTATION);
 }
 
 void CefServerImpl::SendWebSocketMessageInternal(
@@ -427,7 +426,7 @@ void CefServerImpl::SendWebSocketMessageInternal(
   if (!CEF_CURRENTLY_ON_HT()) {
     CEF_POST_TASK_HT(
         base::BindOnce(&CefServerImpl::SendWebSocketMessageInternal, this,
-                       connection_id, base::Passed(std::move(data))));
+                       connection_id, std::move(data)));
     return;
   }
 
@@ -444,7 +443,7 @@ void CefServerImpl::SendWebSocketMessageInternal(
     return;
   }
 
-  server_->SendOverWebSocket(connection_id, *data, NO_TRAFFIC_ANNOTATION_YET);
+  server_->SendOverWebSocket(connection_id, *data, MISSING_TRAFFIC_ANNOTATION);
 }
 
 void CefServerImpl::OnConnect(int connection_id) {
@@ -492,8 +491,7 @@ void CefServerImpl::OnWebSocketRequest(
       CreateRequest(address_, request_info, true), callback);
 }
 
-void CefServerImpl::OnWebSocketMessage(int connection_id,
-                                       const std::string& data) {
+void CefServerImpl::OnWebSocketMessage(int connection_id, std::string data) {
   CEF_REQUIRE_HT();
 
   ConnectionInfo* info = GetConnectionInfo(connection_id);
@@ -522,7 +520,7 @@ void CefServerImpl::StartOnUIThread(const std::string& address,
   std::unique_ptr<base::Thread> thread(
       new base::Thread(base::StringPrintf("%s:%d", address.c_str(), port)));
   base::Thread::Options options;
-  options.message_loop_type = base::MessageLoop::TYPE_IO;
+  options.message_pump_type = base::MessagePumpType::IO;
   if (thread->StartWithOptions(options)) {
     // Add a reference that will be released in ShutdownOnUIThread().
     AddRef();
@@ -597,8 +595,15 @@ void CefServerImpl::ShutdownOnUIThread() {
   if (thread_) {
     // Stop the handler thread as a background task so the UI thread isn't
     // blocked.
-    CEF_POST_BACKGROUND_TASK(
-        BindOnce([](std::unique_ptr<base::Thread>) {}, std::move(thread_)));
+    CEF_POST_BACKGROUND_TASK(BindOnce(
+        [](std::unique_ptr<base::Thread> thread) {
+          // Calling PlatformThread::Join() on the UI thread is otherwise
+          // disallowed.
+          base::ScopedAllowBaseSyncPrimitivesForTesting
+              scoped_allow_sync_primitives;
+          thread.reset();
+        },
+        std::move(thread_)));
 
     // Release the reference that was added in StartupOnUIThread().
     Release();

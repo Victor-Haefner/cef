@@ -12,6 +12,7 @@
 
 #include "base/environment.h"
 #include "base/logging.h"
+#include "base/stl_util.h"
 #include "base/strings/string16.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_split.h"
@@ -45,7 +46,7 @@
 #if defined(OS_WIN)
 #include "base/debug/leak_annotations.h"
 #include "chrome/install_static/install_util.h"
-#include "components/crash/content/app/crashpad.h"
+#include "components/crash/core/app/crashpad.h"
 #endif
 
 namespace {
@@ -379,7 +380,7 @@ bool CefCrashReporterClient::ReadCrashConfigFile() {
     kCrashKeysSection,
   } current_section = kNoSection;
 
-  while (fgets(line, sizeof(line) - 1, fp) != NULL) {
+  while (fgets(line, sizeof(line) - 1, fp) != nullptr) {
     std::string str = line;
     base::TrimString(str, base::kWhitespaceASCII, &str);
     if (str.empty() || str[0] == '#')
@@ -494,14 +495,14 @@ bool CefCrashReporterClient::ReadCrashConfigFile() {
     };
 
     // Make sure we can fit all possible name/value pairs.
-    static_assert(arraysize(ids) * crashpad::Annotation::kValueMaxSize >=
+    static_assert(base::size(ids) * crashpad::Annotation::kValueMaxSize >=
                       3 * 26 /* sizes (small, medium, large) * slots (A to Z) */
                           * (3 + 2 /* key size ("S-A") + delim size ("=,") */
                              + crashpad::Annotation::kNameMaxLength),
                   "Not enough storage for key map");
 
     size_t offset = 0;
-    for (size_t i = 0; i < arraysize(ids); ++i) {
+    for (size_t i = 0; i < base::size(ids); ++i) {
       size_t length = std::min(map_keys.size() - offset,
                                crashpad::Annotation::kValueMaxSize);
       ids[i].Set(base::StringPiece(map_keys.data() + offset, length));
@@ -670,7 +671,7 @@ bool CefCrashReporterClient::IsRunningUnattended() {
 }
 #endif
 
-std::string CefCrashReporterClient::GetCrashServerURL() {
+std::string CefCrashReporterClient::GetUploadUrl() {
   return server_url_;
 }
 
@@ -683,17 +684,17 @@ void CefCrashReporterClient::GetCrashOptionalArguments(
 
   if (max_uploads_ > 0) {
     arguments->push_back(std::string("--max-uploads=") +
-                         base::IntToString(max_uploads_));
+                         base::NumberToString(max_uploads_));
   }
 
   if (max_db_size_ > 0) {
     arguments->push_back(std::string("--max-db-size=") +
-                         base::IntToString(max_db_size_));
+                         base::NumberToString(max_db_size_));
   }
 
   if (max_db_age_ > 0) {
     arguments->push_back(std::string("--max-db-age=") +
-                         base::IntToString(max_db_age_));
+                         base::NumberToString(max_db_age_));
   }
 }
 
@@ -745,13 +746,13 @@ CefCrashReporterClient::ParameterMap CefCrashReporterClient::FilterParameters(
       IDKEY(n "-V"), IDKEY(n "-W"), IDKEY(n "-X"), IDKEY(n "-Y"),            \
       IDKEY(n "-Z")
 
-#define IDKEY_FUNCTION(name, size)                                           \
-  static_assert(size <= crashpad::Annotation::kValueMaxSize,                 \
+#define IDKEY_FUNCTION(name, size_)                                          \
+  static_assert(size_ <= crashpad::Annotation::kValueMaxSize,                \
                 "Annotation size is too large.");                            \
   bool Set##name##Annotation(size_t index, const base::StringPiece& value) { \
-    using IDKey = crash_reporter::CrashKeyString<size>;                      \
+    using IDKey = crash_reporter::CrashKeyString<size_>;                     \
     static IDKey ids[] = {IDKEY_ENTRIES(#name)};                             \
-    if (index < arraysize(ids)) {                                            \
+    if (index < base::size(ids)) {                                           \
       if (value.empty()) {                                                   \
         ids[index].Clear();                                                  \
       } else {                                                               \

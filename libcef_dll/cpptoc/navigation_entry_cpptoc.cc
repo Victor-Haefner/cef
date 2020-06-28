@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,11 +9,12 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=ae28c6ce7f521cf7c3d871a25e947f56738e2789$
+// $hash=cdcd1b3b9458442c480e69c5f7cee2ed48587e8b$
 //
 
 #include "libcef_dll/cpptoc/navigation_entry_cpptoc.h"
 #include "libcef_dll/cpptoc/sslstatus_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -21,6 +22,8 @@ namespace {
 
 int CEF_CALLBACK
 navigation_entry_is_valid(struct _cef_navigation_entry_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -36,6 +39,8 @@ navigation_entry_is_valid(struct _cef_navigation_entry_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 navigation_entry_get_url(struct _cef_navigation_entry_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -51,6 +56,8 @@ navigation_entry_get_url(struct _cef_navigation_entry_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 navigation_entry_get_display_url(struct _cef_navigation_entry_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -66,6 +73,8 @@ navigation_entry_get_display_url(struct _cef_navigation_entry_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 navigation_entry_get_original_url(struct _cef_navigation_entry_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -81,6 +90,8 @@ navigation_entry_get_original_url(struct _cef_navigation_entry_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 navigation_entry_get_title(struct _cef_navigation_entry_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -96,6 +107,8 @@ navigation_entry_get_title(struct _cef_navigation_entry_t* self) {
 
 cef_transition_type_t CEF_CALLBACK
 navigation_entry_get_transition_type(struct _cef_navigation_entry_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -112,6 +125,8 @@ navigation_entry_get_transition_type(struct _cef_navigation_entry_t* self) {
 
 int CEF_CALLBACK
 navigation_entry_has_post_data(struct _cef_navigation_entry_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -127,6 +142,8 @@ navigation_entry_has_post_data(struct _cef_navigation_entry_t* self) {
 
 cef_time_t CEF_CALLBACK
 navigation_entry_get_completion_time(struct _cef_navigation_entry_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -142,6 +159,8 @@ navigation_entry_get_completion_time(struct _cef_navigation_entry_t* self) {
 
 int CEF_CALLBACK
 navigation_entry_get_http_status_code(struct _cef_navigation_entry_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -157,6 +176,8 @@ navigation_entry_get_http_status_code(struct _cef_navigation_entry_t* self) {
 
 struct _cef_sslstatus_t* CEF_CALLBACK
 navigation_entry_get_sslstatus(struct _cef_navigation_entry_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -188,6 +209,12 @@ CefNavigationEntryCppToC::CefNavigationEntryCppToC() {
   GetStruct()->get_sslstatus = navigation_entry_get_sslstatus;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefNavigationEntryCppToC::~CefNavigationEntryCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefNavigationEntry> CefCppToCRefCounted<
     CefNavigationEntryCppToC,
@@ -195,16 +222,8 @@ CefRefPtr<CefNavigationEntry> CefCppToCRefCounted<
     cef_navigation_entry_t>::UnwrapDerived(CefWrapperType type,
                                            cef_navigation_entry_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefNavigationEntryCppToC,
-                                         CefNavigationEntry,
-                                         cef_navigation_entry_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefNavigationEntryCppToC,

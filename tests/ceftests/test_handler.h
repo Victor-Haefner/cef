@@ -58,11 +58,11 @@ class TestHandler : public CefClient,
                     public CefDialogHandler,
                     public CefDisplayHandler,
                     public CefDownloadHandler,
-                    public CefDragHandler,
                     public CefJSDialogHandler,
                     public CefLifeSpanHandler,
                     public CefLoadHandler,
-                    public CefRequestHandler {
+                    public CefRequestHandler,
+                    public CefResourceRequestHandler {
  public:
   // Tracks the completion state of related test runs.
   class CompletionState {
@@ -139,7 +139,7 @@ class TestHandler : public CefClient,
   };
 
   // The |completion_state| object if specified must outlive this class.
-  explicit TestHandler(CompletionState* completion_state = NULL);
+  explicit TestHandler(CompletionState* completion_state = nullptr);
   ~TestHandler() override;
 
   // Implement this method to set up the test. Only used in combination with a
@@ -154,7 +154,6 @@ class TestHandler : public CefClient,
   CefRefPtr<CefDialogHandler> GetDialogHandler() override { return this; }
   CefRefPtr<CefDisplayHandler> GetDisplayHandler() override { return this; }
   CefRefPtr<CefDownloadHandler> GetDownloadHandler() override { return this; }
-  CefRefPtr<CefDragHandler> GetDragHandler() override { return this; }
   CefRefPtr<CefJSDialogHandler> GetJSDialogHandler() override { return this; }
   CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override { return this; }
   CefRefPtr<CefLoadHandler> GetLoadHandler() override { return this; }
@@ -167,16 +166,23 @@ class TestHandler : public CefClient,
       const CefString& suggested_name,
       CefRefPtr<CefBeforeDownloadCallback> callback) override {}
 
-  // CefDragHandler methods
-  void OnDraggableRegionsChanged(
-      CefRefPtr<CefBrowser> browser,
-      const std::vector<CefDraggableRegion>& regions) override {}
-
   // CefLifeSpanHandler methods
   void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
   void OnBeforeClose(CefRefPtr<CefBrowser> browser) override;
 
   // CefRequestHandler methods
+  CefRefPtr<CefResourceRequestHandler> GetResourceRequestHandler(
+      CefRefPtr<CefBrowser> browser,
+      CefRefPtr<CefFrame> frame,
+      CefRefPtr<CefRequest> request,
+      bool is_navigation,
+      bool is_download,
+      const CefString& request_initiator,
+      bool& disable_default_handling) override {
+    return this;
+  }
+
+  // CefResourceRequestHandler methods
   CefRefPtr<CefResourceHandler> GetResourceHandler(
       CefRefPtr<CefBrowser> browser,
       CefRefPtr<CefFrame> frame,
@@ -233,7 +239,8 @@ class TestHandler : public CefClient,
   virtual void PopulateBrowserSettings(CefBrowserSettings* settings) {}
 
   void CreateBrowser(const CefString& url,
-                     CefRefPtr<CefRequestContext> request_context = NULL);
+                     CefRefPtr<CefRequestContext> request_context = nullptr,
+                     CefRefPtr<CefDictionaryValue> extra_info = nullptr);
   static void CloseBrowser(CefRefPtr<CefBrowser> browser, bool force_close);
 
   void AddResource(const std::string& url,
@@ -314,12 +321,12 @@ void ReleaseAndWaitForDestructor(CefRefPtr<T>& handler, int delay_ms = 2000) {
       CefWaitableEvent::CreateWaitableEvent(true, false);
   handler->SetDestroyEvent(event);
   T* _handler_ptr = handler.get();
-  handler = NULL;
+  handler = nullptr;
   bool handler_destructed = event->TimedWait(delay_ms);
   EXPECT_TRUE(handler_destructed);
   if (!handler_destructed) {
     // |event| is a stack variable so clear the reference before returning.
-    _handler_ptr->SetDestroyEvent(NULL);
+    _handler_ptr->SetDestroyEvent(nullptr);
   }
 }
 

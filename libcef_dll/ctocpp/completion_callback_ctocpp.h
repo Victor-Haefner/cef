@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=4cec2b2aacfd4397ab504046e7a00252c0f0186d$
+// $hash=8c963d9ea85918f6942e95c24dce6769a7f881c5$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_COMPLETION_CALLBACK_CTOCPP_H_
@@ -32,6 +32,7 @@ class CefCompletionCallbackCToCpp
                                  cef_completion_callback_t> {
  public:
   CefCompletionCallbackCToCpp();
+  virtual ~CefCompletionCallbackCToCpp();
 
   // CefCompletionCallback methods.
   void OnComplete() override;

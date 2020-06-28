@@ -6,6 +6,8 @@
 A simple utility function to merge pack resource files into a single resource file.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 from date_util import *
 from file_util import *
 import os
@@ -14,7 +16,7 @@ import string
 import sys
 
 
-def MakeFileSegment(input):
+def MakeFileSegment(input, all_names):
   result = """
 
 // ---------------------------------------------------------------------------
@@ -26,10 +28,28 @@ def MakeFileSegment(input):
 
   contents = read_file(input)
 
+  # Format for Windows builds with resource whitelisting enabled [1]:
+  #   #define IDR_RESOURCE_NAME (::ui::WhitelistedResource<12345>(), 12345)
+  # Format for other builds:
+  #   #define IDR_RESOURCE_NAME 12345
+  # [1] See https://crbug.com/684788#c18
+
+  regex = '#define\s([A-Za-z0-9_]{1,})\s'
+  if contents.find('ui::WhitelistedResource') > 0:
+    regex += '.*<'
+  regex += '([0-9]{1,})'
+
   # identify the defines in the file
-  p = re.compile('#define\s([A-Za-z0-9_]{1,})\s([0-9]{1,})')
+  p = re.compile(regex)
   list = p.findall(contents)
   for name, id in list:
+    # If the same define exists in multiple files add a suffix.
+    if name in all_names:
+      all_names[name] += 1
+      name += '_%d' % all_names[name]
+    else:
+      all_names[name] = 1
+
     result += "\n#define %s %s" % (name, id)
 
   return result
@@ -79,9 +99,11 @@ def MakeFile(output, input):
   # sort the input files by name
   input = sorted(input, key=lambda path: os.path.split(path)[1])
 
+  all_names = {}
+
   # generate the file segments
   for file in input:
-    result += MakeFileSegment(file)
+    result += MakeFileSegment(file, all_names)
 
   # footer string
   result += \
@@ -94,25 +116,16 @@ def MakeFile(output, input):
   result = result.replace('$YEAR$', get_year())
   # add the guard string
   filename = os.path.split(output)[1]
-  guard = 'CEF_INCLUDE_' + string.upper(filename.replace('.', '_')) + '_'
+  guard = 'CEF_INCLUDE_' + filename.replace('.', '_').upper() + '_'
   result = result.replace('$GUARD$', guard)
 
-  if path_exists(output):
-    old_contents = read_file(output)
-  else:
-    old_contents = ''
-
-  if (result != old_contents):
-    write_file(output, result)
-    sys.stdout.write('File ' + output + ' updated.\n')
-  else:
-    sys.stdout.write('File ' + output + ' is already up to date.\n')
+  write_file_if_changed(output, result)
 
 
 def main(argv):
   if len(argv) < 3:
-    print("Usage:\n  %s <output_filename> <input_file1> [input_file2] ... " %
-          argv[0])
+    print(("Usage:\n  %s <output_filename> <input_file1> [input_file2] ... " %
+           argv[0]))
     sys.exit(-1)
   MakeFile(argv[1], argv[2:])
 

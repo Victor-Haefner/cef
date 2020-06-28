@@ -15,13 +15,14 @@
 #include "include/views/cef_browser_view.h"
 #include "libcef/browser/browser_host_impl.h"
 
-#include "base/callback.h"
+#include "base/callback_forward.h"
 #include "content/public/browser/web_contents.h"
 
 namespace blink {
 class WebMouseEvent;
 class WebMouseWheelEvent;
 class WebInputEvent;
+class WebTouchEvent;
 }  // namespace blink
 
 namespace content {
@@ -41,6 +42,7 @@ class CefBrowserInfo;
 class CefFileDialogRunner;
 class CefJavaScriptDialogRunner;
 class CefMenuRunner;
+class CefWebContentsDialogHelper;
 
 // Provides platform-specific implementations of browser functionality. All
 // methods are called on the browser process UI thread unless otherwise
@@ -108,7 +110,7 @@ class CefBrowserPlatformDelegate {
   // Returns the BrowserView associated with this browser. Only used with views-
   // based browsers.
   virtual CefRefPtr<CefBrowserView> GetBrowserView() const;
-#endif  // defined(USE_AURA)
+#endif
 
   // Called after the WebContents have been created for a new popup browser
   // parented to this browser but before the CefBrowserHostImpl is created for
@@ -139,13 +141,24 @@ class CefBrowserPlatformDelegate {
   // enable transparency.
   virtual SkColor GetBackgroundColor() const = 0;
 
+  virtual bool CanUseSharedTexture() const = 0;
+  virtual bool CanUseExternalBeginFrame() const = 0;
+
   // Notify the window that it was resized.
-  virtual void SynchronizeVisualProperties() = 0;
+  virtual void WasResized() = 0;
 
   // Send input events.
-  virtual void SendKeyEvent(const content::NativeWebKeyboardEvent& event) = 0;
-  virtual void SendMouseEvent(const blink::WebMouseEvent& event) = 0;
-  virtual void SendMouseWheelEvent(const blink::WebMouseWheelEvent& event) = 0;
+  virtual void SendKeyEvent(const CefKeyEvent& event) = 0;
+  virtual void SendMouseClickEvent(const CefMouseEvent& event,
+                                   CefBrowserHost::MouseButtonType type,
+                                   bool mouseUp,
+                                   int clickCount) = 0;
+  virtual void SendMouseMoveEvent(const CefMouseEvent& event,
+                                  bool mouseLeave) = 0;
+  virtual void SendMouseWheelEvent(const CefMouseEvent& event,
+                                   int deltaX,
+                                   int deltaY) = 0;
+  virtual void SendTouchEvent(const CefTouchEvent& event) = 0;
 
   // Send focus event. The browser's WebContents may be NULL when this method is
   // called.
@@ -173,27 +186,11 @@ class CefBrowserPlatformDelegate {
 
   // Forward the keyboard event to the application or frame window to allow
   // processing of shortcut keys.
-  virtual void HandleKeyboardEvent(
+  virtual bool HandleKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) = 0;
 
   // Invoke platform specific handling for the external protocol.
-  virtual void HandleExternalProtocol(const GURL& url) = 0;
-
-  // Translate CEF events to Chromium/Blink events.
-  virtual void TranslateKeyEvent(content::NativeWebKeyboardEvent& result,
-                                 const CefKeyEvent& key_event) const = 0;
-  virtual void TranslateClickEvent(blink::WebMouseEvent& result,
-                                   const CefMouseEvent& mouse_event,
-                                   CefBrowserHost::MouseButtonType type,
-                                   bool mouseUp,
-                                   int clickCount) const = 0;
-  virtual void TranslateMoveEvent(blink::WebMouseEvent& result,
-                                  const CefMouseEvent& mouse_event,
-                                  bool mouseLeave) const = 0;
-  virtual void TranslateWheelEvent(blink::WebMouseWheelEvent& result,
-                                   const CefMouseEvent& mouse_event,
-                                   int deltaX,
-                                   int deltaY) const = 0;
+  static void HandleExternalProtocol(const GURL& url);
 
   // Returns the OS event handle, if any, associated with |event|.
   virtual CefEventHandle GetEventHandle(
@@ -226,6 +223,8 @@ class CefBrowserPlatformDelegate {
 
   // Invalidate the view. Only used with windowless rendering.
   virtual void Invalidate(cef_paint_element_type_t type);
+
+  virtual void SendExternalBeginFrame();
 
   // Set the windowless frame rate. Only used with windowless rendering.
   virtual void SetWindowlessFrameRate(int frame_rate);
@@ -265,6 +264,8 @@ class CefBrowserPlatformDelegate {
       const content::AXEventNotificationDetails& eventData);
   virtual void AccessibilityLocationChangesReceived(
       const std::vector<content::AXLocationChangeNotificationDetails>& locData);
+  virtual gfx::Point GetDialogPosition(const gfx::Size& size);
+  virtual gfx::Size GetMaximumDialogSize();
 
  protected:
   // Allow deletion via scoped_ptr only.
@@ -273,11 +274,16 @@ class CefBrowserPlatformDelegate {
   CefBrowserPlatformDelegate();
   virtual ~CefBrowserPlatformDelegate();
 
-  static int TranslateModifiers(uint32 cef_modifiers);
+  base::RepeatingClosure GetBoundsChangedCallback();
 
-  CefBrowserHostImpl* browser_;  // Not owned by this object.
+  static int TranslateWebEventModifiers(uint32 cef_modifiers);
+
+  CefBrowserHostImpl* browser_ = nullptr;  // Not owned by this object.
 
  private:
+  // Used for the print preview dialog.
+  std::unique_ptr<CefWebContentsDialogHelper> web_contents_dialog_helper_;
+
   DISALLOW_COPY_AND_ASSIGN(CefBrowserPlatformDelegate);
 };
 

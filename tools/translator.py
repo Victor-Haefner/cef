@@ -2,17 +2,20 @@
 # reserved. Use of this source code is governed by a BSD-style license that
 # can be found in the LICENSE file.
 
+from __future__ import absolute_import
 import sys
 from cef_parser import *
 from clang_util import clang_format
 from file_util import *
 import hashlib
+from make_api_hash_header import *
 from make_capi_header import *
 from make_cpptoc_header import *
 from make_cpptoc_impl import *
 from make_ctocpp_header import *
 from make_ctocpp_impl import *
 from make_gypi_file import *
+from make_libcef_dll_dylib_impl import *
 from make_views_stub_impl import *
 from make_wrapper_types_header import *
 from optparse import OptionParser
@@ -71,6 +74,7 @@ cpp_header_dir = os.path.join(root_dir, 'include')
 cpp_header_test_dir = os.path.join(cpp_header_dir, 'test')
 cpp_header_views_dir = os.path.join(cpp_header_dir, 'views')
 capi_header_dir = os.path.join(cpp_header_dir, 'capi')
+api_hash_header = os.path.join(cpp_header_dir, 'cef_api_hash.h')
 libcef_dll_dir = os.path.join(root_dir, 'libcef_dll')
 cpptoc_global_impl = os.path.join(libcef_dll_dir, 'libcef_dll.cc')
 ctocpp_global_impl = os.path.join(libcef_dll_dir, 'wrapper',
@@ -80,6 +84,8 @@ cpptoc_dir = os.path.join(libcef_dll_dir, 'cpptoc')
 ctocpp_dir = os.path.join(libcef_dll_dir, 'ctocpp')
 gypi_file = os.path.join(root_dir, 'cef_paths.gypi')
 views_stub_impl = os.path.join(libcef_dll_dir, 'views_stub.cc')
+libcef_dll_dylib_impl = os.path.join(libcef_dll_dir, 'wrapper',
+                                     'libcef_dll_dylib.cc')
 
 # make sure the header directory exists
 if not path_exists(cpp_header_dir):
@@ -93,7 +99,7 @@ header = obj_header()
 
 # add include files to be processed
 header.set_root_directory(cpp_header_dir)
-excluded_files = ['cef_application_mac.h', 'cef_version.h']
+excluded_files = ['cef_api_hash.h', 'cef_application_mac.h', 'cef_version.h']
 header.add_directory(cpp_header_dir, excluded_files)
 header.add_directory(cpp_header_test_dir)
 header.add_directory(cpp_header_views_dir)
@@ -129,8 +135,7 @@ def update_file(file, newcontents):
         oldhash = oldcontents[start + len(hash_start):end]
 
   # Compute the new hash.
-  rev = hashlib.sha1(newcontents).digest()
-  newhash = ''.join(format(ord(i), '0>2x') for i in rev)
+  newhash = hashlib.sha1(newcontents.encode('utf-8')).hexdigest()
 
   if oldhash == newhash:
     # Pre-formatted contents have not changed.
@@ -139,7 +144,7 @@ def update_file(file, newcontents):
   newcontents = newcontents.replace(hash_token, newhash, 1)
 
   # Apply clang-format for C/C++ files.
-  if os.path.splitext(file)[1][1:] in ('cc', 'cpp', 'h'):
+  if os.path.splitext(file)[1][1:] in ('c', 'cc', 'cpp', 'h'):
     result = clang_format(file, newcontents)
     if result != None:
       newcontents = result
@@ -227,6 +232,18 @@ update_file(*write_gypi_file(header, gypi_file))
 if not options.quiet:
   sys.stdout.write('Generating ' + views_stub_impl + ' file...\n')
 update_file(*write_views_stub_impl(header, views_stub_impl))
+
+# output the libcef dll dylib file
+if not options.quiet:
+  sys.stdout.write('Generating ' + libcef_dll_dylib_impl + ' file...\n')
+update_file(*write_libcef_dll_dylib_impl(header, libcef_dll_dylib_impl))
+
+# Update the API hash header file if necessary. This must be done last because
+# it reads files that were potentially written by proceeding operations.
+if not options.quiet:
+  sys.stdout.write('Generating API hash header...\n')
+if write_api_hash_header(api_hash_header, cpp_header_dir):
+  writect += 1
 
 if not options.quiet:
   sys.stdout.write('Done - Wrote ' + str(writect) + ' files.\n')

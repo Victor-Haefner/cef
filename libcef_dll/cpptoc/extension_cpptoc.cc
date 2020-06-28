@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,13 +9,14 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=5006ab5f5ad7fc301e650810ce77a68c6aad3d46$
+// $hash=0ba733877b885661d95e5767f05a4ce943982bbc$
 //
 
 #include "libcef_dll/cpptoc/extension_cpptoc.h"
 #include "libcef_dll/cpptoc/dictionary_value_cpptoc.h"
 #include "libcef_dll/cpptoc/request_context_cpptoc.h"
 #include "libcef_dll/ctocpp/extension_handler_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -23,6 +24,8 @@ namespace {
 
 cef_string_userfree_t CEF_CALLBACK
 extension_get_identifier(struct _cef_extension_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -38,6 +41,8 @@ extension_get_identifier(struct _cef_extension_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 extension_get_path(struct _cef_extension_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -53,6 +58,8 @@ extension_get_path(struct _cef_extension_t* self) {
 
 struct _cef_dictionary_value_t* CEF_CALLBACK
 extension_get_manifest(struct _cef_extension_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -69,6 +76,8 @@ extension_get_manifest(struct _cef_extension_t* self) {
 
 int CEF_CALLBACK extension_is_same(struct _cef_extension_t* self,
                                    struct _cef_extension_t* that) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -89,6 +98,8 @@ int CEF_CALLBACK extension_is_same(struct _cef_extension_t* self,
 
 struct _cef_extension_handler_t* CEF_CALLBACK
 extension_get_handler(struct _cef_extension_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -105,6 +116,8 @@ extension_get_handler(struct _cef_extension_t* self) {
 
 struct _cef_request_context_t* CEF_CALLBACK
 extension_get_loader_context(struct _cef_extension_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -120,6 +133,8 @@ extension_get_loader_context(struct _cef_extension_t* self) {
 }
 
 int CEF_CALLBACK extension_is_loaded(struct _cef_extension_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -134,6 +149,8 @@ int CEF_CALLBACK extension_is_loaded(struct _cef_extension_t* self) {
 }
 
 void CEF_CALLBACK extension_unload(struct _cef_extension_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -159,20 +176,19 @@ CefExtensionCppToC::CefExtensionCppToC() {
   GetStruct()->unload = extension_unload;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefExtensionCppToC::~CefExtensionCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefExtension>
 CefCppToCRefCounted<CefExtensionCppToC, CefExtension, cef_extension_t>::
     UnwrapDerived(CefWrapperType type, cef_extension_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefExtensionCppToC, CefExtension, cef_extension_t>::
-        DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefExtensionCppToC,

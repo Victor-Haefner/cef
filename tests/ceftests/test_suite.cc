@@ -119,7 +119,7 @@ int CefTestSuite::Run() {
 }
 
 void CefTestSuite::GetSettings(CefSettings& settings) const {
-#if defined(OS_WIN)
+#if (defined(OS_WIN) || defined(OS_LINUX))
   settings.multi_threaded_message_loop =
       command_line_->HasSwitch(client::switches::kMultiThreadedMessageLoop);
 #endif
@@ -182,7 +182,7 @@ void CefTestSuite::PreInitialize() {
 
   // Enable termination on heap corruption.
   // Ignore the result code. Supported starting with XP SP3 and Vista.
-  HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
+  HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, 0);
 #endif
 
 #if defined(OS_LINUX) && defined(USE_AURA)

@@ -12,6 +12,7 @@
 
 #include "include/cef_app.h"
 
+#include "base/observer_list.h"
 #include "base/threading/platform_thread.h"
 #include "third_party/skia/include/core/SkColor.h"
 
@@ -35,6 +36,17 @@ class CefTraceSubscriber;
 class CefContext {
  public:
   typedef std::list<CefRefPtr<CefBrowserHostImpl>> BrowserList;
+
+  // Interface to implement for observers that wish to be informed of changes
+  // to the context. All methods will be called on the UI thread.
+  class Observer {
+   public:
+    // Called before the context is destroyed.
+    virtual void OnContextDestroyed() = 0;
+
+   protected:
+    virtual ~Observer() {}
+  };
 
   CefContext();
   ~CefContext();
@@ -73,9 +85,20 @@ class CefContext {
 
   CefTraceSubscriber* GetTraceSubscriber();
 
-  // Populate the request context settings based on CefSettings and command-
-  // line flags.
-  void PopulateRequestContextSettings(CefRequestContextSettings* settings);
+  // Populate request context settings for the global system context based on
+  // CefSettings and command-line flags.
+  void PopulateGlobalRequestContextSettings(
+      CefRequestContextSettings* settings);
+
+  // Normalize and validate request context settings for user-created contexts.
+  void NormalizeRequestContextSettings(CefRequestContextSettings* settings);
+
+  // Manage observer objects. The observer must either outlive this object or
+  // remove itself before destruction. These methods can only be called on the
+  // UI thread.
+  void AddObserver(Observer* observer);
+  void RemoveObserver(Observer* observer);
+  bool HasObserver(Observer* observer) const;
 
  private:
   void OnContextInitialized();
@@ -101,6 +124,9 @@ class CefContext {
   std::unique_ptr<service_manager::MainParams> sm_main_params_;
   std::unique_ptr<CefTraceSubscriber> trace_subscriber_;
   std::unique_ptr<CefBrowserInfoManager> browser_info_manager_;
+
+  // Observers that want to be notified of changes to this object.
+  base::ObserverList<Observer>::Unchecked observers_;
 };
 
 // Helper macro that returns true if the global context is in a valid state.

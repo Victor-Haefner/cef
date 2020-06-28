@@ -12,6 +12,7 @@
 #include "base/message_loop/message_loop.h"
 #include "base/stl_util.h"
 #include "base/strings/string_util.h"
+#include "base/strings/utf_string_conversions.h"
 #include "base/threading/thread_task_runner_handle.h"
 #include "base/win/wrapped_window_proc.h"
 #include "skia/ext/platform_canvas.h"
@@ -19,6 +20,7 @@
 #include "ui/base/accelerators/accelerator.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/l10n/l10n_util_win.h"
+#include "ui/base/models/image_model.h"
 #include "ui/base/models/menu_model.h"
 #include "ui/events/keycodes/keyboard_codes.h"
 #include "ui/gfx/canvas.h"
@@ -29,9 +31,9 @@
 #include "ui/gfx/text_utils.h"
 #include "ui/gfx/win/hwnd_util.h"
 #include "ui/native_theme/native_theme.h"
+#include "ui/native_theme/themed_vector_icon.h"
 #include "ui/views/controls/menu/menu_config.h"
 #include "ui/views/controls/menu/menu_insertion_delegate_win.h"
-#include "ui/views/controls/menu/menu_listener.h"
 
 using ui::NativeTheme;
 
@@ -76,6 +78,23 @@ void DrawToNativeContext(SkCanvas* canvas,
   skia::CopyHDC(skia::GetNativeDrawingContext(canvas), destination_hdc, x, y,
                 canvas->imageInfo().isOpaque(), *src_rect,
                 canvas->getTotalMatrix());
+}
+
+HFONT CreateNativeFont(const gfx::Font& font) {
+  // Extracts |fonts| properties.
+  const DWORD italic = (font.GetStyle() & gfx::Font::ITALIC) ? TRUE : FALSE;
+  const DWORD underline =
+      (font.GetStyle() & gfx::Font::UNDERLINE) ? TRUE : FALSE;
+  // The font mapper matches its absolute value against the character height of
+  // the available fonts.
+  const int height = -font.GetFontSize();
+
+  // Select the primary font which forces a mapping to a physical font.
+  return ::CreateFont(height, 0, 0, 0, static_cast<int>(font.GetWeight()),
+                      italic, underline, FALSE, DEFAULT_CHARSET,
+                      OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
+                      DEFAULT_PITCH | FF_DONTCARE,
+                      base::UTF8ToUTF16(font.GetFontName()).c_str());
 }
 
 }  // namespace
@@ -179,17 +198,6 @@ class CefNativeMenuWin::MenuHostWindow {
       model->ActivatedAt(position);
   }
 
-  // Called as the user moves their mouse or arrows through the contents of the
-  // menu.
-  void OnMenuSelect(WPARAM w_param, HMENU menu) {
-    if (!menu)
-      return;  // menu is null when closing on XP.
-
-    int position = GetMenuItemIndexFromWPARAM(menu, w_param);
-    if (position >= 0)
-      GetCefNativeMenuWinFromHMENU(menu)->model_->HighlightChangedTo(position);
-  }
-
   // Called by Windows to measure the size of an owner-drawn menu item.
   void OnMeasureItem(WPARAM w_param, MEASUREITEMSTRUCT* measure_item_struct) {
     CefNativeMenuWin::ItemData* data =
@@ -252,8 +260,8 @@ class CefNativeMenuWin::MenuHostWindow {
       if (!underline_mnemonics)
         format |= DT_HIDEPREFIX;
       gfx::FontList font_list;
-      HGDIOBJ old_font = static_cast<HFONT>(
-          SelectObject(dc, font_list.GetPrimaryFont().GetNativeFont()));
+      HFONT new_font = CreateNativeFont(font_list.GetPrimaryFont());
+      HGDIOBJ old_font = SelectObject(dc, new_font);
 
       // If an accelerator is specified (with a tab delimiting the rest of the
       // label from the accelerator), we have to justify the fist part on the
@@ -269,21 +277,31 @@ class CefNativeMenuWin::MenuHostWindow {
       }
       DrawTextEx(dc, const_cast<wchar_t*>(label.data()),
                  static_cast<int>(label.size()), &rect, format | DT_LEFT, NULL);
-      if (!accel.empty())
+      if (!accel.empty()) {
         DrawTextEx(dc, const_cast<wchar_t*>(accel.data()),
                    static_cast<int>(accel.size()), &rect, format | DT_RIGHT,
                    NULL);
+      }
       SelectObject(dc, old_font);
+      DeleteObject(new_font);
 
       ui::MenuModel::ItemType type =
           data->native_menu_win->model_->GetTypeAt(data->model_index);
 
       // Draw the icon after the label, otherwise it would be covered
       // by the label.
-      gfx::Image icon;
-      if (data->native_menu_win->model_->GetIconAt(data->model_index, &icon)) {
+      ui::ImageModel icon =
+          data->native_menu_win->model_->GetIconAt(data->model_index);
+      if (icon.IsImage() || icon.IsVectorIcon()) {
+        ui::NativeTheme* native_theme =
+            ui::NativeTheme::GetInstanceForNativeUi();
+
         // We currently don't support items with both icons and checkboxes.
-        const gfx::ImageSkia skia_icon = icon.AsImageSkia();
+        const gfx::ImageSkia skia_icon =
+            icon.IsImage() ? icon.GetImage().AsImageSkia()
+                           : ui::ThemedVectorIcon(icon.GetVectorIcon())
+                                 .GetImageSkia(native_theme, 16);
+
         DCHECK(type != ui::MenuModel::TYPE_CHECK);
         std::unique_ptr<SkCanvas> canvas = skia::CreatePlatformCanvas(
             skia_icon.width(), skia_icon.height(), false);
@@ -334,7 +352,6 @@ class CefNativeMenuWin::MenuHostWindow {
                     2,
             NULL);
       }
-
     } else {
       // Draw the separator
       draw_item_struct->rcItem.top +=
@@ -357,7 +374,6 @@ class CefNativeMenuWin::MenuHostWindow {
         *l_result = 0;
         return true;
       case WM_MENUSELECT:
-        OnMenuSelect(LOWORD(w_param), reinterpret_cast<HMENU>(l_param));
         *l_result = 0;
         return true;
       case WM_MEASUREITEM:
@@ -395,7 +411,7 @@ class CefNativeMenuWin::MenuHostWindow {
 
 struct CefNativeMenuWin::HighlightedMenuItemInfo {
   HighlightedMenuItemInfo()
-      : has_parent(false), has_submenu(false), menu(NULL), position(-1) {}
+      : has_parent(false), has_submenu(false), menu(nullptr), position(-1) {}
 
   bool has_parent;
   bool has_submenu;
@@ -414,16 +430,16 @@ const wchar_t* CefNativeMenuWin::MenuHostWindow::kWindowClassName =
 
 CefNativeMenuWin::CefNativeMenuWin(ui::MenuModel* model, HWND system_menu_for)
     : model_(model),
-      menu_(NULL),
+      menu_(nullptr),
       owner_draw_(l10n_util::NeedOverrideDefaultUIFont(NULL, NULL) &&
                   !system_menu_for),
       system_menu_for_(system_menu_for),
       first_item_index_(0),
       menu_action_(MENU_ACTION_NONE),
-      menu_to_select_(NULL),
+      menu_to_select_(nullptr),
       position_to_select_(-1),
-      parent_(NULL),
-      destroyed_flag_(NULL),
+      parent_(nullptr),
+      destroyed_flag_(nullptr),
       menu_to_select_factory_(this) {}
 
 CefNativeMenuWin::~CefNativeMenuWin() {
@@ -450,13 +466,9 @@ void CefNativeMenuWin::RunMenuAt(const gfx::Point& point, int alignment) {
   HHOOK hhook = SetWindowsHookEx(WH_MSGFILTER, MenuMessageHook,
                                  GetModuleHandle(NULL), ::GetCurrentThreadId());
 
-  // Mark that any registered listeners have not been called for this particular
-  // opening of the menu.
-  listeners_called_ = false;
-
   // Command dispatch is done through WM_MENUCOMMAND, handled by the host
   // window.
-  menu_to_select_ = NULL;
+  menu_to_select_ = nullptr;
   position_to_select_ = -1;
   menu_to_select_factory_.InvalidateWeakPtrs();
   bool destroyed = false;
@@ -465,10 +477,10 @@ void CefNativeMenuWin::RunMenuAt(const gfx::Point& point, int alignment) {
   TrackPopupMenu(menu_, flags, point.x(), point.y(), 0, host_window_->hwnd(),
                  NULL);
   UnhookWindowsHookEx(hhook);
-  open_native_menu_win_ = NULL;
+  open_native_menu_win_ = nullptr;
   if (destroyed)
     return;
-  destroyed_flag_ = NULL;
+  destroyed_flag_ = nullptr;
   if (menu_to_select_) {
     // Folks aren't too happy if we notify immediately. In particular, notifying
     // the delegate can cause destruction leaving the stack in a weird
@@ -532,14 +544,6 @@ CefNativeMenuWin::MenuAction CefNativeMenuWin::GetMenuAction() const {
   return menu_action_;
 }
 
-void CefNativeMenuWin::AddMenuListener(MenuListener* listener) {
-  listeners_.AddObserver(listener);
-}
-
-void CefNativeMenuWin::RemoveMenuListener(MenuListener* listener) {
-  listeners_.RemoveObserver(listener);
-}
-
 void CefNativeMenuWin::SetMinimumWidth(int width) {
   NOTIMPLEMENTED();
 }
@@ -548,7 +552,7 @@ void CefNativeMenuWin::SetMinimumWidth(int width) {
 // CefNativeMenuWin, private:
 
 // static
-CefNativeMenuWin* CefNativeMenuWin::open_native_menu_win_ = NULL;
+CefNativeMenuWin* CefNativeMenuWin::open_native_menu_win_ = nullptr;
 
 void CefNativeMenuWin::DelayedSelect() {
   if (menu_to_select_)
@@ -587,14 +591,6 @@ LRESULT CALLBACK CefNativeMenuWin::MenuMessageHook(int n_code,
   CefNativeMenuWin* this_ptr = open_native_menu_win_;
   if (!this_ptr)
     return result;
-
-  // The first time this hook is called, that means the menu has successfully
-  // opened, so call the callback function on all of our listeners.
-  if (!this_ptr->listeners_called_) {
-    for (auto& observer : this_ptr->listeners_)
-      observer.OnMenuOpened();
-    this_ptr->listeners_called_ = true;
-  }
 
   MSG* msg = reinterpret_cast<MSG*>(l_param);
   if (msg->message == WM_LBUTTONUP || msg->message == WM_RBUTTONUP) {

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,10 +9,11 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=a4840338213fb8a32e1a47039b3e5173cb300c97$
+// $hash=e353aad49690f92eaa2771a7d4293d8c41a75d5c$
 //
 
 #include "libcef_dll/cpptoc/before_download_callback_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -22,6 +23,8 @@ void CEF_CALLBACK
 before_download_callback_cont(struct _cef_before_download_callback_t* self,
                               const cef_string_t* download_path,
                               int show_dialog) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -42,6 +45,12 @@ CefBeforeDownloadCallbackCppToC::CefBeforeDownloadCallbackCppToC() {
   GetStruct()->cont = before_download_callback_cont;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefBeforeDownloadCallbackCppToC::~CefBeforeDownloadCallbackCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefBeforeDownloadCallback>
 CefCppToCRefCounted<CefBeforeDownloadCallbackCppToC,
@@ -49,16 +58,8 @@ CefCppToCRefCounted<CefBeforeDownloadCallbackCppToC,
                     cef_before_download_callback_t>::
     UnwrapDerived(CefWrapperType type, cef_before_download_callback_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<
-    CefBeforeDownloadCallbackCppToC,
-    CefBeforeDownloadCallback,
-    cef_before_download_callback_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

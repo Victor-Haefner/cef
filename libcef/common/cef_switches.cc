@@ -12,6 +12,7 @@ const char kLogSeverity_Verbose[] = "verbose";
 const char kLogSeverity_Info[] = "info";
 const char kLogSeverity_Warning[] = "warning";
 const char kLogSeverity_Error[] = "error";
+const char kLogSeverity_Fatal[] = "fatal";
 const char kLogSeverity_Disable[] = "disable";
 
 // Path to resources directory.
@@ -28,6 +29,9 @@ const char kUncaughtExceptionStackSize[] = "uncaught-exception-stack-size";
 
 // Default encoding.
 const char kDefaultEncoding[] = "default-encoding";
+
+// Disable JavaScript.
+const char kDisableJavascript[] = "disable-javascript";
 
 // Disable closing of windows via JavaScript.
 const char kDisableJavascriptCloseWindows[] =
@@ -109,12 +113,19 @@ const char kPluginPolicy_Block[] = "block";
 // Expose preferences used only by unit tests.
 const char kEnablePreferenceTesting[] = "enable-preference-testing";
 
-// Enable date-based expiration of built in network security information.
-const char kEnableNetSecurityExpiration[] = "enable-net-security-expiration";
+// Enable print preview.
+const char kEnablePrintPreview[] = "enable-print-preview";
+
+// Disable the timeout for delivering new browser info to the renderer process.
+const char kDisableNewBrowserInfoTimeout[] = "disable-new-browser-info-timeout";
+
+// File used for logging DevTools protocol messages.
+const char kDevToolsProtocolLogFile[] = "devtools-protocol-log-file";
 
 #if defined(OS_MACOSX)
 // Path to the framework directory.
 const char kFrameworkDirPath[] = "framework-dir-path";
+const char kMainBundlePath[] = "main-bundle-path";
 #endif
 
 }  // namespace switches

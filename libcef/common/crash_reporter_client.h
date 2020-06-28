@@ -16,7 +16,7 @@
 #include "base/macros.h"
 #include "base/synchronization/lock.h"
 #include "build/build_config.h"
-#include "components/crash/content/app/crash_reporter_client.h"
+#include "components/crash/core/app/crash_reporter_client.h"
 
 // Global object that is instantiated in each process and configures crash
 // reporting. On Windows this is created by the
@@ -74,7 +74,7 @@ class CefCrashReporterClient : public crash_reporter::CrashReporterClient {
   bool IsRunningUnattended() override;
 #endif
 
-  std::string GetCrashServerURL() override;
+  std::string GetUploadUrl() override;
   void GetCrashOptionalArguments(std::vector<std::string>* arguments) override;
 
 #if defined(OS_WIN)

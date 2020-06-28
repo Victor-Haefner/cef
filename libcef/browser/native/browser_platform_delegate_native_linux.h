@@ -5,16 +5,19 @@
 #ifndef CEF_LIBCEF_BROWSER_NATIVE_BROWSER_PLATFORM_DELEGATE_NATIVE_LINUX_H_
 #define CEF_LIBCEF_BROWSER_NATIVE_BROWSER_PLATFORM_DELEGATE_NATIVE_LINUX_H_
 
-#include "libcef/browser/native/browser_platform_delegate_native.h"
+#include "libcef/browser/native/browser_platform_delegate_native_aura.h"
 
+#if defined(USE_X11)
 class CefWindowX11;
+#endif
 
 // Windowed browser implementation for Linux.
 class CefBrowserPlatformDelegateNativeLinux
-    : public CefBrowserPlatformDelegateNative {
+    : public CefBrowserPlatformDelegateNativeAura {
  public:
   CefBrowserPlatformDelegateNativeLinux(const CefWindowInfo& window_info,
-                                        SkColor background_color);
+                                        SkColor background_color,
+                                        bool use_external_begin_frame);
 
   // CefBrowserPlatformDelegate methods:
   void BrowserDestroyed(CefBrowserHostImpl* browser) override;
@@ -27,31 +30,21 @@ class CefBrowserPlatformDelegateNativeLinux
   void SizeTo(int width, int height) override;
   gfx::Point GetScreenPoint(const gfx::Point& view) const override;
   void ViewText(const std::string& text) override;
-  void HandleKeyboardEvent(
+  bool HandleKeyboardEvent(
       const content::NativeWebKeyboardEvent& event) override;
-  void HandleExternalProtocol(const GURL& url) override;
-  void TranslateKeyEvent(content::NativeWebKeyboardEvent& result,
-                         const CefKeyEvent& key_event) const override;
-  void TranslateClickEvent(blink::WebMouseEvent& result,
-                           const CefMouseEvent& mouse_event,
-                           CefBrowserHost::MouseButtonType type,
-                           bool mouseUp,
-                           int clickCount) const override;
-  void TranslateMoveEvent(blink::WebMouseEvent& result,
-                          const CefMouseEvent& mouse_event,
-                          bool mouseLeave) const override;
-  void TranslateWheelEvent(blink::WebMouseWheelEvent& result,
-                           const CefMouseEvent& mouse_event,
-                           int deltaX,
-                           int deltaY) const override;
   CefEventHandle GetEventHandle(
       const content::NativeWebKeyboardEvent& event) const override;
   std::unique_ptr<CefMenuRunner> CreateMenuRunner() override;
+  gfx::Point GetDialogPosition(const gfx::Size& size) override;
+  gfx::Size GetMaximumDialogSize() override;
+
+  // CefBrowserPlatformDelegateNativeAura methods:
+  ui::KeyEvent TranslateUiKeyEvent(const CefKeyEvent& key_event) const override;
+  content::NativeWebKeyboardEvent TranslateWebKeyEvent(
+      const CefKeyEvent& key_event) const override;
+  base::TimeTicks GetEventTimeStamp() const override;
 
  private:
-  void TranslateMouseEvent(blink::WebMouseEvent& result,
-                           const CefMouseEvent& mouse_event) const;
-
   // True if the host window has been created.
   bool host_window_created_;
 
@@ -59,7 +52,9 @@ class CefBrowserPlatformDelegateNativeLinux
   // associated root window is destroyed.
   views::Widget* window_widget_;
 
-  CefWindowX11* window_x11_;
+#if defined(USE_X11)
+  CefWindowX11* window_x11_ = nullptr;
+#endif
 };
 
 #endif  // CEF_LIBCEF_BROWSER_NATIVE_BROWSER_PLATFORM_DELEGATE_NATIVE_LINUX_H_

@@ -58,7 +58,7 @@ CefTraceSubscriber::CefTraceSubscriber()
 CefTraceSubscriber::~CefTraceSubscriber() {
   CEF_REQUIRE_UIT();
   if (collecting_trace_data_)
-    TracingController::GetInstance()->StopTracing(NULL);
+    TracingController::GetInstance()->StopTracing(nullptr);
 }
 
 bool CefTraceSubscriber::BeginTracing(
@@ -77,11 +77,11 @@ bool CefTraceSubscriber::BeginTracing(
     // reference to |done_callback| after execution.
     callback = new CefCompletionCallbackWrapper(callback);
     done_callback =
-        base::Bind(&CefCompletionCallback::OnComplete, callback.get());
+        base::BindOnce(&CefCompletionCallback::OnComplete, callback.get());
   }
 
   TracingController::GetInstance()->StartTracing(
-      base::trace_event::TraceConfig(categories, ""), done_callback);
+      base::trace_event::TraceConfig(categories, ""), std::move(done_callback));
   return true;
 }
 
@@ -95,7 +95,7 @@ bool CefTraceSubscriber::EndTracing(const base::FilePath& tracing_file,
   if (!callback.get()) {
     // Discard the trace data.
     collecting_trace_data_ = false;
-    TracingController::GetInstance()->StopTracing(NULL);
+    TracingController::GetInstance()->StopTracing(nullptr);
     return true;
   }
 

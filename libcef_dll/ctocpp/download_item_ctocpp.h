@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=4a56603f0afb73987db9b6faf80831bbfd3d040b$
+// $hash=a7cd44cf21351fde788e0756af8d3b9ddb72669a$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_DOWNLOAD_ITEM_CTOCPP_H_
@@ -31,6 +31,7 @@ class CefDownloadItemCToCpp : public CefCToCppRefCounted<CefDownloadItemCToCpp,
                                                          cef_download_item_t> {
  public:
   CefDownloadItemCToCpp();
+  virtual ~CefDownloadItemCToCpp();
 
   // CefDownloadItem methods.
   bool IsValid() OVERRIDE;

@@ -13,9 +13,13 @@
 #include "include/cef_request.h"
 
 #include "base/synchronization/lock.h"
-#include "third_party/blink/public/platform/web_http_body.h"
-#include "third_party/blink/public/platform/web_referrer_policy.h"
+#include "net/cookies/site_for_cookies.h"
+#include "services/network/public/mojom/referrer_policy.mojom-shared.h"
 #include "url/gurl.h"
+
+namespace blink {
+class WebURLRequest;
+}  // namespace blink
 
 namespace navigation_interception {
 class NavigationParams;
@@ -23,17 +27,18 @@ class NavigationParams;
 
 namespace net {
 class HttpRequestHeaders;
+struct RedirectInfo;
 class UploadData;
 class UploadDataStream;
 class UploadElement;
 class UploadElementReader;
-class URLFetcher;
-class URLRequest;
-};  // namespace net
+}  // namespace net
 
-namespace blink {
-class WebURLRequest;
-}  // namespace blink
+namespace network {
+class DataElement;
+struct ResourceRequest;
+class ResourceRequestBody;
+}  // namespace network
 
 struct CefMsg_LoadRequest_Params;
 struct CefNavigateParams;
@@ -49,7 +54,7 @@ class CefRequestImpl : public CefRequest {
     kChangedPostData = 1 << 3,
     kChangedHeaderMap = 1 << 4,
     kChangedFlags = 1 << 5,
-    kChangedFirstPartyForCookies = 1 << 6,
+    kChangedSiteForCookies = 1 << 6,
   };
 
   CefRequestImpl();
@@ -67,6 +72,10 @@ class CefRequestImpl : public CefRequest {
   void SetPostData(CefRefPtr<CefPostData> postData) override;
   void GetHeaderMap(HeaderMap& headerMap) override;
   void SetHeaderMap(const HeaderMap& headerMap) override;
+  CefString GetHeaderByName(const CefString& name) override;
+  void SetHeaderByName(const CefString& name,
+                       const CefString& value,
+                       bool overwrite) override;
   void Set(const CefString& url,
            const CefString& method,
            CefRefPtr<CefPostData> postData,
@@ -79,12 +88,18 @@ class CefRequestImpl : public CefRequest {
   TransitionType GetTransitionType() override;
   uint64 GetIdentifier() override;
 
-  // Populate this object from the URLRequest object.
-  void Set(const net::URLRequest* request);
+  // Populate this object from the ResourceRequest object.
+  void Set(const network::ResourceRequest* request, uint64 identifier);
 
-  // Populate the URLRequest object from this object.
+  // Populate the ResourceRequest object from this object.
   // If |changed_only| is true then only the changed fields will be updated.
-  void Get(net::URLRequest* request, bool changed_only) const;
+  void Get(network::ResourceRequest* request, bool changed_only) const;
+
+  // Populate this object from the RedirectInfo object.
+  void Set(const net::RedirectInfo& redirect_info);
+
+  // Populate this object from teh HttpRequestHeaders object.
+  void Set(const net::HttpRequestHeaders& headers);
 
   // Populate this object from the NavigationParams object.
   // TODO(cef): Remove the |is_main_frame| argument once NavigationParams is
@@ -92,10 +107,6 @@ class CefRequestImpl : public CefRequest {
   // Called from content_browser_client.cc NavigationOnUIThread().
   void Set(const navigation_interception::NavigationParams& params,
            bool is_main_frame);
-
-  // Populate the WebURLRequest object from this object.
-  // Called from CefRenderURLRequest::Context::Start().
-  void Get(blink::WebURLRequest& request, int64& upload_data_size) const;
 
   // Populate the WebURLRequest object based on the contents of |params|.
   // Called from CefBrowserImpl::LoadRequest().
@@ -106,22 +117,31 @@ class CefRequestImpl : public CefRequest {
   // Called from CefBrowserHostImpl::LoadRequest().
   void Get(CefNavigateParams& params) const;
 
-  // Populate the URLFetcher object from this object.
-  // Called from CefBrowserURLRequest::Context::ContinueOnOriginatingThread().
-  void Get(net::URLFetcher& fetcher, int64& upload_data_size) const;
-
   void SetReadOnly(bool read_only);
 
-  void SetTrackChanges(bool track_changes);
+  // Enable or disable tracking of changes. If |track_changes| is true the
+  // status of changes will be tracked, and retrievable via GetChanges(). If
+  // |backup_on_change| is true the original value will be backed up before the
+  // first change. The original values can later be restored by calling
+  // RevertChanges() before calling SetTrackChanges(false).
+  void SetTrackChanges(bool track_changes, bool backup_on_change = false);
+  void RevertChanges();
+  void DiscardChanges();
   uint8_t GetChanges() const;
 
-  static blink::WebReferrerPolicy NetReferrerPolicyToBlinkReferrerPolicy(
+  static network::mojom::ReferrerPolicy NetReferrerPolicyToBlinkReferrerPolicy(
       cef_referrer_policy_t net_policy);
   static cef_referrer_policy_t BlinkReferrerPolicyToNetReferrerPolicy(
-      blink::WebReferrerPolicy blink_policy);
+      network::mojom::ReferrerPolicy blink_policy);
 
  private:
+  // Mark values as changed. Must be called before the new values are assigned.
   void Changed(uint8_t changes);
+
+  // Used with the Set() methods that export data to other object types. Returns
+  // true if the values should be set on the export object. If |changed_only| is
+  // true then only return true if the value has been changed in combination
+  // with track changes.
   bool ShouldSet(uint8_t changes, bool changed_only) const;
 
   void Reset();
@@ -138,16 +158,35 @@ class CefRequestImpl : public CefRequest {
 
   // The below members are used by CefURLRequest.
   int flags_;
-  GURL site_for_cookies_;
+  net::SiteForCookies site_for_cookies_;
+
+  // Stores backup of values for use with track changes.
+  struct Backup {
+    // Bitmask of values that have been backed up.
+    uint8_t backups_ = kChangedNone;
+
+    GURL url_;
+    std::string method_;
+    GURL referrer_url_;
+    ReferrerPolicy referrer_policy_;
+    CefRefPtr<CefPostData> postdata_;
+    std::unique_ptr<HeaderMap> headermap_;
+    int flags_;
+    net::SiteForCookies site_for_cookies_;
+  };
+  std::unique_ptr<Backup> backup_;
 
   // True if this object is read-only.
-  bool read_only_;
+  bool read_only_ = false;
 
   // True if this object should track changes.
-  bool track_changes_;
+  bool track_changes_ = false;
+
+  // True if original values should be backed up when |track_changes_| is true.
+  bool backup_on_change_ = false;
 
   // Bitmask of |Changes| values which indicate which fields have changed.
-  uint8_t changes_;
+  uint8_t changes_ = kChangedNone;
 
   mutable base::Lock lock_;
 
@@ -167,12 +206,12 @@ class CefPostDataImpl : public CefPostData {
   bool AddElement(CefRefPtr<CefPostDataElement> element) override;
   void RemoveElements() override;
 
+  void Set(const network::ResourceRequestBody& body);
+  scoped_refptr<network::ResourceRequestBody> GetBody() const;
   void Set(const net::UploadData& data);
   void Set(const net::UploadDataStream& data_stream);
   void Get(net::UploadData& data) const;
   std::unique_ptr<net::UploadDataStream> Get() const;
-  void Set(const blink::WebHTTPBody& data);
-  void Get(blink::WebHTTPBody& data) const;
 
   void SetReadOnly(bool read_only);
 
@@ -218,12 +257,12 @@ class CefPostDataElementImpl : public CefPostDataElement {
 
   void* GetBytes() { return data_.bytes.bytes; }
 
+  void Set(const network::DataElement& element);
+  void Get(network::ResourceRequestBody& body) const;
   void Set(const net::UploadElement& element);
   void Set(const net::UploadElementReader& element_reader);
   void Get(net::UploadElement& element) const;
   std::unique_ptr<net::UploadElementReader> Get() const;
-  void Set(const blink::WebHTTPBody::Element& element);
-  void Get(blink::WebHTTPBody::Element& element) const;
 
   void SetReadOnly(bool read_only);
 

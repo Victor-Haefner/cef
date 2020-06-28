@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=789fd8ac0731995aa97c4f124ec27d43d421b78e$
+// $hash=8e7a47e0cc8cea5d9aa39e243657107ae51b1b93$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_V8ACCESSOR_CTOCPP_H_
@@ -31,6 +31,7 @@ class CefV8AccessorCToCpp : public CefCToCppRefCounted<CefV8AccessorCToCpp,
                                                        cef_v8accessor_t> {
  public:
   CefV8AccessorCToCpp();
+  virtual ~CefV8AccessorCToCpp();
 
   // CefV8Accessor methods.
   bool Get(const CefString& name,

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,11 +9,12 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=97792c91daf4fa2da345aa3e14ec36343c17c741$
+// $hash=e3b6f2b73933086fdbe54f3073e1182f4f0cd7fb$
 //
 
 #include "libcef_dll/cpptoc/get_extension_resource_callback_cpptoc.h"
 #include "libcef_dll/cpptoc/stream_reader_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -22,6 +23,8 @@ namespace {
 void CEF_CALLBACK get_extension_resource_callback_cont(
     struct _cef_get_extension_resource_callback_t* self,
     struct _cef_stream_reader_t* stream) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -36,6 +39,8 @@ void CEF_CALLBACK get_extension_resource_callback_cont(
 
 void CEF_CALLBACK get_extension_resource_callback_cancel(
     struct _cef_get_extension_resource_callback_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -55,6 +60,13 @@ CefGetExtensionResourceCallbackCppToC::CefGetExtensionResourceCallbackCppToC() {
   GetStruct()->cancel = get_extension_resource_callback_cancel;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefGetExtensionResourceCallbackCppToC::
+    ~CefGetExtensionResourceCallbackCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefGetExtensionResourceCallback>
 CefCppToCRefCounted<CefGetExtensionResourceCallbackCppToC,
@@ -63,16 +75,8 @@ CefCppToCRefCounted<CefGetExtensionResourceCallbackCppToC,
     UnwrapDerived(CefWrapperType type,
                   cef_get_extension_resource_callback_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<
-    CefGetExtensionResourceCallbackCppToC,
-    CefGetExtensionResourceCallback,
-    cef_get_extension_resource_callback_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

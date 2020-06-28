@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,17 +9,20 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=6313603a55de5caa5ab007c5a743a7223fad9717$
+// $hash=8bd602ae38dd8210a27c6fc0671c97d79268633c$
 //
 
 #include "libcef_dll/ctocpp/accessibility_handler_ctocpp.h"
 #include "libcef_dll/cpptoc/value_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall")
 void CefAccessibilityHandlerCToCpp::OnAccessibilityTreeChange(
     CefRefPtr<CefValue> value) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_accessibility_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_accessibility_tree_change))
     return;
@@ -38,6 +41,8 @@ void CefAccessibilityHandlerCToCpp::OnAccessibilityTreeChange(
 NO_SANITIZE("cfi-icall")
 void CefAccessibilityHandlerCToCpp::OnAccessibilityLocationChange(
     CefRefPtr<CefValue> value) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_accessibility_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_accessibility_location_change))
     return;
@@ -58,6 +63,12 @@ void CefAccessibilityHandlerCToCpp::OnAccessibilityLocationChange(
 
 CefAccessibilityHandlerCToCpp::CefAccessibilityHandlerCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefAccessibilityHandlerCToCpp::~CefAccessibilityHandlerCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_accessibility_handler_t* CefCToCppRefCounted<
     CefAccessibilityHandlerCToCpp,
@@ -65,16 +76,8 @@ cef_accessibility_handler_t* CefCToCppRefCounted<
     cef_accessibility_handler_t>::UnwrapDerived(CefWrapperType type,
                                                 CefAccessibilityHandler* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<
-    CefAccessibilityHandlerCToCpp,
-    CefAccessibilityHandler,
-    cef_accessibility_handler_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefAccessibilityHandlerCToCpp,

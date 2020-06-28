@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,11 +9,12 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=3db1328bd8bdd52280a19825d65235fb2214c262$
+// $hash=4899d7b77e91c0a5c46dad615f2e1b32f8077c40$
 //
 
 #include "libcef_dll/ctocpp/find_handler_ctocpp.h"
 #include "libcef_dll/cpptoc/browser_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
@@ -24,6 +25,8 @@ void CefFindHandlerCToCpp::OnFindResult(CefRefPtr<CefBrowser> browser,
                                         const CefRect& selectionRect,
                                         int activeMatchOrdinal,
                                         bool finalUpdate) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_find_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_find_result))
     return;
@@ -45,21 +48,19 @@ void CefFindHandlerCToCpp::OnFindResult(CefRefPtr<CefBrowser> browser,
 
 CefFindHandlerCToCpp::CefFindHandlerCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefFindHandlerCToCpp::~CefFindHandlerCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_find_handler_t*
 CefCToCppRefCounted<CefFindHandlerCToCpp, CefFindHandler, cef_find_handler_t>::
     UnwrapDerived(CefWrapperType type, CefFindHandler* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefFindHandlerCToCpp,
-                                         CefFindHandler,
-                                         cef_find_handler_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefFindHandlerCToCpp,

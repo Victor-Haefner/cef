@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=b2704f9ef05b79a9db1eb11327fb4eac26f735fa$
+// $hash=49e06b49baadb1a40c4b5602d9b97c969614c31e$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_V8HANDLER_CTOCPP_H_
@@ -31,6 +31,7 @@ class CefV8HandlerCToCpp : public CefCToCppRefCounted<CefV8HandlerCToCpp,
                                                       cef_v8handler_t> {
  public:
   CefV8HandlerCToCpp();
+  virtual ~CefV8HandlerCToCpp();
 
   // CefV8Handler methods.
   bool Execute(const CefString& name,

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=bd0b50241f4cb0240c7a1aba24a755b8113f1954$
+// $hash=b24b389259c2ddfb2881760280a94759f4d3b636$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_JSDIALOG_HANDLER_CTOCPP_H_
@@ -32,6 +32,7 @@ class CefJSDialogHandlerCToCpp
                                  cef_jsdialog_handler_t> {
  public:
   CefJSDialogHandlerCToCpp();
+  virtual ~CefJSDialogHandlerCToCpp();
 
   // CefJSDialogHandler methods.
   bool OnJSDialog(CefRefPtr<CefBrowser> browser,

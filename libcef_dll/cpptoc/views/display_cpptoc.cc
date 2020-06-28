@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,15 +9,18 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=5905e6cc8a2c5726b7a4070fe20e841f93d0661c$
+// $hash=d4f5ea07778b1ad3a08a1826dced47de771f9b02$
 //
 
 #include "libcef_dll/cpptoc/views/display_cpptoc.h"
 #include <algorithm>
+#include "libcef_dll/shutdown_checker.h"
 
 // GLOBAL FUNCTIONS - Body may be edited by hand.
 
 CEF_EXPORT cef_display_t* cef_display_get_primary() {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Execute
@@ -30,6 +33,8 @@ CEF_EXPORT cef_display_t* cef_display_get_primary() {
 CEF_EXPORT cef_display_t* cef_display_get_nearest_point(
     const cef_point_t* point,
     int input_pixel_coords) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Verify param: point; type: simple_byref_const
@@ -51,6 +56,8 @@ CEF_EXPORT cef_display_t* cef_display_get_nearest_point(
 CEF_EXPORT cef_display_t* cef_display_get_matching_bounds(
     const cef_rect_t* bounds,
     int input_pixel_coords) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Verify param: bounds; type: simple_byref_const
@@ -70,6 +77,8 @@ CEF_EXPORT cef_display_t* cef_display_get_matching_bounds(
 }
 
 CEF_EXPORT size_t cef_display_get_count() {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Execute
@@ -81,6 +90,8 @@ CEF_EXPORT size_t cef_display_get_count() {
 
 CEF_EXPORT void cef_display_get_alls(size_t* displaysCount,
                                      cef_display_t** displays) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Verify param: displays; type: refptr_vec_same_byref
@@ -115,6 +126,8 @@ namespace {
 // MEMBER FUNCTIONS - Body may be edited by hand.
 
 int64 CEF_CALLBACK display_get_id(struct _cef_display_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -130,6 +143,8 @@ int64 CEF_CALLBACK display_get_id(struct _cef_display_t* self) {
 
 float CEF_CALLBACK
 display_get_device_scale_factor(struct _cef_display_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -145,6 +160,8 @@ display_get_device_scale_factor(struct _cef_display_t* self) {
 
 void CEF_CALLBACK display_convert_point_to_pixels(struct _cef_display_t* self,
                                                   cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -168,6 +185,8 @@ void CEF_CALLBACK display_convert_point_to_pixels(struct _cef_display_t* self,
 
 void CEF_CALLBACK display_convert_point_from_pixels(struct _cef_display_t* self,
                                                     cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -190,6 +209,8 @@ void CEF_CALLBACK display_convert_point_from_pixels(struct _cef_display_t* self,
 }
 
 cef_rect_t CEF_CALLBACK display_get_bounds(struct _cef_display_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -204,6 +225,8 @@ cef_rect_t CEF_CALLBACK display_get_bounds(struct _cef_display_t* self) {
 }
 
 cef_rect_t CEF_CALLBACK display_get_work_area(struct _cef_display_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -218,6 +241,8 @@ cef_rect_t CEF_CALLBACK display_get_work_area(struct _cef_display_t* self) {
 }
 
 int CEF_CALLBACK display_get_rotation(struct _cef_display_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -245,21 +270,20 @@ CefDisplayCppToC::CefDisplayCppToC() {
   GetStruct()->get_rotation = display_get_rotation;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefDisplayCppToC::~CefDisplayCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefDisplay>
 CefCppToCRefCounted<CefDisplayCppToC, CefDisplay, cef_display_t>::UnwrapDerived(
     CefWrapperType type,
     cef_display_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefDisplayCppToC, CefDisplay, cef_display_t>::DebugObjCt
-        ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefDisplayCppToC,

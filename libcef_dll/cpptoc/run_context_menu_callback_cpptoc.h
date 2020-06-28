@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=304d8dd4ad537ba1e4717167d4377b72bdfc15fb$
+// $hash=0bdb34b3f23060c3bdc9f81f20bd1a31fe843713$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_RUN_CONTEXT_MENU_CALLBACK_CPPTOC_H_
@@ -32,6 +32,7 @@ class CefRunContextMenuCallbackCppToC
                                  cef_run_context_menu_callback_t> {
  public:
   CefRunContextMenuCallbackCppToC();
+  virtual ~CefRunContextMenuCallbackCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_RUN_CONTEXT_MENU_CALLBACK_CPPTOC_H_

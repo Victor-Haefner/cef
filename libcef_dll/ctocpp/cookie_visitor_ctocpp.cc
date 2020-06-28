@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,10 +9,11 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=d44af05987980b1d598e67edbacfc28921b77b96$
+// $hash=2fb5cbc3fb182cdc5548139ca7256916148984d7$
 //
 
 #include "libcef_dll/ctocpp/cookie_visitor_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
@@ -21,6 +22,8 @@ bool CefCookieVisitorCToCpp::Visit(const CefCookie& cookie,
                                    int count,
                                    int total,
                                    bool& deleteCookie) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_cookie_visitor_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, visit))
     return false;
@@ -45,6 +48,12 @@ bool CefCookieVisitorCToCpp::Visit(const CefCookie& cookie,
 
 CefCookieVisitorCToCpp::CefCookieVisitorCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefCookieVisitorCToCpp::~CefCookieVisitorCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_cookie_visitor_t*
 CefCToCppRefCounted<CefCookieVisitorCToCpp,
@@ -52,16 +61,8 @@ CefCToCppRefCounted<CefCookieVisitorCToCpp,
                     cef_cookie_visitor_t>::UnwrapDerived(CefWrapperType type,
                                                          CefCookieVisitor* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefCookieVisitorCToCpp,
-                                         CefCookieVisitor,
-                                         cef_cookie_visitor_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefCookieVisitorCToCpp,

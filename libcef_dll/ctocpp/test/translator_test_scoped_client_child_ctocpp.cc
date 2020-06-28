@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=8020e125acce042dbc4b2b8d921d88ecd7124bc5$
+// $hash=d9e908faae3ca204ade3cceff3471419b234dddb$
 //
 
 #include "libcef_dll/ctocpp/test/translator_test_scoped_client_child_ctocpp.h"
@@ -52,6 +52,11 @@ int CefTranslatorTestScopedClientChildCToCpp::GetValue() {
 CefTranslatorTestScopedClientChildCToCpp::
     CefTranslatorTestScopedClientChildCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefTranslatorTestScopedClientChildCToCpp::
+    ~CefTranslatorTestScopedClientChildCToCpp() {}
+
 template <>
 cef_translator_test_scoped_client_child_t*
 CefCToCppScoped<CefTranslatorTestScopedClientChildCToCpp,
@@ -60,7 +65,7 @@ CefCToCppScoped<CefTranslatorTestScopedClientChildCToCpp,
     UnwrapDerivedOwn(CefWrapperType type,
                      CefOwnPtr<CefTranslatorTestScopedClientChild> c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
 
 template <>
@@ -71,16 +76,8 @@ CefCToCppScoped<CefTranslatorTestScopedClientChildCToCpp,
     UnwrapDerivedRaw(CefWrapperType type,
                      CefRawPtr<CefTranslatorTestScopedClientChild> c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppScoped<
-    CefTranslatorTestScopedClientChildCToCpp,
-    CefTranslatorTestScopedClientChild,
-    cef_translator_test_scoped_client_child_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

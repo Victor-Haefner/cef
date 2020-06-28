@@ -32,7 +32,7 @@ class SimpleWindowDelegate : public CefWindowDelegate {
   }
 
   void OnWindowDestroyed(CefRefPtr<CefWindow> window) OVERRIDE {
-    browser_view_ = NULL;
+    browser_view_ = nullptr;
   }
 
   bool CanClose(CefRefPtr<CefWindow> window) OVERRIDE {
@@ -43,11 +43,36 @@ class SimpleWindowDelegate : public CefWindowDelegate {
     return true;
   }
 
+  CefSize GetPreferredSize(CefRefPtr<CefView> view) OVERRIDE {
+    return CefSize(800, 600);
+  }
+
  private:
   CefRefPtr<CefBrowserView> browser_view_;
 
   IMPLEMENT_REFCOUNTING(SimpleWindowDelegate);
   DISALLOW_COPY_AND_ASSIGN(SimpleWindowDelegate);
+};
+
+class SimpleBrowserViewDelegate : public CefBrowserViewDelegate {
+ public:
+  SimpleBrowserViewDelegate() {}
+
+  bool OnPopupBrowserViewCreated(CefRefPtr<CefBrowserView> browser_view,
+                                 CefRefPtr<CefBrowserView> popup_browser_view,
+                                 bool is_devtools) OVERRIDE {
+    // Create a new top-level Window for the popup. It will show itself after
+    // creation.
+    CefWindow::CreateTopLevelWindow(
+        new SimpleWindowDelegate(popup_browser_view));
+
+    // We created the Window.
+    return true;
+  }
+
+ private:
+  IMPLEMENT_REFCOUNTING(SimpleBrowserViewDelegate);
+  DISALLOW_COPY_AND_ASSIGN(SimpleBrowserViewDelegate);
 };
 
 }  // namespace
@@ -87,7 +112,8 @@ void SimpleApp::OnContextInitialized() {
   if (use_views) {
     // Create the BrowserView.
     CefRefPtr<CefBrowserView> browser_view = CefBrowserView::CreateBrowserView(
-        handler, url, browser_settings, NULL, NULL);
+        handler, url, browser_settings, nullptr, nullptr,
+        new SimpleBrowserViewDelegate());
 
     // Create the Window. It will show itself after creation.
     CefWindow::CreateTopLevelWindow(new SimpleWindowDelegate(browser_view));
@@ -103,6 +129,6 @@ void SimpleApp::OnContextInitialized() {
 
     // Create the first browser window.
     CefBrowserHost::CreateBrowser(window_info, handler, url, browser_settings,
-                                  NULL);
+                                  nullptr, nullptr);
   }
 }

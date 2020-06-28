@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,11 +9,12 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=ef0342d66a995b4833fbf83785ea1e1936cb8d28$
+// $hash=c423c0e433e50b85f28dea833aa19e12404f3139$
 //
 
 #include "libcef_dll/ctocpp/menu_model_delegate_ctocpp.h"
 #include "libcef_dll/cpptoc/menu_model_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
@@ -22,6 +23,8 @@ void CefMenuModelDelegateCToCpp::ExecuteCommand(
     CefRefPtr<CefMenuModel> menu_model,
     int command_id,
     cef_event_flags_t event_flags) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_menu_model_delegate_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, execute_command))
     return;
@@ -42,6 +45,8 @@ NO_SANITIZE("cfi-icall")
 void CefMenuModelDelegateCToCpp::MouseOutsideMenu(
     CefRefPtr<CefMenuModel> menu_model,
     const CefPoint& screen_point) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_menu_model_delegate_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, mouse_outside_menu))
     return;
@@ -62,6 +67,8 @@ NO_SANITIZE("cfi-icall")
 void CefMenuModelDelegateCToCpp::UnhandledOpenSubmenu(
     CefRefPtr<CefMenuModel> menu_model,
     bool is_rtl) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_menu_model_delegate_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, unhandled_open_submenu))
     return;
@@ -82,6 +89,8 @@ NO_SANITIZE("cfi-icall")
 void CefMenuModelDelegateCToCpp::UnhandledCloseSubmenu(
     CefRefPtr<CefMenuModel> menu_model,
     bool is_rtl) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_menu_model_delegate_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, unhandled_close_submenu))
     return;
@@ -101,6 +110,8 @@ void CefMenuModelDelegateCToCpp::UnhandledCloseSubmenu(
 NO_SANITIZE("cfi-icall")
 void CefMenuModelDelegateCToCpp::MenuWillShow(
     CefRefPtr<CefMenuModel> menu_model) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_menu_model_delegate_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, menu_will_show))
     return;
@@ -119,6 +130,8 @@ void CefMenuModelDelegateCToCpp::MenuWillShow(
 NO_SANITIZE("cfi-icall")
 void CefMenuModelDelegateCToCpp::MenuClosed(
     CefRefPtr<CefMenuModel> menu_model) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_menu_model_delegate_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, menu_closed))
     return;
@@ -137,6 +150,8 @@ void CefMenuModelDelegateCToCpp::MenuClosed(
 NO_SANITIZE("cfi-icall")
 bool CefMenuModelDelegateCToCpp::FormatLabel(CefRefPtr<CefMenuModel> menu_model,
                                              CefString& label) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_menu_model_delegate_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, format_label))
     return false;
@@ -160,6 +175,12 @@ bool CefMenuModelDelegateCToCpp::FormatLabel(CefRefPtr<CefMenuModel> menu_model,
 
 CefMenuModelDelegateCToCpp::CefMenuModelDelegateCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefMenuModelDelegateCToCpp::~CefMenuModelDelegateCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_menu_model_delegate_t* CefCToCppRefCounted<
     CefMenuModelDelegateCToCpp,
@@ -167,16 +188,8 @@ cef_menu_model_delegate_t* CefCToCppRefCounted<
     cef_menu_model_delegate_t>::UnwrapDerived(CefWrapperType type,
                                               CefMenuModelDelegate* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefMenuModelDelegateCToCpp,
-                                         CefMenuModelDelegate,
-                                         cef_menu_model_delegate_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefMenuModelDelegateCToCpp,

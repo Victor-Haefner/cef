@@ -32,7 +32,7 @@ CefRefPtr<CefDragData> CefDragData::Create() {
 }
 
 CefRefPtr<CefDragData> CefDragDataImpl::Clone() {
-  CefDragDataImpl* drag_data = NULL;
+  CefDragDataImpl* drag_data = nullptr;
   {
     base::AutoLock lock_scope(lock_);
     drag_data = new CefDragDataImpl(data_, image_, image_hotspot_);
@@ -96,9 +96,6 @@ CefString CefDragDataImpl::GetFragmentBaseURL() {
 
 CefString CefDragDataImpl::GetFileName() {
   base::AutoLock lock_scope(lock_);
-  if (data_.file_contents_content_disposition.empty())
-    return CefString();
-
   base::Optional<base::FilePath> filename =
       data_.GetSafeFilenameForImageFileContents();
   return filename ? CefString(filename->value()) : CefString();

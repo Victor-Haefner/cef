@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,16 +9,19 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=1aaf969c94fb47c344f8c12a5ba8063ff5c54c5c$
+// $hash=eb78e3b37b654734b8b28449b713cc3eb3b9070d$
 //
 
 #include "libcef_dll/cpptoc/menu_model_cpptoc.h"
 #include "libcef_dll/ctocpp/menu_model_delegate_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // GLOBAL FUNCTIONS - Body may be edited by hand.
 
 CEF_EXPORT cef_menu_model_t* cef_menu_model_create(
     struct _cef_menu_model_delegate_t* delegate) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Verify param: delegate; type: refptr_diff
@@ -39,6 +42,8 @@ namespace {
 // MEMBER FUNCTIONS - Body may be edited by hand.
 
 int CEF_CALLBACK menu_model_is_sub_menu(struct _cef_menu_model_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -53,6 +58,8 @@ int CEF_CALLBACK menu_model_is_sub_menu(struct _cef_menu_model_t* self) {
 }
 
 int CEF_CALLBACK menu_model_clear(struct _cef_menu_model_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -67,6 +74,8 @@ int CEF_CALLBACK menu_model_clear(struct _cef_menu_model_t* self) {
 }
 
 int CEF_CALLBACK menu_model_get_count(struct _cef_menu_model_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -81,6 +90,8 @@ int CEF_CALLBACK menu_model_get_count(struct _cef_menu_model_t* self) {
 }
 
 int CEF_CALLBACK menu_model_add_separator(struct _cef_menu_model_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -97,6 +108,8 @@ int CEF_CALLBACK menu_model_add_separator(struct _cef_menu_model_t* self) {
 int CEF_CALLBACK menu_model_add_item(struct _cef_menu_model_t* self,
                                      int command_id,
                                      const cef_string_t* label) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -118,6 +131,8 @@ int CEF_CALLBACK menu_model_add_item(struct _cef_menu_model_t* self,
 int CEF_CALLBACK menu_model_add_check_item(struct _cef_menu_model_t* self,
                                            int command_id,
                                            const cef_string_t* label) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -140,6 +155,8 @@ int CEF_CALLBACK menu_model_add_radio_item(struct _cef_menu_model_t* self,
                                            int command_id,
                                            const cef_string_t* label,
                                            int group_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -162,6 +179,8 @@ struct _cef_menu_model_t* CEF_CALLBACK
 menu_model_add_sub_menu(struct _cef_menu_model_t* self,
                         int command_id,
                         const cef_string_t* label) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -182,6 +201,8 @@ menu_model_add_sub_menu(struct _cef_menu_model_t* self,
 
 int CEF_CALLBACK menu_model_insert_separator_at(struct _cef_menu_model_t* self,
                                                 int index) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -199,6 +220,8 @@ int CEF_CALLBACK menu_model_insert_item_at(struct _cef_menu_model_t* self,
                                            int index,
                                            int command_id,
                                            const cef_string_t* label) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -221,6 +244,8 @@ int CEF_CALLBACK menu_model_insert_check_item_at(struct _cef_menu_model_t* self,
                                                  int index,
                                                  int command_id,
                                                  const cef_string_t* label) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -244,6 +269,8 @@ int CEF_CALLBACK menu_model_insert_radio_item_at(struct _cef_menu_model_t* self,
                                                  int command_id,
                                                  const cef_string_t* label,
                                                  int group_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -267,6 +294,8 @@ menu_model_insert_sub_menu_at(struct _cef_menu_model_t* self,
                               int index,
                               int command_id,
                               const cef_string_t* label) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -288,6 +317,8 @@ menu_model_insert_sub_menu_at(struct _cef_menu_model_t* self,
 
 int CEF_CALLBACK menu_model_remove(struct _cef_menu_model_t* self,
                                    int command_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -303,6 +334,8 @@ int CEF_CALLBACK menu_model_remove(struct _cef_menu_model_t* self,
 
 int CEF_CALLBACK menu_model_remove_at(struct _cef_menu_model_t* self,
                                       int index) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -318,6 +351,8 @@ int CEF_CALLBACK menu_model_remove_at(struct _cef_menu_model_t* self,
 
 int CEF_CALLBACK menu_model_get_index_of(struct _cef_menu_model_t* self,
                                          int command_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -333,6 +368,8 @@ int CEF_CALLBACK menu_model_get_index_of(struct _cef_menu_model_t* self,
 
 int CEF_CALLBACK menu_model_get_command_id_at(struct _cef_menu_model_t* self,
                                               int index) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -349,6 +386,8 @@ int CEF_CALLBACK menu_model_get_command_id_at(struct _cef_menu_model_t* self,
 int CEF_CALLBACK menu_model_set_command_id_at(struct _cef_menu_model_t* self,
                                               int index,
                                               int command_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -365,6 +404,8 @@ int CEF_CALLBACK menu_model_set_command_id_at(struct _cef_menu_model_t* self,
 
 cef_string_userfree_t CEF_CALLBACK
 menu_model_get_label(struct _cef_menu_model_t* self, int command_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -380,6 +421,8 @@ menu_model_get_label(struct _cef_menu_model_t* self, int command_id) {
 
 cef_string_userfree_t CEF_CALLBACK
 menu_model_get_label_at(struct _cef_menu_model_t* self, int index) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -396,6 +439,8 @@ menu_model_get_label_at(struct _cef_menu_model_t* self, int index) {
 int CEF_CALLBACK menu_model_set_label(struct _cef_menu_model_t* self,
                                       int command_id,
                                       const cef_string_t* label) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -417,6 +462,8 @@ int CEF_CALLBACK menu_model_set_label(struct _cef_menu_model_t* self,
 int CEF_CALLBACK menu_model_set_label_at(struct _cef_menu_model_t* self,
                                          int index,
                                          const cef_string_t* label) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -437,6 +484,8 @@ int CEF_CALLBACK menu_model_set_label_at(struct _cef_menu_model_t* self,
 
 cef_menu_item_type_t CEF_CALLBACK
 menu_model_get_type(struct _cef_menu_model_t* self, int command_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -453,6 +502,8 @@ menu_model_get_type(struct _cef_menu_model_t* self, int command_id) {
 
 cef_menu_item_type_t CEF_CALLBACK
 menu_model_get_type_at(struct _cef_menu_model_t* self, int index) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -469,6 +520,8 @@ menu_model_get_type_at(struct _cef_menu_model_t* self, int index) {
 
 int CEF_CALLBACK menu_model_get_group_id(struct _cef_menu_model_t* self,
                                          int command_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -484,6 +537,8 @@ int CEF_CALLBACK menu_model_get_group_id(struct _cef_menu_model_t* self,
 
 int CEF_CALLBACK menu_model_get_group_id_at(struct _cef_menu_model_t* self,
                                             int index) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -500,6 +555,8 @@ int CEF_CALLBACK menu_model_get_group_id_at(struct _cef_menu_model_t* self,
 int CEF_CALLBACK menu_model_set_group_id(struct _cef_menu_model_t* self,
                                          int command_id,
                                          int group_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -517,6 +574,8 @@ int CEF_CALLBACK menu_model_set_group_id(struct _cef_menu_model_t* self,
 int CEF_CALLBACK menu_model_set_group_id_at(struct _cef_menu_model_t* self,
                                             int index,
                                             int group_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -532,6 +591,8 @@ int CEF_CALLBACK menu_model_set_group_id_at(struct _cef_menu_model_t* self,
 
 struct _cef_menu_model_t* CEF_CALLBACK
 menu_model_get_sub_menu(struct _cef_menu_model_t* self, int command_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -548,6 +609,8 @@ menu_model_get_sub_menu(struct _cef_menu_model_t* self, int command_id) {
 
 struct _cef_menu_model_t* CEF_CALLBACK
 menu_model_get_sub_menu_at(struct _cef_menu_model_t* self, int index) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -564,6 +627,8 @@ menu_model_get_sub_menu_at(struct _cef_menu_model_t* self, int index) {
 
 int CEF_CALLBACK menu_model_is_visible(struct _cef_menu_model_t* self,
                                        int command_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -579,6 +644,8 @@ int CEF_CALLBACK menu_model_is_visible(struct _cef_menu_model_t* self,
 
 int CEF_CALLBACK menu_model_is_visible_at(struct _cef_menu_model_t* self,
                                           int index) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -595,6 +662,8 @@ int CEF_CALLBACK menu_model_is_visible_at(struct _cef_menu_model_t* self,
 int CEF_CALLBACK menu_model_set_visible(struct _cef_menu_model_t* self,
                                         int command_id,
                                         int visible) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -612,6 +681,8 @@ int CEF_CALLBACK menu_model_set_visible(struct _cef_menu_model_t* self,
 int CEF_CALLBACK menu_model_set_visible_at(struct _cef_menu_model_t* self,
                                            int index,
                                            int visible) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -628,6 +699,8 @@ int CEF_CALLBACK menu_model_set_visible_at(struct _cef_menu_model_t* self,
 
 int CEF_CALLBACK menu_model_is_enabled(struct _cef_menu_model_t* self,
                                        int command_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -643,6 +716,8 @@ int CEF_CALLBACK menu_model_is_enabled(struct _cef_menu_model_t* self,
 
 int CEF_CALLBACK menu_model_is_enabled_at(struct _cef_menu_model_t* self,
                                           int index) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -659,6 +734,8 @@ int CEF_CALLBACK menu_model_is_enabled_at(struct _cef_menu_model_t* self,
 int CEF_CALLBACK menu_model_set_enabled(struct _cef_menu_model_t* self,
                                         int command_id,
                                         int enabled) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -676,6 +753,8 @@ int CEF_CALLBACK menu_model_set_enabled(struct _cef_menu_model_t* self,
 int CEF_CALLBACK menu_model_set_enabled_at(struct _cef_menu_model_t* self,
                                            int index,
                                            int enabled) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -692,6 +771,8 @@ int CEF_CALLBACK menu_model_set_enabled_at(struct _cef_menu_model_t* self,
 
 int CEF_CALLBACK menu_model_is_checked(struct _cef_menu_model_t* self,
                                        int command_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -707,6 +788,8 @@ int CEF_CALLBACK menu_model_is_checked(struct _cef_menu_model_t* self,
 
 int CEF_CALLBACK menu_model_is_checked_at(struct _cef_menu_model_t* self,
                                           int index) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -723,6 +806,8 @@ int CEF_CALLBACK menu_model_is_checked_at(struct _cef_menu_model_t* self,
 int CEF_CALLBACK menu_model_set_checked(struct _cef_menu_model_t* self,
                                         int command_id,
                                         int checked) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -740,6 +825,8 @@ int CEF_CALLBACK menu_model_set_checked(struct _cef_menu_model_t* self,
 int CEF_CALLBACK menu_model_set_checked_at(struct _cef_menu_model_t* self,
                                            int index,
                                            int checked) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -756,6 +843,8 @@ int CEF_CALLBACK menu_model_set_checked_at(struct _cef_menu_model_t* self,
 
 int CEF_CALLBACK menu_model_has_accelerator(struct _cef_menu_model_t* self,
                                             int command_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -771,6 +860,8 @@ int CEF_CALLBACK menu_model_has_accelerator(struct _cef_menu_model_t* self,
 
 int CEF_CALLBACK menu_model_has_accelerator_at(struct _cef_menu_model_t* self,
                                                int index) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -790,6 +881,8 @@ int CEF_CALLBACK menu_model_set_accelerator(struct _cef_menu_model_t* self,
                                             int shift_pressed,
                                             int ctrl_pressed,
                                             int alt_pressed) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -811,6 +904,8 @@ int CEF_CALLBACK menu_model_set_accelerator_at(struct _cef_menu_model_t* self,
                                                int shift_pressed,
                                                int ctrl_pressed,
                                                int alt_pressed) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -828,6 +923,8 @@ int CEF_CALLBACK menu_model_set_accelerator_at(struct _cef_menu_model_t* self,
 
 int CEF_CALLBACK menu_model_remove_accelerator(struct _cef_menu_model_t* self,
                                                int command_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -843,6 +940,8 @@ int CEF_CALLBACK menu_model_remove_accelerator(struct _cef_menu_model_t* self,
 
 int CEF_CALLBACK
 menu_model_remove_accelerator_at(struct _cef_menu_model_t* self, int index) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -862,6 +961,8 @@ int CEF_CALLBACK menu_model_get_accelerator(struct _cef_menu_model_t* self,
                                             int* shift_pressed,
                                             int* ctrl_pressed,
                                             int* alt_pressed) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -921,6 +1022,8 @@ int CEF_CALLBACK menu_model_get_accelerator_at(struct _cef_menu_model_t* self,
                                                int* shift_pressed,
                                                int* ctrl_pressed,
                                                int* alt_pressed) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -977,6 +1080,8 @@ int CEF_CALLBACK menu_model_set_color(struct _cef_menu_model_t* self,
                                       int command_id,
                                       cef_menu_color_type_t color_type,
                                       cef_color_t color) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -995,6 +1100,8 @@ int CEF_CALLBACK menu_model_set_color_at(struct _cef_menu_model_t* self,
                                          int index,
                                          cef_menu_color_type_t color_type,
                                          cef_color_t color) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1013,6 +1120,8 @@ int CEF_CALLBACK menu_model_get_color(struct _cef_menu_model_t* self,
                                       int command_id,
                                       cef_menu_color_type_t color_type,
                                       cef_color_t* color) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1042,6 +1151,8 @@ int CEF_CALLBACK menu_model_get_color_at(struct _cef_menu_model_t* self,
                                          int index,
                                          cef_menu_color_type_t color_type,
                                          cef_color_t* color) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1070,6 +1181,8 @@ int CEF_CALLBACK menu_model_get_color_at(struct _cef_menu_model_t* self,
 int CEF_CALLBACK menu_model_set_font_list(struct _cef_menu_model_t* self,
                                           int command_id,
                                           const cef_string_t* font_list) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1088,6 +1201,8 @@ int CEF_CALLBACK menu_model_set_font_list(struct _cef_menu_model_t* self,
 int CEF_CALLBACK menu_model_set_font_list_at(struct _cef_menu_model_t* self,
                                              int index,
                                              const cef_string_t* font_list) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1166,20 +1281,19 @@ CefMenuModelCppToC::CefMenuModelCppToC() {
   GetStruct()->set_font_list_at = menu_model_set_font_list_at;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefMenuModelCppToC::~CefMenuModelCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefMenuModel>
 CefCppToCRefCounted<CefMenuModelCppToC, CefMenuModel, cef_menu_model_t>::
     UnwrapDerived(CefWrapperType type, cef_menu_model_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefMenuModelCppToC, CefMenuModel, cef_menu_model_t>::
-        DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefMenuModelCppToC,

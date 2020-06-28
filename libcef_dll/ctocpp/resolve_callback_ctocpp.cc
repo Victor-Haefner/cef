@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,10 +9,11 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=d8dad2efcfeef33de2f54da7c72dccea1aa72993$
+// $hash=37265d073717bef3508ba6c42f944e7b27c7b1dd$
 //
 
 #include "libcef_dll/ctocpp/resolve_callback_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 #include "libcef_dll/transfer_util.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
@@ -21,6 +22,8 @@ NO_SANITIZE("cfi-icall")
 void CefResolveCallbackCToCpp::OnResolveCompleted(
     cef_errorcode_t result,
     const std::vector<CefString>& resolved_ips) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_resolve_callback_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_resolve_completed))
     return;
@@ -47,6 +50,12 @@ void CefResolveCallbackCToCpp::OnResolveCompleted(
 
 CefResolveCallbackCToCpp::CefResolveCallbackCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefResolveCallbackCToCpp::~CefResolveCallbackCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_resolve_callback_t* CefCToCppRefCounted<
     CefResolveCallbackCToCpp,
@@ -54,16 +63,8 @@ cef_resolve_callback_t* CefCToCppRefCounted<
     cef_resolve_callback_t>::UnwrapDerived(CefWrapperType type,
                                            CefResolveCallback* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefResolveCallbackCToCpp,
-                                         CefResolveCallback,
-                                         cef_resolve_callback_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefResolveCallbackCToCpp,

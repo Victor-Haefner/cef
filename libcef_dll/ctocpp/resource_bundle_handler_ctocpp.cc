@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,16 +9,19 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=12107ff56a34277a6b975365ed671e1a2eb2e8aa$
+// $hash=e0a6432bb54e21c91fb9a82c708b04b36822c067$
 //
 
 #include "libcef_dll/ctocpp/resource_bundle_handler_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall")
 bool CefResourceBundleHandlerCToCpp::GetLocalizedString(int string_id,
                                                         CefString& string) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_resource_bundle_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_localized_string))
     return false;
@@ -37,6 +40,8 @@ NO_SANITIZE("cfi-icall")
 bool CefResourceBundleHandlerCToCpp::GetDataResource(int resource_id,
                                                      void*& data,
                                                      size_t& data_size) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_resource_bundle_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_data_resource))
     return false;
@@ -57,6 +62,8 @@ bool CefResourceBundleHandlerCToCpp::GetDataResourceForScale(
     ScaleFactor scale_factor,
     void*& data,
     size_t& data_size) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_resource_bundle_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_data_resource_for_scale))
     return false;
@@ -75,6 +82,12 @@ bool CefResourceBundleHandlerCToCpp::GetDataResourceForScale(
 
 CefResourceBundleHandlerCToCpp::CefResourceBundleHandlerCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefResourceBundleHandlerCToCpp::~CefResourceBundleHandlerCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_resource_bundle_handler_t* CefCToCppRefCounted<
     CefResourceBundleHandlerCToCpp,
@@ -82,16 +95,8 @@ cef_resource_bundle_handler_t* CefCToCppRefCounted<
     cef_resource_bundle_handler_t>::UnwrapDerived(CefWrapperType type,
                                                   CefResourceBundleHandler* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<
-    CefResourceBundleHandlerCToCpp,
-    CefResourceBundleHandler,
-    cef_resource_bundle_handler_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

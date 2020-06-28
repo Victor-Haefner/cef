@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,10 +9,11 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=50c90e97ff3042a7539c56199784a0074976ff71$
+// $hash=cb7f7a8bc8e7b414eceba18bd4164b857d21ff34$
 //
 
 #include "libcef_dll/ctocpp/register_cdm_callback_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
@@ -20,6 +21,8 @@ NO_SANITIZE("cfi-icall")
 void CefRegisterCdmCallbackCToCpp::OnCdmRegistrationComplete(
     cef_cdm_registration_error_t result,
     const CefString& error_message) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_register_cdm_callback_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_cdm_registration_complete))
     return;
@@ -37,6 +40,12 @@ void CefRegisterCdmCallbackCToCpp::OnCdmRegistrationComplete(
 
 CefRegisterCdmCallbackCToCpp::CefRegisterCdmCallbackCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefRegisterCdmCallbackCToCpp::~CefRegisterCdmCallbackCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_register_cdm_callback_t* CefCToCppRefCounted<
     CefRegisterCdmCallbackCToCpp,
@@ -44,16 +53,8 @@ cef_register_cdm_callback_t* CefCToCppRefCounted<
     cef_register_cdm_callback_t>::UnwrapDerived(CefWrapperType type,
                                                 CefRegisterCdmCallback* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<
-    CefRegisterCdmCallbackCToCpp,
-    CefRegisterCdmCallback,
-    cef_register_cdm_callback_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefRegisterCdmCallbackCToCpp,

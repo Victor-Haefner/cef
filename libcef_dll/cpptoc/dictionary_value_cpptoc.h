@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=726580c1cc628de3d920c613299160a68a687275$
+// $hash=083bd5ba100fb82c10769e8e073b9d931914fb03$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_DICTIONARY_VALUE_CPPTOC_H_
@@ -32,6 +32,7 @@ class CefDictionaryValueCppToC
                                  cef_dictionary_value_t> {
  public:
   CefDictionaryValueCppToC();
+  virtual ~CefDictionaryValueCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_DICTIONARY_VALUE_CPPTOC_H_

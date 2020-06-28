@@ -5,9 +5,59 @@
 
 #include "libcef/browser/chrome_profile_stub.h"
 
+#include "components/variations/variations_client.h"
+#include "components/variations/variations_http_header_provider.h"
+#include "content/public/browser/resource_context.h"
+#include "net/url_request/url_request_context.h"
+
+namespace {
+
+class CefVariationsClient : public variations::VariationsClient {
+ public:
+  explicit CefVariationsClient(content::BrowserContext* browser_context)
+      : browser_context_(browser_context) {}
+
+  ~CefVariationsClient() override = default;
+
+  bool IsIncognito() const override {
+    return browser_context_->IsOffTheRecord();
+  }
+
+  std::string GetVariationsHeader() const override {
+    return variations::VariationsHttpHeaderProvider::GetInstance()
+        ->GetClientDataHeader(false /* is_signed_in */);
+  }
+
+ private:
+  content::BrowserContext* browser_context_;
+};
+
+}  // namespace
+
 ChromeProfileStub::ChromeProfileStub() {}
 
 ChromeProfileStub::~ChromeProfileStub() {}
+
+bool ChromeProfileStub::IsOffTheRecord() {
+  return false;
+}
+
+bool ChromeProfileStub::IsOffTheRecord() const {
+  return false;
+}
+
+const Profile::OTRProfileID& ChromeProfileStub::GetOTRProfileID() const {
+  NOTREACHED();
+  static base::NoDestructor<Profile::OTRProfileID> otr_profile_id(
+      "ProfileImp::NoOTRProfileID");
+  return *otr_profile_id;
+}
+
+variations::VariationsClient* ChromeProfileStub::GetVariationsClient() {
+  if (!variations_client_)
+    variations_client_ = std::make_unique<CefVariationsClient>(this);
+  return variations_client_.get();
+}
 
 scoped_refptr<base::SequencedTaskRunner> ChromeProfileStub::GetIOTaskRunner() {
   NOTREACHED();
@@ -23,16 +73,27 @@ Profile::ProfileType ChromeProfileStub::GetProfileType() const {
   return REGULAR_PROFILE;
 }
 
-Profile* ChromeProfileStub::GetOffTheRecordProfile() {
+Profile* ChromeProfileStub::GetOffTheRecordProfile(
+    const Profile::OTRProfileID& otr_profile_id) {
   NOTREACHED();
-  return NULL;
+  return nullptr;
 }
 
-void ChromeProfileStub::DestroyOffTheRecordProfile() {
+std::vector<Profile*> ChromeProfileStub::GetAllOffTheRecordProfiles() {
+  NOTREACHED();
+  return {};
+}
+
+void ChromeProfileStub::DestroyOffTheRecordProfile(Profile* otr_profile) {
   NOTREACHED();
 }
 
-bool ChromeProfileStub::HasOffTheRecordProfile() {
+bool ChromeProfileStub::HasOffTheRecordProfile(
+    const Profile::OTRProfileID& otr_profile_id) {
+  return false;
+}
+
+bool ChromeProfileStub::HasAnyOffTheRecordProfile() {
   return false;
 }
 
@@ -53,26 +114,18 @@ bool ChromeProfileStub::IsChild() const {
 }
 
 bool ChromeProfileStub::IsLegacySupervised() const {
-  NOTREACHED();
   return false;
 }
 
 ExtensionSpecialStoragePolicy*
 ChromeProfileStub::GetExtensionSpecialStoragePolicy() {
   NOTREACHED();
-  return NULL;
+  return nullptr;
 }
 
 PrefService* ChromeProfileStub::GetOffTheRecordPrefs() {
   NOTREACHED();
-  return NULL;
-}
-
-net::URLRequestContextGetter*
-ChromeProfileStub::GetRequestContextForExtensions() {
-  // TODO(cef): Consider creating a separate context for extensions to match
-  // Chrome behavior.
-  return GetRequestContext();
+  return nullptr;
 }
 
 bool ChromeProfileStub::IsSameProfile(Profile* profile) {
@@ -95,11 +148,6 @@ void ChromeProfileStub::set_last_selected_directory(
   NOTREACHED();
 }
 
-chrome_browser_net::Predictor* ChromeProfileStub::GetNetworkPredictor() {
-  NOTREACHED();
-  return NULL;
-}
-
 GURL ChromeProfileStub::GetHomePage() {
   NOTREACHED();
   return GURL();
@@ -117,4 +165,13 @@ void ChromeProfileStub::SetExitType(ExitType exit_type) {
 Profile::ExitType ChromeProfileStub::GetLastSessionExitType() {
   NOTREACHED();
   return EXIT_NORMAL;
+}
+
+base::Time ChromeProfileStub::GetCreationTime() const {
+  NOTREACHED();
+  return base::Time();
+}
+
+void ChromeProfileStub::SetCreationTimeForTesting(base::Time creation_time) {
+  NOTREACHED();
 }

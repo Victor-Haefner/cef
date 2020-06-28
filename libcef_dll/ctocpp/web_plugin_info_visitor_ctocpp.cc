@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,11 +9,12 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=23e73a858b35e248d4414f8ecd9138f4acd28fa5$
+// $hash=aa1d37e0ac4dbe70fc8e0739676ef968c8ffa765$
 //
 
 #include "libcef_dll/ctocpp/web_plugin_info_visitor_ctocpp.h"
 #include "libcef_dll/cpptoc/web_plugin_info_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
@@ -21,6 +22,8 @@ NO_SANITIZE("cfi-icall")
 bool CefWebPluginInfoVisitorCToCpp::Visit(CefRefPtr<CefWebPluginInfo> info,
                                           int count,
                                           int total) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_web_plugin_info_visitor_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, visit))
     return false;
@@ -44,6 +47,12 @@ bool CefWebPluginInfoVisitorCToCpp::Visit(CefRefPtr<CefWebPluginInfo> info,
 
 CefWebPluginInfoVisitorCToCpp::CefWebPluginInfoVisitorCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefWebPluginInfoVisitorCToCpp::~CefWebPluginInfoVisitorCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_web_plugin_info_visitor_t* CefCToCppRefCounted<
     CefWebPluginInfoVisitorCToCpp,
@@ -51,16 +60,8 @@ cef_web_plugin_info_visitor_t* CefCToCppRefCounted<
     cef_web_plugin_info_visitor_t>::UnwrapDerived(CefWrapperType type,
                                                   CefWebPluginInfoVisitor* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<
-    CefWebPluginInfoVisitorCToCpp,
-    CefWebPluginInfoVisitor,
-    cef_web_plugin_info_visitor_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

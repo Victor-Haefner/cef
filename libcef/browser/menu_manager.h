@@ -11,13 +11,13 @@
 #include "libcef/browser/menu_runner.h"
 
 #include "base/memory/weak_ptr.h"
+#include "content/public/browser/context_menu_params.h"
 #include "content/public/browser/web_contents_observer.h"
-#include "content/public/common/context_menu_params.h"
 
 namespace content {
 class RenderFrameHost;
 class WebContents;
-};
+}  // namespace content
 
 class CefBrowserHostImpl;
 class CefRunContextMenuCallback;

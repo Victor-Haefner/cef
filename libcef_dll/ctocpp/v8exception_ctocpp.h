@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=56ef885df3536fcd4bc5f852e5c7f3d6c75a8d93$
+// $hash=d5fbe63e64a74c8217af3d551f65a85ded5214fd$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_V8EXCEPTION_CTOCPP_H_
@@ -31,6 +31,7 @@ class CefV8ExceptionCToCpp : public CefCToCppRefCounted<CefV8ExceptionCToCpp,
                                                         cef_v8exception_t> {
  public:
   CefV8ExceptionCToCpp();
+  virtual ~CefV8ExceptionCToCpp();
 
   // CefV8Exception methods.
   CefString GetMessage() OVERRIDE;

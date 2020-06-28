@@ -5,6 +5,7 @@
 #ifndef CEF_LIBCEF_RENDERER_RENDER_URLREQUEST_IMPL_H_
 #define CEF_LIBCEF_RENDERER_RENDER_URLREQUEST_IMPL_H_
 
+#include "include/cef_frame.h"
 #include "include/cef_urlrequest.h"
 
 #include "base/memory/ref_counted.h"
@@ -13,7 +14,11 @@ class CefRenderURLRequest : public CefURLRequest {
  public:
   class Context;
 
-  CefRenderURLRequest(CefRefPtr<CefRequest> request,
+  // If |frame| is nullptr the default URLLoaderFactory will be used. That
+  // factory only supports http(s) and blob requests that cannot be
+  // intercepted in the browser process.
+  CefRenderURLRequest(CefRefPtr<CefFrame> frame,
+                      CefRefPtr<CefRequest> request,
                       CefRefPtr<CefURLRequestClient> client);
   ~CefRenderURLRequest() override;
 

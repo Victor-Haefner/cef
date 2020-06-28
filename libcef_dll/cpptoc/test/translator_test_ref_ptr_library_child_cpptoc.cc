@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,16 +9,19 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=01a7d3b6dbd9703cfb3b47e5df63aa14464c518d$
+// $hash=82b0faf6b4c952550427001b82efaa6565a417e5$
 //
 
 #include "libcef_dll/cpptoc/test/translator_test_ref_ptr_library_child_cpptoc.h"
 #include "libcef_dll/cpptoc/test/translator_test_ref_ptr_library_child_child_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // GLOBAL FUNCTIONS - Body may be edited by hand.
 
 CEF_EXPORT cef_translator_test_ref_ptr_library_child_t*
 cef_translator_test_ref_ptr_library_child_create(int value, int other_value) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Execute
@@ -35,6 +38,8 @@ namespace {
 
 int CEF_CALLBACK translator_test_ref_ptr_library_child_get_other_value(
     struct _cef_translator_test_ref_ptr_library_child_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -52,6 +57,8 @@ int CEF_CALLBACK translator_test_ref_ptr_library_child_get_other_value(
 void CEF_CALLBACK translator_test_ref_ptr_library_child_set_other_value(
     struct _cef_translator_test_ref_ptr_library_child_t* self,
     int value) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -64,6 +71,8 @@ void CEF_CALLBACK translator_test_ref_ptr_library_child_set_other_value(
 
 int CEF_CALLBACK translator_test_ref_ptr_library_child_get_value(
     struct _cef_translator_test_ref_ptr_library_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -83,6 +92,8 @@ int CEF_CALLBACK translator_test_ref_ptr_library_child_get_value(
 void CEF_CALLBACK translator_test_ref_ptr_library_child_set_value(
     struct _cef_translator_test_ref_ptr_library_t* self,
     int value) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -109,6 +120,13 @@ CefTranslatorTestRefPtrLibraryChildCppToC::
   GetStruct()->base.set_value = translator_test_ref_ptr_library_child_set_value;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefTranslatorTestRefPtrLibraryChildCppToC::
+    ~CefTranslatorTestRefPtrLibraryChildCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefTranslatorTestRefPtrLibraryChild>
 CefCppToCRefCounted<CefTranslatorTestRefPtrLibraryChildCppToC,
@@ -122,16 +140,8 @@ CefCppToCRefCounted<CefTranslatorTestRefPtrLibraryChildCppToC,
             s));
   }
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<
-    CefTranslatorTestRefPtrLibraryChildCppToC,
-    CefTranslatorTestRefPtrLibraryChild,
-    cef_translator_test_ref_ptr_library_child_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<

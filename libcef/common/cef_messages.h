@@ -10,7 +10,7 @@
 
 #include "libcef/common/net/upload_data.h"
 
-#include "base/memory/shared_memory.h"
+#include "base/memory/shared_memory_mapping.h"
 #include "base/values.h"
 #include "content/public/common/common_param_traits.h"
 #include "content/public/common/referrer.h"
@@ -50,9 +50,6 @@ struct ParamTraits<scoped_refptr<net::UploadData>> {
 IPC_STRUCT_BEGIN(Cef_Request_Params)
   // Unique request id to match requests and responses.
   IPC_STRUCT_MEMBER(int, request_id)
-
-  // Unique id of the target frame. -1 if unknown / invalid.
-  IPC_STRUCT_MEMBER(int64_t, frame_id)
 
   // True if the request is user-initiated instead of internal.
   IPC_STRUCT_MEMBER(bool, user_initiated)
@@ -112,16 +109,12 @@ IPC_STRUCT_BEGIN(CefMsg_LoadRequest_Params)
   // One of the cef_referrer_policy_t values.
   IPC_STRUCT_MEMBER(int, referrer_policy)
 
-  // Identifies the frame within the RenderView that sent the request.
-  // -1 if unknown / invalid.
-  IPC_STRUCT_MEMBER(int64_t, frame_id)
-
   // Usually the URL of the document in the top-level window, which may be
   // checked by the third-party cookie blocking policy. Leaving it empty may
   // lead to undesired cookie blocking. Third-party cookie blocking can be
   // bypassed by setting site_for_cookies = url, but this should ideally
   // only be done if there really is no way to determine the correct value.
-  IPC_STRUCT_MEMBER(GURL, site_for_cookies)
+  IPC_STRUCT_MEMBER(net::SiteForCookies, site_for_cookies)
 
   // Additional HTTP request headers.
   IPC_STRUCT_MEMBER(std::string, headers)
@@ -147,14 +140,12 @@ IPC_MESSAGE_ROUTED1(CefMsg_Response, Cef_Response_Params)
 // has been processed.
 IPC_MESSAGE_ROUTED1(CefMsg_ResponseAck, int /* request_id */)
 
+// Tells the renderer that loading has stopped.
+IPC_MESSAGE_ROUTED0(CefMsg_DidStopLoading)
+
 // Tells the render frame to load all blocked plugins with the given identifier.
 // Based on ChromeViewMsg_LoadBlockedPlugins.
 IPC_MESSAGE_ROUTED1(CefViewMsg_LoadBlockedPlugins, std::string /* identifier */)
-
-// Sent on process startup to indicate whether this process is running in
-// incognito mode. Based on ChromeViewMsg_SetIsIncognitoProcess.
-IPC_MESSAGE_CONTROL1(CefProcessMsg_SetIsIncognitoProcess,
-                     bool /* is_incognito_processs */)
 
 // Sent to child processes to add or remove a cross-origin whitelist entry.
 IPC_MESSAGE_CONTROL2(CefProcessMsg_ModifyCrossOriginWhitelistEntry,
@@ -185,6 +176,7 @@ IPC_STRUCT_BEGIN(CefProcessHostMsg_GetNewBrowserInfo_Params)
   IPC_STRUCT_MEMBER(bool, is_popup)
   IPC_STRUCT_MEMBER(bool, is_windowless)
   IPC_STRUCT_MEMBER(bool, is_guest_view)
+  IPC_STRUCT_MEMBER(base::DictionaryValue, extra_info)
 IPC_STRUCT_END()
 
 // Retrieve information about a newly created browser.
@@ -193,20 +185,12 @@ IPC_SYNC_MESSAGE_CONTROL1_1(
     int /* render_frame_routing_id */,
     CefProcessHostMsg_GetNewBrowserInfo_Params /* params*/)
 
-// Sent when a frame is identified for the first time.
-IPC_MESSAGE_ROUTED3(CefHostMsg_FrameIdentified,
-                    int64_t /* frame_id */,
-                    int64_t /* parent_frame_id */,
-                    base::string16 /* frame_name */)
-
-// Sent by the renderer when the frame becomes focused.
-IPC_MESSAGE_ROUTED0(CefHostMsg_FrameFocused)
+// Sent by the renderer when the frame can begin receiving messages.
+IPC_MESSAGE_ROUTED0(CefHostMsg_FrameAttached)
 
 // Sent when a frame has finished loading. Based on ViewHostMsg_DidFinishLoad.
-IPC_MESSAGE_ROUTED4(CefHostMsg_DidFinishLoad,
-                    int64_t /* frame_id */,
+IPC_MESSAGE_ROUTED2(CefHostMsg_DidFinishLoad,
                     GURL /* validated_url */,
-                    bool /* is_main_frame */,
                     int /* http_status_code */)
 
 // Sent when the renderer has a request for the browser. The browser may respond

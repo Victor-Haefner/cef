@@ -11,6 +11,7 @@
 #include "libcef/browser/browser_host_impl.h"
 #include "libcef/browser/thread_util.h"
 
+#include "content/public/browser/file_select_listener.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/common/file_chooser_file_info.h"
 #include "net/base/directory_lister.h"
@@ -19,17 +20,20 @@ namespace {
 
 class CefFileDialogCallbackImpl : public CefFileDialogCallback {
  public:
-  explicit CefFileDialogCallbackImpl(
-      const CefFileDialogRunner::RunFileChooserCallback& callback)
-      : callback_(callback) {}
+  using CallbackType = CefFileDialogRunner::RunFileChooserCallback;
+
+  explicit CefFileDialogCallbackImpl(CallbackType callback)
+      : callback_(std::move(callback)) {}
+
   ~CefFileDialogCallbackImpl() override {
     if (!callback_.is_null()) {
       // The callback is still pending. Cancel it now.
       if (CEF_CURRENTLY_ON_UIT()) {
-        CancelNow(callback_);
+        CancelNow(std::move(callback_));
       } else {
-        CEF_POST_TASK(CEF_UIT, base::Bind(&CefFileDialogCallbackImpl::CancelNow,
-                                          callback_));
+        CEF_POST_TASK(CEF_UIT,
+                      base::BindOnce(&CefFileDialogCallbackImpl::CancelNow,
+                                     std::move(callback_)));
       }
     }
   }
@@ -44,41 +48,36 @@ class CefFileDialogCallbackImpl : public CefFileDialogCallback {
           for (; it != file_paths.end(); ++it)
             vec.push_back(base::FilePath(*it));
         }
-        callback_.Run(selected_accept_filter, vec);
-        callback_.Reset();
+        std::move(callback_).Run(selected_accept_filter, vec);
       }
     } else {
       CEF_POST_TASK(CEF_UIT,
-                    base::Bind(&CefFileDialogCallbackImpl::Continue, this,
-                               selected_accept_filter, file_paths));
+                    base::BindOnce(&CefFileDialogCallbackImpl::Continue, this,
+                                   selected_accept_filter, file_paths));
     }
   }
 
   void Cancel() override {
     if (CEF_CURRENTLY_ON_UIT()) {
       if (!callback_.is_null()) {
-        CancelNow(callback_);
-        callback_.Reset();
+        CancelNow(std::move(callback_));
       }
     } else {
       CEF_POST_TASK(CEF_UIT,
-                    base::Bind(&CefFileDialogCallbackImpl::Cancel, this));
+                    base::BindOnce(&CefFileDialogCallbackImpl::Cancel, this));
     }
   }
 
-  bool IsConnected() { return !callback_.is_null(); }
-
-  void Disconnect() { callback_.Reset(); }
+  CallbackType Disconnect() WARN_UNUSED_RESULT { return std::move(callback_); }
 
  private:
-  static void CancelNow(
-      const CefFileDialogRunner::RunFileChooserCallback& callback) {
+  static void CancelNow(CallbackType callback) {
     CEF_REQUIRE_UIT();
     std::vector<base::FilePath> file_paths;
-    callback.Run(0, file_paths);
+    std::move(callback).Run(0, file_paths);
   }
 
-  CefFileDialogRunner::RunFileChooserCallback callback_;
+  CallbackType callback_;
 
   IMPLEMENT_REFCOUNTING(CefFileDialogCallbackImpl);
 };
@@ -98,16 +97,16 @@ class UploadFolderHelper
     : public net::DirectoryLister::DirectoryListerDelegate {
  public:
   explicit UploadFolderHelper(
-      const CefFileDialogRunner::RunFileChooserCallback& callback)
-      : callback_(callback) {}
+      CefFileDialogRunner::RunFileChooserCallback callback)
+      : callback_(std::move(callback)) {}
 
   ~UploadFolderHelper() override {
     if (!callback_.is_null()) {
       if (CEF_CURRENTLY_ON_UIT()) {
-        CancelNow(callback_);
+        CancelNow(std::move(callback_));
       } else {
-        CEF_POST_TASK(CEF_UIT,
-                      base::Bind(&UploadFolderHelper::CancelNow, callback_));
+        CEF_POST_TASK(CEF_UIT, base::BindOnce(&UploadFolderHelper::CancelNow,
+                                              std::move(callback_)));
       }
     }
   }
@@ -122,17 +121,15 @@ class UploadFolderHelper
   void OnListDone(int error) override {
     CEF_REQUIRE_UIT();
     if (!callback_.is_null()) {
-      callback_.Run(0, select_files_);
-      callback_.Reset();
+      std::move(callback_).Run(0, select_files_);
     }
   }
 
  private:
-  static void CancelNow(
-      const CefFileDialogRunner::RunFileChooserCallback& callback) {
+  static void CancelNow(CefFileDialogRunner::RunFileChooserCallback callback) {
     CEF_REQUIRE_UIT();
     std::vector<base::FilePath> file_paths;
-    callback.Run(0, file_paths);
+    std::move(callback).Run(0, file_paths);
   }
 
   CefFileDialogRunner::RunFileChooserCallback callback_;
@@ -146,20 +143,16 @@ class UploadFolderHelper
 CefFileDialogManager::CefFileDialogManager(
     CefBrowserHostImpl* browser,
     std::unique_ptr<CefFileDialogRunner> runner)
-    : content::WebContentsObserver(browser->web_contents()),
-      browser_(browser),
+    : browser_(browser),
       runner_(std::move(runner)),
       file_chooser_pending_(false),
-      render_frame_host_(nullptr),
-      weak_ptr_factory_(this) {
-  DCHECK(web_contents());
-}
+      weak_ptr_factory_(this) {}
 
 CefFileDialogManager::~CefFileDialogManager() {}
 
 void CefFileDialogManager::Destroy() {
   DCHECK(!file_chooser_pending_);
-  runner_.reset(NULL);
+  runner_.reset(nullptr);
 }
 
 void CefFileDialogManager::RunFileDialog(
@@ -176,16 +169,16 @@ void CefFileDialogManager::RunFileDialog(
   CefFileDialogRunner::FileChooserParams params;
   switch (mode & FILE_DIALOG_TYPE_MASK) {
     case FILE_DIALOG_OPEN:
-      params.mode = content::FileChooserParams::Open;
+      params.mode = blink::mojom::FileChooserParams::Mode::kOpen;
       break;
     case FILE_DIALOG_OPEN_MULTIPLE:
-      params.mode = content::FileChooserParams::OpenMultiple;
+      params.mode = blink::mojom::FileChooserParams::Mode::kOpenMultiple;
       break;
     case FILE_DIALOG_OPEN_FOLDER:
-      params.mode = content::FileChooserParams::UploadFolder;
+      params.mode = blink::mojom::FileChooserParams::Mode::kUploadFolder;
       break;
     case FILE_DIALOG_SAVE:
-      params.mode = content::FileChooserParams::Save;
+      params.mode = blink::mojom::FileChooserParams::Mode::kSave;
       break;
   }
 
@@ -209,51 +202,48 @@ void CefFileDialogManager::RunFileDialog(
 }
 
 void CefFileDialogManager::RunFileChooser(
-    content::RenderFrameHost* render_frame_host,
-    const content::FileChooserParams& params) {
+    std::unique_ptr<content::FileSelectListener> listener,
+    const blink::mojom::FileChooserParams& params) {
   CEF_REQUIRE_UIT();
-  DCHECK(render_frame_host);
 
   CefFileDialogRunner::FileChooserParams cef_params;
-  static_cast<content::FileChooserParams&>(cef_params) = params;
+  static_cast<blink::mojom::FileChooserParams&>(cef_params) = params;
 
   CefFileDialogRunner::RunFileChooserCallback callback;
-  if (params.mode == content::FileChooserParams::UploadFolder) {
-    callback = base::Bind(
+  if (params.mode == blink::mojom::FileChooserParams::Mode::kUploadFolder) {
+    callback = base::BindOnce(
         &CefFileDialogManager::OnRunFileChooserUploadFolderDelegateCallback,
-        weak_ptr_factory_.GetWeakPtr(), params.mode);
+        weak_ptr_factory_.GetWeakPtr(), params.mode, std::move(listener));
   } else {
-    callback =
-        base::Bind(&CefFileDialogManager::OnRunFileChooserDelegateCallback,
-                   weak_ptr_factory_.GetWeakPtr(), params.mode);
+    callback = base::BindOnce(
+        &CefFileDialogManager::OnRunFileChooserDelegateCallback,
+        weak_ptr_factory_.GetWeakPtr(), params.mode, std::move(listener));
   }
 
-  RunFileChooserInternal(render_frame_host, cef_params, callback);
+  RunFileChooserInternal(cef_params, std::move(callback));
 }
 
 void CefFileDialogManager::RunFileChooser(
     const CefFileDialogRunner::FileChooserParams& params,
-    const CefFileDialogRunner::RunFileChooserCallback& callback) {
-  const CefFileDialogRunner::RunFileChooserCallback& host_callback =
-      base::Bind(&CefFileDialogManager::OnRunFileChooserCallback,
-                 weak_ptr_factory_.GetWeakPtr(), callback);
-  RunFileChooserInternal(nullptr, params, host_callback);
+    CefFileDialogRunner::RunFileChooserCallback callback) {
+  CefFileDialogRunner::RunFileChooserCallback host_callback =
+      base::BindOnce(&CefFileDialogManager::OnRunFileChooserCallback,
+                     weak_ptr_factory_.GetWeakPtr(), std::move(callback));
+  RunFileChooserInternal(params, std::move(host_callback));
 }
 
 void CefFileDialogManager::RunFileChooserInternal(
-    content::RenderFrameHost* render_frame_host,
     const CefFileDialogRunner::FileChooserParams& params,
-    const CefFileDialogRunner::RunFileChooserCallback& callback) {
+    CefFileDialogRunner::RunFileChooserCallback callback) {
   CEF_REQUIRE_UIT();
 
   if (file_chooser_pending_) {
     // Dismiss the new dialog immediately.
-    callback.Run(0, std::vector<base::FilePath>());
+    std::move(callback).Run(0, std::vector<base::FilePath>());
     return;
   }
 
   file_chooser_pending_ = true;
-  render_frame_host_ = render_frame_host;
 
   bool handled = false;
 
@@ -263,16 +253,16 @@ void CefFileDialogManager::RunFileChooserInternal(
     if (handler.get()) {
       int mode = FILE_DIALOG_OPEN;
       switch (params.mode) {
-        case content::FileChooserParams::Open:
+        case blink::mojom::FileChooserParams::Mode::kOpen:
           mode = FILE_DIALOG_OPEN;
           break;
-        case content::FileChooserParams::OpenMultiple:
+        case blink::mojom::FileChooserParams::Mode::kOpenMultiple:
           mode = FILE_DIALOG_OPEN_MULTIPLE;
           break;
-        case content::FileChooserParams::UploadFolder:
+        case blink::mojom::FileChooserParams::Mode::kUploadFolder:
           mode = FILE_DIALOG_OPEN_FOLDER;
           break;
-        case content::FileChooserParams::Save:
+        case blink::mojom::FileChooserParams::Mode::kSave:
           mode = FILE_DIALOG_SAVE;
           break;
         default:
@@ -293,35 +283,30 @@ void CefFileDialogManager::RunFileChooserInternal(
         accept_filters.push_back(*it);
 
       CefRefPtr<CefFileDialogCallbackImpl> callbackImpl(
-          new CefFileDialogCallbackImpl(callback));
+          new CefFileDialogCallbackImpl(std::move(callback)));
       handled = handler->OnFileDialog(
           browser_, static_cast<cef_file_dialog_mode_t>(mode), params.title,
           params.default_file_name.value(), accept_filters,
           params.selected_accept_filter, callbackImpl.get());
       if (!handled) {
-        if (callbackImpl->IsConnected()) {
-          callbackImpl->Disconnect();
-        } else {
-          // User executed the callback even though they returned false.
-          NOTREACHED();
-          handled = true;
-        }
+        // May return nullptr if the client has already executed the callback.
+        callback = callbackImpl->Disconnect();
       }
     }
   }
 
-  if (!handled) {
+  if (!handled && !callback.is_null()) {
     if (runner_.get()) {
-      runner_->Run(browser_, params, callback);
+      runner_->Run(browser_, params, std::move(callback));
     } else {
       LOG(WARNING) << "No file dialog runner available for this platform";
-      callback.Run(0, std::vector<base::FilePath>());
+      std::move(callback).Run(0, std::vector<base::FilePath>());
     }
   }
 }
 
 void CefFileDialogManager::OnRunFileChooserCallback(
-    const CefFileDialogRunner::RunFileChooserCallback& callback,
+    CefFileDialogRunner::RunFileChooserCallback callback,
     int selected_accept_filter,
     const std::vector<base::FilePath>& file_paths) {
   CEF_REQUIRE_UIT();
@@ -329,47 +314,56 @@ void CefFileDialogManager::OnRunFileChooserCallback(
   Cleanup();
 
   // Execute the callback asynchronously.
-  CEF_POST_TASK(CEF_UIT,
-                base::Bind(callback, selected_accept_filter, file_paths));
+  CEF_POST_TASK(CEF_UIT, base::BindOnce(std::move(callback),
+                                        selected_accept_filter, file_paths));
 }
 
 void CefFileDialogManager::OnRunFileChooserUploadFolderDelegateCallback(
-    const content::FileChooserParams::Mode mode,
+    const blink::mojom::FileChooserParams::Mode mode,
+    std::unique_ptr<content::FileSelectListener> listener,
     int selected_accept_filter,
     const std::vector<base::FilePath>& file_paths) {
   CEF_REQUIRE_UIT();
-  DCHECK_EQ(mode, content::FileChooserParams::UploadFolder);
+  DCHECK_EQ(mode, blink::mojom::FileChooserParams::Mode::kUploadFolder);
 
   if (file_paths.size() == 0) {
     // Client canceled the file chooser.
-    OnRunFileChooserDelegateCallback(mode, selected_accept_filter, file_paths);
+    OnRunFileChooserDelegateCallback(mode, std::move(listener),
+                                     selected_accept_filter, file_paths);
   } else {
     lister_.reset(new net::DirectoryLister(
         file_paths[0], net::DirectoryLister::NO_SORT_RECURSIVE,
-        new UploadFolderHelper(
-            base::Bind(&CefFileDialogManager::OnRunFileChooserDelegateCallback,
-                       weak_ptr_factory_.GetWeakPtr(), mode))));
+        new UploadFolderHelper(base::BindOnce(
+            &CefFileDialogManager::OnRunFileChooserDelegateCallback,
+            weak_ptr_factory_.GetWeakPtr(), mode, std::move(listener)))));
     lister_->Start();
   }
 }
 
 void CefFileDialogManager::OnRunFileChooserDelegateCallback(
-    content::FileChooserParams::Mode mode,
+    blink::mojom::FileChooserParams::Mode mode,
+    std::unique_ptr<content::FileSelectListener> listener,
     int selected_accept_filter,
     const std::vector<base::FilePath>& file_paths) {
   CEF_REQUIRE_UIT();
 
-  // Convert FilePath list to SelectedFileInfo list.
-  std::vector<content::FileChooserFileInfo> selected_files;
-  for (size_t i = 0; i < file_paths.size(); ++i) {
-    content::FileChooserFileInfo info;
-    info.file_path = file_paths[i];
-    selected_files.push_back(info);
+  base::FilePath base_dir;
+  std::vector<blink::mojom::FileChooserFileInfoPtr> selected_files;
+
+  if (!file_paths.empty()) {
+    if (mode == blink::mojom::FileChooserParams::Mode::kUploadFolder) {
+      base_dir = file_paths[0].DirName();
+    }
+
+    // Convert FilePath list to SelectedFileInfo list.
+    for (size_t i = 0; i < file_paths.size(); ++i) {
+      auto info = blink::mojom::FileChooserFileInfo::NewNativeFile(
+          blink::mojom::NativeFileInfo::New(file_paths[i], base::string16()));
+      selected_files.push_back(std::move(info));
+    }
   }
 
-  // Notify our RenderViewHost in all cases.
-  if (render_frame_host_)
-    render_frame_host_->FilesSelectedInChooser(selected_files, mode);
+  listener->FileSelected(std::move(selected_files), base_dir, mode);
 
   Cleanup();
 }
@@ -378,12 +372,5 @@ void CefFileDialogManager::Cleanup() {
   if (lister_)
     lister_.reset();
 
-  render_frame_host_ = nullptr;
   file_chooser_pending_ = false;
-}
-
-void CefFileDialogManager::RenderFrameDeleted(
-    content::RenderFrameHost* render_frame_host) {
-  if (render_frame_host == render_frame_host_)
-    render_frame_host_ = nullptr;
 }

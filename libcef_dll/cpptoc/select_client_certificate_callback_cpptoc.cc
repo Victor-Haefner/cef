@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,11 +9,12 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=6130f0e9d0e8f9d241c7a04f5d10e92eb186578c$
+// $hash=cc2fc42f673c2a27a73e5237f1c9533bf550aa33$
 //
 
 #include "libcef_dll/cpptoc/select_client_certificate_callback_cpptoc.h"
 #include "libcef_dll/cpptoc/x509certificate_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -22,6 +23,8 @@ namespace {
 void CEF_CALLBACK select_client_certificate_callback_select(
     struct _cef_select_client_certificate_callback_t* self,
     struct _cef_x509certificate_t* cert) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -43,6 +46,13 @@ CefSelectClientCertificateCallbackCppToC::
   GetStruct()->select = select_client_certificate_callback_select;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefSelectClientCertificateCallbackCppToC::
+    ~CefSelectClientCertificateCallbackCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefSelectClientCertificateCallback>
 CefCppToCRefCounted<CefSelectClientCertificateCallbackCppToC,
@@ -51,16 +61,8 @@ CefCppToCRefCounted<CefSelectClientCertificateCallbackCppToC,
     UnwrapDerived(CefWrapperType type,
                   cef_select_client_certificate_callback_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<
-    CefSelectClientCertificateCallbackCppToC,
-    CefSelectClientCertificateCallback,
-    cef_select_client_certificate_callback_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<

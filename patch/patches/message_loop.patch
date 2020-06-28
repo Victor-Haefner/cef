@@ -1,54 +1,37 @@
-diff --git base/message_loop/message_loop.cc base/message_loop/message_loop.cc
-index 4571c726ec4a..ad1479647400 100644
---- base/message_loop/message_loop.cc
-+++ base/message_loop/message_loop.cc
-@@ -573,6 +573,9 @@ MessageLoopForUI::MessageLoopForUI(Type type) : MessageLoop(type) {
- #endif
+diff --git base/message_loop/message_loop_current.cc base/message_loop/message_loop_current.cc
+index 7688ba3d7b0d..9acaaa0d5c7f 100644
+--- base/message_loop/message_loop_current.cc
++++ base/message_loop/message_loop_current.cc
+@@ -47,6 +47,8 @@ void MessageLoopCurrent::AddDestructionObserver(
+ 
+ void MessageLoopCurrent::RemoveDestructionObserver(
+     DestructionObserver* destruction_observer) {
++  if (!current_)
++    return;
+   DCHECK(current_->IsBoundToCurrentThread());
+   current_->RemoveDestructionObserver(destruction_observer);
  }
- 
-+MessageLoopForUI::MessageLoopForUI(std::unique_ptr<MessagePump> pump)
-+    : MessageLoop(TYPE_UI, BindOnce(&ReturnPump, std::move(pump))) {}
-+
- // static
- MessageLoopCurrentForUI MessageLoopForUI::current() {
-   return MessageLoopCurrentForUI::Get();
-diff --git base/message_loop/message_loop.h base/message_loop/message_loop.h
-index 6010333616eb..f9479daaa4b8 100644
---- base/message_loop/message_loop.h
-+++ base/message_loop/message_loop.h
-@@ -343,6 +343,7 @@ class BASE_EXPORT MessageLoop : public MessagePump::Delegate,
- class BASE_EXPORT MessageLoopForUI : public MessageLoop {
-  public:
-   explicit MessageLoopForUI(Type type = TYPE_UI);
-+  explicit MessageLoopForUI(std::unique_ptr<MessagePump> pump);
- 
-   // TODO(gab): Mass migrate callers to MessageLoopCurrentForUI::Get()/IsSet().
-   static MessageLoopCurrentForUI current();
 diff --git base/message_loop/message_loop_current.h base/message_loop/message_loop_current.h
-index 61d1607e31e7..656b3a9c9f68 100644
+index 61b8c6fcc42d..d439b00a87bb 100644
 --- base/message_loop/message_loop_current.h
 +++ base/message_loop/message_loop_current.h
-@@ -120,6 +120,16 @@ class BASE_EXPORT MessageLoopCurrent {
-   void AddTaskObserver(TaskObserver* task_observer);
-   void RemoveTaskObserver(TaskObserver* task_observer);
+@@ -117,6 +117,12 @@ class BASE_EXPORT MessageLoopCurrent {
+   // posted tasks.
+   void SetAddQueueTimeToTasks(bool enable);
  
 +#if defined(OS_WIN)
-+  void set_os_modal_loop(bool os_modal_loop) {
-+    os_modal_loop_ = os_modal_loop;
-+  }
++  void set_os_modal_loop(bool os_modal_loop) { os_modal_loop_ = os_modal_loop; }
 +
-+  bool os_modal_loop() const {
-+    return os_modal_loop_;
-+  }
++  bool os_modal_loop() const { return os_modal_loop_; }
 +#endif  // OS_WIN
 +
    // Enables or disables the recursive task processing. This happens in the case
    // of recursive message loops. Some unwanted message loops may occur when
    // using common controls or printer functions. By default, recursive task
-@@ -188,6 +198,13 @@ class BASE_EXPORT MessageLoopCurrent {
-   explicit MessageLoopCurrent(MessageLoop* current) : current_(current) {}
+@@ -186,6 +192,13 @@ class BASE_EXPORT MessageLoopCurrent {
+   friend class web::WebTaskEnvironment;
  
-   MessageLoop* const current_;
+   sequence_manager::internal::SequenceManagerImpl* current_;
 +
 +#if defined(OS_WIN)
 + private:
@@ -60,43 +43,24 @@ index 61d1607e31e7..656b3a9c9f68 100644
  
  #if !defined(OS_NACL)
 diff --git base/message_loop/message_pump_win.cc base/message_loop/message_pump_win.cc
-index c95f85abfee1..b28ac0a0faa1 100644
+index 83cbec19c292..a890a324c8db 100644
 --- base/message_loop/message_pump_win.cc
 +++ base/message_loop/message_pump_win.cc
-@@ -11,6 +11,7 @@
+@@ -2,6 +2,7 @@
+ // Use of this source code is governed by a BSD-style license that can be
+ // found in the LICENSE file.
  
- #include "base/debug/alias.h"
- #include "base/memory/ptr_util.h"
 +#include "base/message_loop/message_loop_current.h"
- #include "base/metrics/histogram_macros.h"
- #include "base/strings/stringprintf.h"
- #include "base/trace_event/trace_event.h"
-@@ -375,20 +376,28 @@ bool MessagePumpForUI::ProcessMessageHelper(const MSG& msg) {
- }
+ #include "base/message_loop/message_pump_win.h"
  
- bool MessagePumpForUI::ProcessPumpReplacementMessage() {
--  // When we encounter a kMsgHaveWork message, this method is called to peek and
--  // process a replacement message. The goal is to make the kMsgHaveWork as non-
--  // intrusive as possible, even though a continuous stream of such messages are
--  // posted. This method carefully peeks a message while there is no chance for
--  // a kMsgHaveWork to be pending, then resets the |have_work_| flag (allowing a
--  // replacement kMsgHaveWork to possibly be posted), and finally dispatches
--  // that peeked replacement. Note that the re-post of kMsgHaveWork may be
--  // asynchronous to this thread!!
--
-+  // When we encounter a kMsgHaveWork message, this method is called to peek
-+  // and process a replacement message, such as a WM_PAINT or WM_TIMER.  The
-+  // goal is to make the kMsgHaveWork as non-intrusive as possible, even though
-+  // a continuous stream of such messages are posted.  This method carefully
-+  // peeks a message while there is no chance for a kMsgHaveWork to be pending,
-+  // then resets the have_work_ flag (allowing a replacement kMsgHaveWork to
-+  // possibly be posted), and finally dispatches that peeked replacement.  Note
-+  // that the re-post of kMsgHaveWork may be asynchronous to this thread!!
-+
-+  bool have_message = false;
+ #include <algorithm>
+@@ -550,10 +551,18 @@ bool MessagePumpForUI::ProcessPumpReplacementMessage() {
+   state_->delegate->BeforeDoInternalWork();
+ 
    MSG msg;
 -  const bool have_message =
--      PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE) != FALSE;
+-      ::PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE) != FALSE;
++  bool have_message = false;
 +  // We should not process all window messages if we are in the context of an
 +  // OS modal loop, i.e. in the context of a windows API call like MessageBox.
 +  // This is to ensure that these messages are peeked out by the OS modal loop.

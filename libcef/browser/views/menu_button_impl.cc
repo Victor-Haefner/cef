@@ -12,19 +12,14 @@
 // static
 CefRefPtr<CefMenuButton> CefMenuButton::CreateMenuButton(
     CefRefPtr<CefMenuButtonDelegate> delegate,
-    const CefString& text,
-    bool with_frame,
-    bool with_menu_marker) {
-  return CefMenuButtonImpl::Create(delegate, text, with_frame,
-                                   with_menu_marker);
+    const CefString& text) {
+  return CefMenuButtonImpl::Create(delegate, text);
 }
 
 // static
 CefRefPtr<CefMenuButtonImpl> CefMenuButtonImpl::Create(
     CefRefPtr<CefMenuButtonDelegate> delegate,
-    const CefString& text,
-    bool with_frame,
-    bool with_menu_marker) {
+    const CefString& text) {
   CEF_REQUIRE_UIT_RETURN(nullptr);
   DCHECK(delegate);
   if (!delegate)
@@ -33,10 +28,6 @@ CefRefPtr<CefMenuButtonImpl> CefMenuButtonImpl::Create(
   menu_button->Initialize();
   if (!text.empty())
     menu_button->SetText(text);
-  if (with_frame) {
-    menu_button->root_view()->SetStyleDeprecated(views::Button::STYLE_BUTTON);
-  }
-  menu_button->root_view()->set_show_menu_marker(with_menu_marker);
   return menu_button;
 }
 

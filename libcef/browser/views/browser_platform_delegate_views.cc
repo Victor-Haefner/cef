@@ -52,18 +52,23 @@ class PopupWindowDelegate : public CefWindowDelegate {
 CefBrowserPlatformDelegateViews::CefBrowserPlatformDelegateViews(
     std::unique_ptr<CefBrowserPlatformDelegateNative> native_delegate,
     CefRefPtr<CefBrowserViewImpl> browser_view)
-    : native_delegate_(std::move(native_delegate)),
-      browser_view_(browser_view) {
+    : native_delegate_(std::move(native_delegate)) {
+  if (browser_view)
+    SetBrowserView(browser_view);
   native_delegate_->set_windowless_handler(this);
 }
 
-void CefBrowserPlatformDelegateViews::set_browser_view(
+void CefBrowserPlatformDelegateViews::SetBrowserView(
     CefRefPtr<CefBrowserViewImpl> browser_view) {
+  DCHECK(!browser_view_);
+  DCHECK(browser_view);
   browser_view_ = browser_view;
 }
 
 void CefBrowserPlatformDelegateViews::WebContentsCreated(
     content::WebContents* web_contents) {
+  CefBrowserPlatformDelegate::WebContentsCreated(web_contents);
+
   browser_view_->WebContentsCreated(web_contents);
 }
 
@@ -71,7 +76,8 @@ void CefBrowserPlatformDelegateViews::BrowserCreated(
     CefBrowserHostImpl* browser) {
   CefBrowserPlatformDelegate::BrowserCreated(browser);
 
-  browser_view_->BrowserCreated(browser);
+  native_delegate_->set_browser(browser);
+  browser_view_->BrowserCreated(browser, GetBoundsChangedCallback());
 }
 
 void CefBrowserPlatformDelegateViews::NotifyBrowserCreated() {
@@ -92,6 +98,7 @@ void CefBrowserPlatformDelegateViews::BrowserDestroyed(
     CefBrowserHostImpl* browser) {
   CefBrowserPlatformDelegate::BrowserDestroyed(browser);
 
+  native_delegate_->set_browser(nullptr);
   browser_view_->BrowserDestroyed(browser);
   browser_view_ = nullptr;
 }
@@ -143,7 +150,7 @@ void CefBrowserPlatformDelegateViews::PopupWebContentsCreated(
       CefBrowserViewImpl::CreateForPopup(settings, new_delegate);
 
   // Associate the PlatformDelegate with the new BrowserView.
-  new_platform_delegate_impl->set_browser_view(new_browser_view);
+  new_platform_delegate_impl->SetBrowserView(new_browser_view);
 }
 
 void CefBrowserPlatformDelegateViews::PopupBrowserCreated(
@@ -165,35 +172,50 @@ void CefBrowserPlatformDelegateViews::PopupBrowserCreated(
   }
 }
 
+bool CefBrowserPlatformDelegateViews::CanUseSharedTexture() const {
+  return native_delegate_->CanUseSharedTexture();
+}
+
+bool CefBrowserPlatformDelegateViews::CanUseExternalBeginFrame() const {
+  return native_delegate_->CanUseExternalBeginFrame();
+}
+
 SkColor CefBrowserPlatformDelegateViews::GetBackgroundColor() const {
   return native_delegate_->GetBackgroundColor();
 }
 
-void CefBrowserPlatformDelegateViews::SynchronizeVisualProperties() {
-  content::RenderViewHost* host = browser_->web_contents()->GetRenderViewHost();
-  if (host)
-    host->GetWidget()->SynchronizeVisualProperties();
+void CefBrowserPlatformDelegateViews::WasResized() {
+  native_delegate_->WasResized();
 }
 
-void CefBrowserPlatformDelegateViews::SendKeyEvent(
-    const content::NativeWebKeyboardEvent& event) {
-  content::RenderViewHost* host = browser_->web_contents()->GetRenderViewHost();
-  if (host)
-    host->GetWidget()->ForwardKeyboardEvent(event);
+void CefBrowserPlatformDelegateViews::SendKeyEvent(const CefKeyEvent& event) {
+  native_delegate_->SendKeyEvent(event);
 }
 
-void CefBrowserPlatformDelegateViews::SendMouseEvent(
-    const blink::WebMouseEvent& event) {
-  content::RenderViewHost* host = browser_->web_contents()->GetRenderViewHost();
-  if (host)
-    host->GetWidget()->ForwardMouseEvent(event);
+void CefBrowserPlatformDelegateViews::SendMouseClickEvent(
+    const CefMouseEvent& event,
+    CefBrowserHost::MouseButtonType type,
+    bool mouseUp,
+    int clickCount) {
+  native_delegate_->SendMouseClickEvent(event, type, mouseUp, clickCount);
+}
+
+void CefBrowserPlatformDelegateViews::SendMouseMoveEvent(
+    const CefMouseEvent& event,
+    bool mouseLeave) {
+  native_delegate_->SendMouseMoveEvent(event, mouseLeave);
 }
 
 void CefBrowserPlatformDelegateViews::SendMouseWheelEvent(
-    const blink::WebMouseWheelEvent& event) {
-  content::RenderViewHost* host = browser_->web_contents()->GetRenderViewHost();
-  if (host)
-    host->GetWidget()->ForwardWheelEvent(event);
+    const CefMouseEvent& event,
+    int deltaX,
+    int deltaY) {
+  native_delegate_->SendMouseWheelEvent(event, deltaX, deltaY);
+}
+
+void CefBrowserPlatformDelegateViews::SendTouchEvent(
+    const CefTouchEvent& event) {
+  native_delegate_->SendTouchEvent(event);
 }
 
 void CefBrowserPlatformDelegateViews::SendFocusEvent(bool setFocus) {
@@ -217,45 +239,10 @@ void CefBrowserPlatformDelegateViews::ViewText(const std::string& text) {
   native_delegate_->ViewText(text);
 }
 
-void CefBrowserPlatformDelegateViews::HandleKeyboardEvent(
+bool CefBrowserPlatformDelegateViews::HandleKeyboardEvent(
     const content::NativeWebKeyboardEvent& event) {
   // The BrowserView will handle accelerators.
-  browser_view_->HandleKeyboardEvent(event);
-}
-
-void CefBrowserPlatformDelegateViews::HandleExternalProtocol(const GURL& url) {
-  native_delegate_->HandleExternalProtocol(url);
-}
-
-void CefBrowserPlatformDelegateViews::TranslateKeyEvent(
-    content::NativeWebKeyboardEvent& result,
-    const CefKeyEvent& key_event) const {
-  native_delegate_->TranslateKeyEvent(result, key_event);
-}
-
-void CefBrowserPlatformDelegateViews::TranslateClickEvent(
-    blink::WebMouseEvent& result,
-    const CefMouseEvent& mouse_event,
-    CefBrowserHost::MouseButtonType type,
-    bool mouseUp,
-    int clickCount) const {
-  native_delegate_->TranslateClickEvent(result, mouse_event, type, mouseUp,
-                                        clickCount);
-}
-
-void CefBrowserPlatformDelegateViews::TranslateMoveEvent(
-    blink::WebMouseEvent& result,
-    const CefMouseEvent& mouse_event,
-    bool mouseLeave) const {
-  native_delegate_->TranslateMoveEvent(result, mouse_event, mouseLeave);
-}
-
-void CefBrowserPlatformDelegateViews::TranslateWheelEvent(
-    blink::WebMouseWheelEvent& result,
-    const CefMouseEvent& mouse_event,
-    int deltaX,
-    int deltaY) const {
-  native_delegate_->TranslateWheelEvent(result, mouse_event, deltaX, deltaY);
+  return browser_view_->HandleKeyboardEvent(event);
 }
 
 CefEventHandle CefBrowserPlatformDelegateViews::GetEventHandle(
@@ -284,6 +271,23 @@ bool CefBrowserPlatformDelegateViews::IsWindowless() const {
 
 bool CefBrowserPlatformDelegateViews::IsViewsHosted() const {
   return true;
+}
+
+gfx::Point CefBrowserPlatformDelegateViews::GetDialogPosition(
+    const gfx::Size& size) {
+  const gfx::Rect& bounds = browser_view_->root_view()->GetBoundsInScreen();
+
+  // Offset relative to the top-level content view.
+  gfx::Point offset = bounds.origin();
+  view_util::ConvertPointFromScreen(
+      browser_view_->root_view()->GetWidget()->GetRootView(), &offset, false);
+
+  return gfx::Point(offset.x() + (bounds.width() - size.width()) / 2,
+                    offset.y() + (bounds.height() - size.height()) / 2);
+}
+
+gfx::Size CefBrowserPlatformDelegateViews::GetMaximumDialogSize() {
+  return browser_view_->root_view()->GetBoundsInScreen().size();
 }
 
 CefWindowHandle CefBrowserPlatformDelegateViews::GetParentWindowHandle() const {

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,12 +9,14 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=81af536bfb8253e563e2a047adda6144f640b65f$
+// $hash=1aa70a0c640336bc3569f151bfba80d675b4c07e$
 //
 
 #include "libcef_dll/ctocpp/drag_handler_ctocpp.h"
 #include "libcef_dll/cpptoc/browser_cpptoc.h"
 #include "libcef_dll/cpptoc/drag_data_cpptoc.h"
+#include "libcef_dll/cpptoc/frame_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
@@ -22,6 +24,8 @@ NO_SANITIZE("cfi-icall")
 bool CefDragHandlerCToCpp::OnDragEnter(CefRefPtr<CefBrowser> browser,
                                        CefRefPtr<CefDragData> dragData,
                                        DragOperationsMask mask) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_drag_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_drag_enter))
     return false;
@@ -48,7 +52,10 @@ bool CefDragHandlerCToCpp::OnDragEnter(CefRefPtr<CefBrowser> browser,
 NO_SANITIZE("cfi-icall")
 void CefDragHandlerCToCpp::OnDraggableRegionsChanged(
     CefRefPtr<CefBrowser> browser,
+    CefRefPtr<CefFrame> frame,
     const std::vector<CefDraggableRegion>& regions) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_drag_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_draggable_regions_changed))
     return;
@@ -58,6 +65,10 @@ void CefDragHandlerCToCpp::OnDraggableRegionsChanged(
   // Verify param: browser; type: refptr_diff
   DCHECK(browser.get());
   if (!browser.get())
+    return;
+  // Verify param: frame; type: refptr_diff
+  DCHECK(frame.get());
+  if (!frame.get())
     return;
 
   // Translate param: regions; type: simple_vec_byref_const
@@ -75,7 +86,8 @@ void CefDragHandlerCToCpp::OnDraggableRegionsChanged(
 
   // Execute
   _struct->on_draggable_regions_changed(
-      _struct, CefBrowserCppToC::Wrap(browser), regionsCount, regionsList);
+      _struct, CefBrowserCppToC::Wrap(browser), CefFrameCppToC::Wrap(frame),
+      regionsCount, regionsList);
 
   // Restore param:regions; type: simple_vec_byref_const
   if (regionsList)
@@ -86,21 +98,19 @@ void CefDragHandlerCToCpp::OnDraggableRegionsChanged(
 
 CefDragHandlerCToCpp::CefDragHandlerCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefDragHandlerCToCpp::~CefDragHandlerCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_drag_handler_t*
 CefCToCppRefCounted<CefDragHandlerCToCpp, CefDragHandler, cef_drag_handler_t>::
     UnwrapDerived(CefWrapperType type, CefDragHandler* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefDragHandlerCToCpp,
-                                         CefDragHandler,
-                                         cef_drag_handler_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefDragHandlerCToCpp,

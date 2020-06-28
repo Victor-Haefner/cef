@@ -18,10 +18,11 @@ CefRefPtr<CefBrowserView> CefBrowserView::CreateBrowserView(
     CefRefPtr<CefClient> client,
     const CefString& url,
     const CefBrowserSettings& settings,
+    CefRefPtr<CefDictionaryValue> extra_info,
     CefRefPtr<CefRequestContext> request_context,
     CefRefPtr<CefBrowserViewDelegate> delegate) {
-  return CefBrowserViewImpl::Create(client, url, settings, request_context,
-                                    delegate);
+  return CefBrowserViewImpl::Create(client, url, settings, extra_info,
+                                    request_context, delegate);
 }
 
 // static
@@ -40,11 +41,12 @@ CefRefPtr<CefBrowserViewImpl> CefBrowserViewImpl::Create(
     CefRefPtr<CefClient> client,
     const CefString& url,
     const CefBrowserSettings& settings,
+    CefRefPtr<CefDictionaryValue> extra_info,
     CefRefPtr<CefRequestContext> request_context,
     CefRefPtr<CefBrowserViewDelegate> delegate) {
   CEF_REQUIRE_UIT_RETURN(nullptr);
   CefRefPtr<CefBrowserViewImpl> browser_view = new CefBrowserViewImpl(delegate);
-  browser_view->SetPendingBrowserCreateParams(client, url, settings,
+  browser_view->SetPendingBrowserCreateParams(client, url, settings, extra_info,
                                               request_context);
   browser_view->Initialize();
   browser_view->SetDefaults(settings);
@@ -68,8 +70,11 @@ void CefBrowserViewImpl::WebContentsCreated(
     root_view()->SetWebContents(web_contents);
 }
 
-void CefBrowserViewImpl::BrowserCreated(CefBrowserHostImpl* browser) {
+void CefBrowserViewImpl::BrowserCreated(
+    CefBrowserHostImpl* browser,
+    base::RepeatingClosure on_bounds_changed) {
   browser_ = browser;
+  on_bounds_changed_ = on_bounds_changed;
 }
 
 void CefBrowserViewImpl::BrowserDestroyed(CefBrowserHostImpl* browser) {
@@ -80,17 +85,17 @@ void CefBrowserViewImpl::BrowserDestroyed(CefBrowserHostImpl* browser) {
     root_view()->SetWebContents(nullptr);
 }
 
-void CefBrowserViewImpl::HandleKeyboardEvent(
+bool CefBrowserViewImpl::HandleKeyboardEvent(
     const content::NativeWebKeyboardEvent& event) {
   if (!root_view())
-    return;
+    return false;
 
   views::FocusManager* focus_manager = root_view()->GetFocusManager();
   if (!focus_manager)
-    return;
+    return false;
 
   if (HandleAccelerator(event, focus_manager))
-    return;
+    return true;
 
   // Give the CefWindowDelegate a chance to handle the event.
   CefRefPtr<CefWindow> window =
@@ -100,12 +105,13 @@ void CefBrowserViewImpl::HandleKeyboardEvent(
     CefKeyEvent cef_event;
     if (browser_util::GetCefKeyEvent(event, cef_event) &&
         window_impl->OnKeyEvent(cef_event)) {
-      return;
+      return true;
     }
   }
 
   // Proceed with default native handling.
-  unhandled_keyboard_event_handler_.HandleKeyboardEvent(event, focus_manager);
+  return unhandled_keyboard_event_handler_.HandleKeyboardEvent(event,
+                                                               focus_manager);
 }
 
 CefRefPtr<CefBrowser> CefBrowserViewImpl::GetBrowser() {
@@ -162,6 +168,11 @@ void CefBrowserViewImpl::OnBrowserViewAdded() {
   }
 }
 
+void CefBrowserViewImpl::OnBoundsChanged() {
+  if (!on_bounds_changed_.is_null())
+    on_bounds_changed_.Run();
+}
+
 CefBrowserViewImpl::CefBrowserViewImpl(
     CefRefPtr<CefBrowserViewDelegate> delegate)
     : ParentClass(delegate) {}
@@ -170,12 +181,14 @@ void CefBrowserViewImpl::SetPendingBrowserCreateParams(
     CefRefPtr<CefClient> client,
     const CefString& url,
     const CefBrowserSettings& settings,
+    CefRefPtr<CefDictionaryValue> extra_info,
     CefRefPtr<CefRequestContext> request_context) {
   DCHECK(!pending_browser_create_params_);
   pending_browser_create_params_.reset(new CefBrowserHostImpl::CreateParams());
   pending_browser_create_params_->client = client;
   pending_browser_create_params_->url = GURL(url.ToString());
   pending_browser_create_params_->settings = settings;
+  pending_browser_create_params_->extra_info = extra_info;
   pending_browser_create_params_->request_context = request_context;
 }
 
@@ -198,7 +211,7 @@ bool CefBrowserViewImpl::HandleAccelerator(
   // Previous calls to TranslateMessage can generate Char events as well as
   // RawKeyDown events, even if the latter triggered an accelerator.  In these
   // cases, we discard the Char events.
-  if (event.GetType() == blink::WebInputEvent::kChar &&
+  if (event.GetType() == blink::WebInputEvent::Type::kChar &&
       ignore_next_char_event_) {
     ignore_next_char_event_ = false;
     return true;
@@ -208,7 +221,7 @@ bool CefBrowserViewImpl::HandleAccelerator(
   // always generate a Char event.
   ignore_next_char_event_ = false;
 
-  if (event.GetType() == blink::WebInputEvent::kRawKeyDown) {
+  if (event.GetType() == blink::WebInputEvent::Type::kRawKeyDown) {
     ui::Accelerator accelerator =
         ui::GetAcceleratorFromNativeWebKeyboardEvent(event);
 

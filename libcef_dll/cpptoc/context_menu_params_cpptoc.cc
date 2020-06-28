@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,10 +9,11 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=ec42c43c526e519fabe15d915e6e31f6c5e91eaf$
+// $hash=b6e2bf6704ad9ca5dc40c6dd7674f575d0dc1e67$
 //
 
 #include "libcef_dll/cpptoc/context_menu_params_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 #include "libcef_dll/transfer_util.h"
 
 namespace {
@@ -21,6 +22,8 @@ namespace {
 
 int CEF_CALLBACK
 context_menu_params_get_xcoord(struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -36,6 +39,8 @@ context_menu_params_get_xcoord(struct _cef_context_menu_params_t* self) {
 
 int CEF_CALLBACK
 context_menu_params_get_ycoord(struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -51,6 +56,8 @@ context_menu_params_get_ycoord(struct _cef_context_menu_params_t* self) {
 
 cef_context_menu_type_flags_t CEF_CALLBACK
 context_menu_params_get_type_flags(struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -67,6 +74,8 @@ context_menu_params_get_type_flags(struct _cef_context_menu_params_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 context_menu_params_get_link_url(struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -82,6 +91,8 @@ context_menu_params_get_link_url(struct _cef_context_menu_params_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK context_menu_params_get_unfiltered_link_url(
     struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -98,6 +109,8 @@ cef_string_userfree_t CEF_CALLBACK context_menu_params_get_unfiltered_link_url(
 
 cef_string_userfree_t CEF_CALLBACK
 context_menu_params_get_source_url(struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -113,6 +126,8 @@ context_menu_params_get_source_url(struct _cef_context_menu_params_t* self) {
 
 int CEF_CALLBACK context_menu_params_has_image_contents(
     struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -128,6 +143,8 @@ int CEF_CALLBACK context_menu_params_has_image_contents(
 
 cef_string_userfree_t CEF_CALLBACK
 context_menu_params_get_title_text(struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -143,6 +160,8 @@ context_menu_params_get_title_text(struct _cef_context_menu_params_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 context_menu_params_get_page_url(struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -158,6 +177,8 @@ context_menu_params_get_page_url(struct _cef_context_menu_params_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 context_menu_params_get_frame_url(struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -173,6 +194,8 @@ context_menu_params_get_frame_url(struct _cef_context_menu_params_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 context_menu_params_get_frame_charset(struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -188,6 +211,8 @@ context_menu_params_get_frame_charset(struct _cef_context_menu_params_t* self) {
 
 cef_context_menu_media_type_t CEF_CALLBACK
 context_menu_params_get_media_type(struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -205,6 +230,8 @@ context_menu_params_get_media_type(struct _cef_context_menu_params_t* self) {
 cef_context_menu_media_state_flags_t CEF_CALLBACK
 context_menu_params_get_media_state_flags(
     struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -221,6 +248,8 @@ context_menu_params_get_media_state_flags(
 
 cef_string_userfree_t CEF_CALLBACK context_menu_params_get_selection_text(
     struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -236,6 +265,8 @@ cef_string_userfree_t CEF_CALLBACK context_menu_params_get_selection_text(
 
 cef_string_userfree_t CEF_CALLBACK context_menu_params_get_misspelled_word(
     struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -253,6 +284,8 @@ cef_string_userfree_t CEF_CALLBACK context_menu_params_get_misspelled_word(
 int CEF_CALLBACK context_menu_params_get_dictionary_suggestions(
     struct _cef_context_menu_params_t* self,
     cef_string_list_t suggestions) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -282,6 +315,8 @@ int CEF_CALLBACK context_menu_params_get_dictionary_suggestions(
 
 int CEF_CALLBACK
 context_menu_params_is_editable(struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -297,6 +332,8 @@ context_menu_params_is_editable(struct _cef_context_menu_params_t* self) {
 
 int CEF_CALLBACK context_menu_params_is_spell_check_enabled(
     struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -313,6 +350,8 @@ int CEF_CALLBACK context_menu_params_is_spell_check_enabled(
 cef_context_menu_edit_state_flags_t CEF_CALLBACK
 context_menu_params_get_edit_state_flags(
     struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -329,6 +368,8 @@ context_menu_params_get_edit_state_flags(
 
 int CEF_CALLBACK
 context_menu_params_is_custom_menu(struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -344,6 +385,8 @@ context_menu_params_is_custom_menu(struct _cef_context_menu_params_t* self) {
 
 int CEF_CALLBACK
 context_menu_params_is_pepper_menu(struct _cef_context_menu_params_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -389,6 +432,12 @@ CefContextMenuParamsCppToC::CefContextMenuParamsCppToC() {
   GetStruct()->is_pepper_menu = context_menu_params_is_pepper_menu;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefContextMenuParamsCppToC::~CefContextMenuParamsCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefContextMenuParams> CefCppToCRefCounted<
     CefContextMenuParamsCppToC,
@@ -396,16 +445,8 @@ CefRefPtr<CefContextMenuParams> CefCppToCRefCounted<
     cef_context_menu_params_t>::UnwrapDerived(CefWrapperType type,
                                               cef_context_menu_params_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefContextMenuParamsCppToC,
-                                         CefContextMenuParams,
-                                         cef_context_menu_params_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefContextMenuParamsCppToC,

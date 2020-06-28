@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=a0e352ab964b29c7b1aa22791ee38a81cd418a99$
+// $hash=4c83d1414180cb0e03443f76eb4a49472c532a86$
 //
 
 #include "libcef_dll/cpptoc/v8array_buffer_release_callback_cpptoc.h"
@@ -43,6 +43,11 @@ CefV8ArrayBufferReleaseCallbackCppToC::CefV8ArrayBufferReleaseCallbackCppToC() {
   GetStruct()->release_buffer = v8array_buffer_release_callback_release_buffer;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefV8ArrayBufferReleaseCallbackCppToC::
+    ~CefV8ArrayBufferReleaseCallbackCppToC() {}
+
 template <>
 CefRefPtr<CefV8ArrayBufferReleaseCallback>
 CefCppToCRefCounted<CefV8ArrayBufferReleaseCallbackCppToC,
@@ -51,16 +56,8 @@ CefCppToCRefCounted<CefV8ArrayBufferReleaseCallbackCppToC,
     UnwrapDerived(CefWrapperType type,
                   cef_v8array_buffer_release_callback_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<
-    CefV8ArrayBufferReleaseCallbackCppToC,
-    CefV8ArrayBufferReleaseCallback,
-    cef_v8array_buffer_release_callback_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=94c67478f5efb5fd42bdc56c76c0201f82b1c200$
+// $hash=1af599620e55743a48e67a53254ff6f3006e5842$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_COMMAND_LINE_CPPTOC_H_
@@ -31,6 +31,7 @@ class CefCommandLineCppToC : public CefCppToCRefCounted<CefCommandLineCppToC,
                                                         cef_command_line_t> {
  public:
   CefCommandLineCppToC();
+  virtual ~CefCommandLineCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_COMMAND_LINE_CPPTOC_H_

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=8c80c1d261206c468fdaccb6cf49422f142fcd6d$
+// $hash=de597fbd256308a25adcd6ac0d27b1293ce6a088$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_COMMAND_LINE_CTOCPP_H_
@@ -32,6 +32,7 @@ class CefCommandLineCToCpp : public CefCToCppRefCounted<CefCommandLineCToCpp,
                                                         cef_command_line_t> {
  public:
   CefCommandLineCToCpp();
+  virtual ~CefCommandLineCToCpp();
 
   // CefCommandLine methods.
   bool IsValid() OVERRIDE;

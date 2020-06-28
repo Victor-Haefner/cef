@@ -6,7 +6,6 @@
 #define CEF_LIBCEF_BROWSER_BROWSER_MAIN_H_
 #pragma once
 
-#include "libcef/browser/net/url_request_context_getter_impl.h"
 #include "libcef/browser/request_context_impl.h"
 
 #include "base/macros.h"
@@ -14,12 +13,6 @@
 #include "build/build_config.h"
 #include "components/prefs/pref_service.h"
 #include "content/public/browser/browser_main_parts.h"
-#include "net/url_request/url_request_context_getter.h"
-
-namespace base {
-class MessageLoop;
-class Thread;
-}  // namespace base
 
 namespace content {
 struct MainFunctionParams;
@@ -36,35 +29,30 @@ class WMState;
 }
 #endif
 
+#if defined(TOOLKIT_VIEWS)
+namespace views {
+class ViewsDelegate;
+#if defined(OS_MACOSX)
+class LayoutProvider;
+#endif
+}
+#endif  // defined(TOOLKIT_VIEWS)
+
 class CefDevToolsDelegate;
-class ChromeBrowserMainExtraParts;
 
 class CefBrowserMainParts : public content::BrowserMainParts {
  public:
   explicit CefBrowserMainParts(const content::MainFunctionParams& parameters);
   ~CefBrowserMainParts() override;
 
-  // Add additional ChromeBrowserMainExtraParts.
-  void AddParts(ChromeBrowserMainExtraParts* parts);
-
   int PreEarlyInitialization() override;
-  void PostEarlyInitialization() override;
   void ToolkitInitialized() override;
   void PreMainMessageLoopStart() override;
   void PostMainMessageLoopStart() override;
   int PreCreateThreads() override;
-  void ServiceManagerConnectionStarted(
-      content::ServiceManagerConnection* connection) override;
   void PreMainMessageLoopRun() override;
   void PostMainMessageLoopRun() override;
   void PostDestroyThreads() override;
-
-  // Additional stages for ChromeBrowserMainExtraParts. These stages are called
-  // in order from PreMainMessageLoopRun(). See implementation for details.
-  void PreProfileInit();
-  void PostProfileInit();
-  void PreBrowserStart();
-  void PostBrowserStart();
 
   CefRefPtr<CefRequestContextImpl> request_context() const {
     return global_request_context_;
@@ -89,7 +77,6 @@ class CefBrowserMainParts : public content::BrowserMainParts {
 
   CefRefPtr<CefRequestContextImpl> global_request_context_;
   CefDevToolsDelegate* devtools_delegate_;  // Deletes itself.
-  std::unique_ptr<base::MessageLoop> message_loop_;
 
   std::unique_ptr<extensions::ExtensionsClient> extensions_client_;
   std::unique_ptr<extensions::ExtensionsBrowserClient>
@@ -107,9 +94,12 @@ class CefBrowserMainParts : public content::BrowserMainParts {
   std::unique_ptr<wm::WMState> wm_state_;
 #endif
 
-  // Vector of additional ChromeBrowserMainExtraParts.
-  // Parts are deleted in the inverse order they are added.
-  std::vector<ChromeBrowserMainExtraParts*> chrome_extra_parts_;
+#if defined(TOOLKIT_VIEWS)
+  std::unique_ptr<views::ViewsDelegate> views_delegate_;
+#if defined(OS_MACOSX)
+  std::unique_ptr<views::LayoutProvider> layout_provider_;
+#endif
+#endif  // defined(TOOLKIT_VIEWS)
 
   DISALLOW_COPY_AND_ASSIGN(CefBrowserMainParts);
 };

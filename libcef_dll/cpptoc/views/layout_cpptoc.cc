@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,12 +9,13 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=2e0279f194dd77312917bfe92eb3bf25549a154e$
+// $hash=b690e5907fc196ab782442abcc218bf296537625$
 //
 
 #include "libcef_dll/cpptoc/views/layout_cpptoc.h"
 #include "libcef_dll/cpptoc/views/box_layout_cpptoc.h"
 #include "libcef_dll/cpptoc/views/fill_layout_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -22,6 +23,8 @@ namespace {
 
 cef_box_layout_t* CEF_CALLBACK
 layout_as_box_layout(struct _cef_layout_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -37,6 +40,8 @@ layout_as_box_layout(struct _cef_layout_t* self) {
 
 cef_fill_layout_t* CEF_CALLBACK
 layout_as_fill_layout(struct _cef_layout_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -51,6 +56,8 @@ layout_as_fill_layout(struct _cef_layout_t* self) {
 }
 
 int CEF_CALLBACK layout_is_valid(struct _cef_layout_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -74,6 +81,12 @@ CefLayoutCppToC::CefLayoutCppToC() {
   GetStruct()->is_valid = layout_is_valid;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefLayoutCppToC::~CefLayoutCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefLayout>
 CefCppToCRefCounted<CefLayoutCppToC, CefLayout, cef_layout_t>::UnwrapDerived(
@@ -86,15 +99,8 @@ CefCppToCRefCounted<CefLayoutCppToC, CefLayout, cef_layout_t>::UnwrapDerived(
     return CefFillLayoutCppToC::Unwrap(reinterpret_cast<cef_fill_layout_t*>(s));
   }
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefLayoutCppToC, CefLayout, cef_layout_t>::DebugObjCt
-        ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefLayoutCppToC, CefLayout, cef_layout_t>::

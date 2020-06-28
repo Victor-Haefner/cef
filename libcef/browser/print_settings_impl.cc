@@ -6,15 +6,17 @@
 
 #include "base/logging.h"
 
-CefPrintSettingsImpl::CefPrintSettingsImpl(printing::PrintSettings* value,
-                                           bool will_delete,
-                                           bool read_only)
-    : CefValueBase<CefPrintSettings, printing::PrintSettings>(
-          value,
-          NULL,
-          will_delete ? kOwnerWillDelete : kOwnerNoDelete,
-          read_only,
-          NULL) {}
+#include "printing/mojom/print.mojom.h"
+
+CefPrintSettingsImpl::CefPrintSettingsImpl(
+    std::unique_ptr<printing::PrintSettings> settings,
+    bool read_only)
+    : CefValueBase<CefPrintSettings, printing::PrintSettings>(settings.get(),
+                                                              nullptr,
+                                                              kOwnerNoDelete,
+                                                              read_only,
+                                                              nullptr),
+      settings_(std::move(settings)) {}
 
 bool CefPrintSettingsImpl::IsValid() {
   return !detached();
@@ -22,13 +24,6 @@ bool CefPrintSettingsImpl::IsValid() {
 
 bool CefPrintSettingsImpl::IsReadOnly() {
   return read_only();
-}
-
-CefRefPtr<CefPrintSettings> CefPrintSettingsImpl::Copy() {
-  CEF_VALUE_VERIFY_RETURN(false, NULL);
-  printing::PrintSettings* new_settings = new printing::PrintSettings;
-  *new_settings = const_value();
-  return new CefPrintSettingsImpl(new_settings, true, false);
 }
 
 void CefPrintSettingsImpl::SetOrientation(bool landscape) {
@@ -147,7 +142,8 @@ int CefPrintSettingsImpl::GetCopies() {
 
 void CefPrintSettingsImpl::SetDuplexMode(DuplexMode mode) {
   CEF_VALUE_VERIFY_RETURN_VOID(true);
-  mutable_value()->set_duplex_mode(static_cast<printing::DuplexMode>(mode));
+  mutable_value()->set_duplex_mode(
+      static_cast<printing::mojom::DuplexMode>(mode));
 }
 
 CefPrintSettings::DuplexMode CefPrintSettingsImpl::GetDuplexMode() {
@@ -155,9 +151,15 @@ CefPrintSettings::DuplexMode CefPrintSettingsImpl::GetDuplexMode() {
   return static_cast<DuplexMode>(const_value().duplex_mode());
 }
 
+std::unique_ptr<printing::PrintSettings> CefPrintSettingsImpl::TakeOwnership() {
+  Detach(nullptr);
+  return std::move(settings_);
+}
+
 // CefPrintSettings implementation.
 
 // static
 CefRefPtr<CefPrintSettings> CefPrintSettings::Create() {
-  return new CefPrintSettingsImpl(new printing::PrintSettings(), true, false);
+  return new CefPrintSettingsImpl(std::make_unique<printing::PrintSettings>(),
+                                  false);
 }

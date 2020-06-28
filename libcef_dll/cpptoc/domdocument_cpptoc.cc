@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,11 +9,12 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=be13fc7237b5a0bc4cbfe74ee0afd3893b93dc21$
+// $hash=312e73a1e276ba266640055115c6b8f78920fcbb$
 //
 
 #include "libcef_dll/cpptoc/domdocument_cpptoc.h"
 #include "libcef_dll/cpptoc/domnode_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
@@ -21,6 +22,8 @@ namespace {
 
 cef_dom_document_type_t CEF_CALLBACK
 domdocument_get_type(struct _cef_domdocument_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -36,6 +39,8 @@ domdocument_get_type(struct _cef_domdocument_t* self) {
 
 struct _cef_domnode_t* CEF_CALLBACK
 domdocument_get_document(struct _cef_domdocument_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -52,6 +57,8 @@ domdocument_get_document(struct _cef_domdocument_t* self) {
 
 struct _cef_domnode_t* CEF_CALLBACK
 domdocument_get_body(struct _cef_domdocument_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -67,6 +74,8 @@ domdocument_get_body(struct _cef_domdocument_t* self) {
 
 struct _cef_domnode_t* CEF_CALLBACK
 domdocument_get_head(struct _cef_domdocument_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -82,6 +91,8 @@ domdocument_get_head(struct _cef_domdocument_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 domdocument_get_title(struct _cef_domdocument_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -98,6 +109,8 @@ domdocument_get_title(struct _cef_domdocument_t* self) {
 struct _cef_domnode_t* CEF_CALLBACK
 domdocument_get_element_by_id(struct _cef_domdocument_t* self,
                               const cef_string_t* id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -118,6 +131,8 @@ domdocument_get_element_by_id(struct _cef_domdocument_t* self,
 
 struct _cef_domnode_t* CEF_CALLBACK
 domdocument_get_focused_node(struct _cef_domdocument_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -133,6 +148,8 @@ domdocument_get_focused_node(struct _cef_domdocument_t* self) {
 }
 
 int CEF_CALLBACK domdocument_has_selection(struct _cef_domdocument_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -148,6 +165,8 @@ int CEF_CALLBACK domdocument_has_selection(struct _cef_domdocument_t* self) {
 
 int CEF_CALLBACK
 domdocument_get_selection_start_offset(struct _cef_domdocument_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -163,6 +182,8 @@ domdocument_get_selection_start_offset(struct _cef_domdocument_t* self) {
 
 int CEF_CALLBACK
 domdocument_get_selection_end_offset(struct _cef_domdocument_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -178,6 +199,8 @@ domdocument_get_selection_end_offset(struct _cef_domdocument_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 domdocument_get_selection_as_markup(struct _cef_domdocument_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -193,6 +216,8 @@ domdocument_get_selection_as_markup(struct _cef_domdocument_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 domdocument_get_selection_as_text(struct _cef_domdocument_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -208,6 +233,8 @@ domdocument_get_selection_as_text(struct _cef_domdocument_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 domdocument_get_base_url(struct _cef_domdocument_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -224,6 +251,8 @@ domdocument_get_base_url(struct _cef_domdocument_t* self) {
 cef_string_userfree_t CEF_CALLBACK
 domdocument_get_complete_url(struct _cef_domdocument_t* self,
                              const cef_string_t* partialURL) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -264,21 +293,19 @@ CefDOMDocumentCppToC::CefDOMDocumentCppToC() {
   GetStruct()->get_complete_url = domdocument_get_complete_url;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefDOMDocumentCppToC::~CefDOMDocumentCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefDOMDocument>
 CefCppToCRefCounted<CefDOMDocumentCppToC, CefDOMDocument, cef_domdocument_t>::
     UnwrapDerived(CefWrapperType type, cef_domdocument_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefDOMDocumentCppToC,
-                                         CefDOMDocument,
-                                         cef_domdocument_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefDOMDocumentCppToC,

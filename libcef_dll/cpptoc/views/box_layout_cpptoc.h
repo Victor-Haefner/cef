@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=ee63e0fa109425bf8fd5fc6395e4f73d78b08111$
+// $hash=9e9add48dabc81d6b8eb58131db0018443f04dda$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_VIEWS_BOX_LAYOUT_CPPTOC_H_
@@ -33,6 +33,7 @@ class CefBoxLayoutCppToC : public CefCppToCRefCounted<CefBoxLayoutCppToC,
                                                       cef_box_layout_t> {
  public:
   CefBoxLayoutCppToC();
+  virtual ~CefBoxLayoutCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_VIEWS_BOX_LAYOUT_CPPTOC_H_

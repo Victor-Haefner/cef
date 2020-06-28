@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=248657b411053e330aa1d75c124fdbc107bb0067$
+// $hash=271072f761428ca4b308b0ee5418148f11126c27$
 //
 
 #include "libcef_dll/ctocpp/v8handler_ctocpp.h"
@@ -70,7 +70,7 @@ bool CefV8HandlerCToCpp::Execute(const CefString& name,
       retval = CefV8ValueCppToC::Unwrap(retvalStruct);
     }
   } else {
-    retval = NULL;
+    retval = nullptr;
   }
 
   // Return type: bool
@@ -81,20 +81,17 @@ bool CefV8HandlerCToCpp::Execute(const CefString& name,
 
 CefV8HandlerCToCpp::CefV8HandlerCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefV8HandlerCToCpp::~CefV8HandlerCToCpp() {}
+
 template <>
 cef_v8handler_t*
 CefCToCppRefCounted<CefV8HandlerCToCpp, CefV8Handler, cef_v8handler_t>::
     UnwrapDerived(CefWrapperType type, CefV8Handler* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCToCppRefCounted<CefV8HandlerCToCpp, CefV8Handler, cef_v8handler_t>::
-        DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefV8HandlerCToCpp,

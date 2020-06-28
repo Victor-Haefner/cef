@@ -15,7 +15,7 @@ BytesWriteHandler::BytesWriteHandler(size_t grow)
     : grow_(grow), datasize_(grow), offset_(0) {
   DCHECK_GT(grow, 0U);
   data_ = malloc(grow);
-  DCHECK(data_ != NULL);
+  DCHECK(data_ != nullptr);
 }
 
 BytesWriteHandler::~BytesWriteHandler() {
@@ -77,11 +77,11 @@ int BytesWriteHandler::Flush() {
 }
 
 size_t BytesWriteHandler::Grow(size_t size) {
-  base::AutoLock lock_scope(lock_);
+  lock_.AssertAcquired();
   size_t rv;
   size_t s = (size > grow_ ? size : grow_);
   void* tmp = realloc(data_, datasize_ + s);
-  DCHECK(tmp != NULL);
+  DCHECK(tmp != nullptr);
   if (tmp) {
     data_ = tmp;
     datasize_ += s;

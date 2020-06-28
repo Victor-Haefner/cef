@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=a180d6485b23b6796e2d866504d4259441e55b31$
+// $hash=eb6a2fc4970c9511728a65bb944720cc44c76568$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_X509CERT_PRINCIPAL_CTOCPP_H_
@@ -33,6 +33,7 @@ class CefX509CertPrincipalCToCpp
                                  cef_x509cert_principal_t> {
  public:
   CefX509CertPrincipalCToCpp();
+  virtual ~CefX509CertPrincipalCToCpp();
 
   // CefX509CertPrincipal methods.
   CefString GetDisplayName() OVERRIDE;

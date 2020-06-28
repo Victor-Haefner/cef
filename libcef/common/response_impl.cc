@@ -6,11 +6,13 @@
 
 #include <string>
 
+#include "libcef/common/net/http_header_utils.h"
+#include "libcef/common/net_service/net_service_util.h"
+
 #include "base/logging.h"
-#include "base/strings/stringprintf.h"
+#include "base/strings/string_util.h"
 #include "net/http/http_request_headers.h"
 #include "net/http/http_response_headers.h"
-#include "net/url_request/url_request.h"
 #include "third_party/blink/public/platform/web_http_header_visitor.h"
 #include "third_party/blink/public/platform/web_string.h"
 #include "third_party/blink/public/platform/web_url.h"
@@ -84,16 +86,51 @@ void CefResponseImpl::SetMimeType(const CefString& mimeType) {
   mime_type_ = mimeType;
 }
 
-CefString CefResponseImpl::GetHeader(const CefString& name) {
+CefString CefResponseImpl::GetCharset() {
+  base::AutoLock lock_scope(lock_);
+  return charset_;
+}
+
+void CefResponseImpl::SetCharset(const CefString& charset) {
+  base::AutoLock lock_scope(lock_);
+  CHECK_READONLY_RETURN_VOID();
+  charset_ = charset;
+}
+
+CefString CefResponseImpl::GetHeaderByName(const CefString& name) {
   base::AutoLock lock_scope(lock_);
 
-  CefString value;
+  std::string nameLower = name;
+  HttpHeaderUtils::MakeASCIILower(&nameLower);
 
-  HeaderMap::const_iterator it = header_map_.find(name);
+  auto it = HttpHeaderUtils::FindHeaderInMap(nameLower, header_map_);
   if (it != header_map_.end())
-    value = it->second;
+    return it->second;
 
-  return value;
+  return CefString();
+}
+
+void CefResponseImpl::SetHeaderByName(const CefString& name,
+                                      const CefString& value,
+                                      bool overwrite) {
+  base::AutoLock lock_scope(lock_);
+  CHECK_READONLY_RETURN_VOID();
+
+  std::string nameLower = name;
+  HttpHeaderUtils::MakeASCIILower(&nameLower);
+
+  // There may be multiple values, so remove any first.
+  for (auto it = header_map_.begin(); it != header_map_.end();) {
+    if (base::EqualsCaseInsensitiveASCII(it->first.ToString(), nameLower)) {
+      if (!overwrite)
+        return;
+      it = header_map_.erase(it);
+    } else {
+      ++it;
+    }
+  }
+
+  header_map_.insert(std::make_pair(name, value));
 }
 
 CefString CefResponseImpl::GetURL() {
@@ -118,54 +155,20 @@ void CefResponseImpl::SetHeaderMap(const HeaderMap& headerMap) {
   header_map_ = headerMap;
 }
 
-net::HttpResponseHeaders* CefResponseImpl::GetResponseHeaders() {
+scoped_refptr<net::HttpResponseHeaders> CefResponseImpl::GetResponseHeaders() {
   base::AutoLock lock_scope(lock_);
 
-  std::string response;
-  std::string status_text;
-  bool has_content_type_header = false;
+  std::string mime_type = mime_type_;
+  if (mime_type.empty())
+    mime_type = "text/html";
 
-  if (!status_text_.empty())
-    status_text = status_text_;
-  else
-    status_text = (status_code_ == 200) ? "OK" : "ERROR";
+  std::multimap<std::string, std::string> extra_headers;
+  for (const auto& pair : header_map_)
+    extra_headers.insert(std::make_pair(pair.first, pair.second));
 
-  base::SStringPrintf(&response, "HTTP/1.1 %d %s", status_code_,
-                      status_text.c_str());
-  if (header_map_.size() > 0) {
-    for (HeaderMap::const_iterator header = header_map_.begin();
-         header != header_map_.end(); ++header) {
-      const CefString& key = header->first;
-      const CefString& value = header->second;
-
-      if (!key.empty()) {
-        // Delimit with "\0" as required by net::HttpResponseHeaders.
-        std::string key_str(key);
-        std::string value_str(value);
-        base::StringAppendF(&response, "%c%s: %s", '\0', key_str.c_str(),
-                            value_str.c_str());
-
-        if (!has_content_type_header &&
-            key_str == net::HttpRequestHeaders::kContentType) {
-          has_content_type_header = true;
-        }
-      }
-    }
-  }
-
-  if (!has_content_type_header) {
-    std::string mime_type;
-    if (!mime_type_.empty())
-      mime_type = mime_type_;
-    else
-      mime_type = "text/html";
-
-    base::StringAppendF(&response, "%c%s: %s", '\0',
-                        net::HttpRequestHeaders::kContentType,
-                        mime_type.c_str());
-  }
-
-  return new net::HttpResponseHeaders(response);
+  return net_service::MakeResponseHeaders(
+      status_code_, status_text_, mime_type, charset_, -1, extra_headers,
+      true /* allow_existing_header_override */);
 }
 
 void CefResponseImpl::SetResponseHeaders(
@@ -183,11 +186,16 @@ void CefResponseImpl::SetResponseHeaders(
   status_code_ = headers.response_code();
   status_text_ = headers.GetStatusText();
 
-  std::string mime_type;
-  if (headers.GetMimeType(&mime_type))
-    mime_type_ = mime_type;
-  else
+  if (headers.IsRedirect(nullptr)) {
+    // Don't report Content-Type header values for redirects.
     mime_type_.clear();
+    charset_.clear();
+  } else {
+    std::string mime_type, charset;
+    headers.GetMimeTypeAndCharset(&mime_type, &charset);
+    mime_type_ = mime_type;
+    charset_ = charset;
+  }
 }
 
 void CefResponseImpl::Set(const blink::WebURLResponse& response) {
@@ -202,7 +210,7 @@ void CefResponseImpl::Set(const blink::WebURLResponse& response) {
   status_text_ = str.Utf16();
   str = response.MimeType();
   mime_type_ = str.Utf16();
-  str = response.Url().GetString();
+  str = response.CurrentRequestUrl().GetString();
   url_ = str.Utf16();
 
   class HeaderVisitor : public blink::WebHTTPHeaderVisitor {
@@ -219,15 +227,7 @@ void CefResponseImpl::Set(const blink::WebURLResponse& response) {
   };
 
   HeaderVisitor visitor(&header_map_);
-  response.VisitHTTPHeaderFields(&visitor);
-}
-
-void CefResponseImpl::Set(const net::URLRequest* request) {
-  DCHECK(request);
-
-  const net::HttpResponseHeaders* headers = request->response_headers();
-  if (headers)
-    SetResponseHeaders(*headers);
+  response.VisitHttpHeaderFields(&visitor);
 }
 
 void CefResponseImpl::SetReadOnly(bool read_only) {

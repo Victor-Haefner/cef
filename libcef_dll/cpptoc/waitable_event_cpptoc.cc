@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,16 +9,19 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=810cadf7f378fbcbc15f39cbfdb1b13fb470d613$
+// $hash=9251c1a72b2ece747624e43953dbd476e68a62a2$
 //
 
 #include "libcef_dll/cpptoc/waitable_event_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // GLOBAL FUNCTIONS - Body may be edited by hand.
 
 CEF_EXPORT cef_waitable_event_t* cef_waitable_event_create(
     int automatic_reset,
     int initially_signaled) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Execute
@@ -34,6 +37,8 @@ namespace {
 // MEMBER FUNCTIONS - Body may be edited by hand.
 
 void CEF_CALLBACK waitable_event_reset(struct _cef_waitable_event_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -45,6 +50,8 @@ void CEF_CALLBACK waitable_event_reset(struct _cef_waitable_event_t* self) {
 }
 
 void CEF_CALLBACK waitable_event_signal(struct _cef_waitable_event_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -57,6 +64,8 @@ void CEF_CALLBACK waitable_event_signal(struct _cef_waitable_event_t* self) {
 
 int CEF_CALLBACK
 waitable_event_is_signaled(struct _cef_waitable_event_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -71,6 +80,8 @@ waitable_event_is_signaled(struct _cef_waitable_event_t* self) {
 }
 
 void CEF_CALLBACK waitable_event_wait(struct _cef_waitable_event_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -83,6 +94,8 @@ void CEF_CALLBACK waitable_event_wait(struct _cef_waitable_event_t* self) {
 
 int CEF_CALLBACK waitable_event_timed_wait(struct _cef_waitable_event_t* self,
                                            int64 max_ms) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -108,6 +121,12 @@ CefWaitableEventCppToC::CefWaitableEventCppToC() {
   GetStruct()->timed_wait = waitable_event_timed_wait;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefWaitableEventCppToC::~CefWaitableEventCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefWaitableEvent> CefCppToCRefCounted<
     CefWaitableEventCppToC,
@@ -115,16 +134,8 @@ CefRefPtr<CefWaitableEvent> CefCppToCRefCounted<
     cef_waitable_event_t>::UnwrapDerived(CefWrapperType type,
                                          cef_waitable_event_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefWaitableEventCppToC,
-                                         CefWaitableEvent,
-                                         cef_waitable_event_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefWaitableEventCppToC,

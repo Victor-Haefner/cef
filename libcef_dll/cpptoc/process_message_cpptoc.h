@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=16db9de0724cb4001eb5ab5165c6e484be63790b$
+// $hash=593f843c0c82f66bba1e16943dd8a381ddbedd4f$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_PROCESS_MESSAGE_CPPTOC_H_
@@ -32,6 +32,7 @@ class CefProcessMessageCppToC
                                  cef_process_message_t> {
  public:
   CefProcessMessageCppToC();
+  virtual ~CefProcessMessageCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_PROCESS_MESSAGE_CPPTOC_H_

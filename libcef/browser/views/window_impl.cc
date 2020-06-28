@@ -14,13 +14,14 @@
 
 #include "ui/base/test/ui_controls.h"
 #include "ui/gfx/geometry/rect.h"
+#include "ui/views/controls/button/menu_button.h"
 #include "ui/views/controls/menu/menu_runner.h"
 
 #if defined(USE_AURA)
 #include "ui/aura/test/ui_controls_factory_aura.h"
 #include "ui/aura/window.h"
 #include "ui/base/test/ui_controls_aura.h"
-#if defined(OS_LINUX)
+#if defined(OS_LINUX) && defined(USE_X11)
 #include "ui/views/test/ui_controls_factory_desktop_aurax11.h"
 #endif
 #endif
@@ -38,11 +39,12 @@ void InitializeUITesting() {
     ui_controls::EnableUIControls();
 
 #if defined(USE_AURA)
-#if defined(OS_LINUX)
+#if defined(OS_LINUX) && defined(USE_X11)
     ui_controls::InstallUIControlsAura(
         views::test::CreateUIControlsDesktopAura());
 #else
-    ui_controls::InstallUIControlsAura(aura::test::CreateUIControlsAura(NULL));
+    ui_controls::InstallUIControlsAura(
+        aura::test::CreateUIControlsAura(nullptr));
 #endif
 #endif
 
@@ -177,14 +179,17 @@ void CefWindowImpl::BringToTop() {
 
 void CefWindowImpl::SetAlwaysOnTop(bool on_top) {
   CEF_REQUIRE_VALID_RETURN_VOID();
-  if (widget_ && on_top != widget_->IsAlwaysOnTop())
-    widget_->SetAlwaysOnTop(on_top);
+  if (widget_ && on_top != (widget_->GetZOrderLevel() ==
+                            ui::ZOrderLevel::kFloatingWindow)) {
+    widget_->SetZOrderLevel(on_top ? ui::ZOrderLevel::kFloatingWindow
+                                   : ui::ZOrderLevel::kNormal);
+  }
 }
 
 bool CefWindowImpl::IsAlwaysOnTop() {
   CEF_REQUIRE_VALID_RETURN(false);
   if (widget_)
-    return widget_->IsAlwaysOnTop();
+    return widget_->GetZOrderLevel() == ui::ZOrderLevel::kFloatingWindow;
   return false;
 }
 
@@ -436,7 +441,7 @@ void CefWindowImpl::ShowMenu(views::MenuButton* menu_button,
                             base::Bind(&CefWindowImpl::MenuClosed, this)));
 
   menu_runner_->RunMenuAt(
-      widget_, menu_button,
+      widget_, menu_button ? menu_button->button_controller() : nullptr,
       gfx::Rect(gfx::Point(screen_point.x, screen_point.y), gfx::Size()),
       static_cast<views::MenuAnchorPosition>(anchor_position),
       ui::MENU_SOURCE_NONE);

@@ -52,7 +52,7 @@ class AlarmsTestHandler : public ExtensionTestHandler {
     EXPECT_TRUE(extension_->IsSame(extension));
     EXPECT_FALSE(got_unloaded_);
     got_unloaded_.yes();
-    extension_ = NULL;
+    extension_ = nullptr;
 
     // Execute asynchronously so call stacks have a chance to unwind.
     // Will close the browser windows.
@@ -79,7 +79,7 @@ class AlarmsTestHandler : public ExtensionTestHandler {
     }
   }
 
-  // CefRequestHandler methods:
+  // CefResourceRequestHandler methods:
   CefRefPtr<CefResourceHandler> GetResourceHandler(
       CefRefPtr<CefBrowser> browser,
       CefRefPtr<CefFrame> frame,
@@ -124,7 +124,7 @@ class AlarmsTestHandler : public ExtensionTestHandler {
   }
 
   void OnDestroyTest() override {
-    extension_browser_ = NULL;
+    extension_browser_ = nullptr;
 
     EXPECT_TRUE(got_loaded_);
     EXPECT_TRUE(got_url_request_);
@@ -236,7 +236,7 @@ class CreateAlarmTestHandler : public AlarmsTestHandler {
 };
 }  // namespace
 
-ALARMS_TEST_GROUP_ALL(CreateAlarm, CreateAlarmTestHandler);
+ALARMS_TEST_GROUP_ALL(CreateAlarm, CreateAlarmTestHandler)
 
 namespace {
 
@@ -260,7 +260,7 @@ class GetAlarmTestHandler : public AlarmsTestHandler {
 };
 }  // namespace
 
-ALARMS_TEST_GROUP_MINIMAL(GetAlarm, GetAlarmTestHandler);
+ALARMS_TEST_GROUP_MINIMAL(GetAlarm, GetAlarmTestHandler)
 
 namespace {
 
@@ -286,7 +286,7 @@ class GetAllAlarmsTestHandler : public AlarmsTestHandler {
 };
 }  // namespace
 
-ALARMS_TEST_GROUP_MINIMAL(GetAllAlarms, GetAllAlarmsTestHandler);
+ALARMS_TEST_GROUP_MINIMAL(GetAllAlarms, GetAllAlarmsTestHandler)
 
 namespace {
 
@@ -311,7 +311,7 @@ class ClearAlarmTestHandler : public AlarmsTestHandler {
 };
 }  // namespace
 
-ALARMS_TEST_GROUP_MINIMAL(ClearAlarm, ClearAlarmTestHandler);
+ALARMS_TEST_GROUP_MINIMAL(ClearAlarm, ClearAlarmTestHandler)
 
 namespace {
 
@@ -337,4 +337,4 @@ class ClearAllAlarmsTestHandler : public AlarmsTestHandler {
 };
 }  // namespace
 
-ALARMS_TEST_GROUP_MINIMAL(ClearAllAlarms, ClearAllAlarmsTestHandler);
+ALARMS_TEST_GROUP_MINIMAL(ClearAllAlarms, ClearAllAlarmsTestHandler)

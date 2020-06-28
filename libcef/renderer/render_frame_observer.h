@@ -7,10 +7,14 @@
 
 #include "content/public/renderer/render_frame_observer.h"
 #include "services/service_manager/public/cpp/binder_registry.h"
+#include "third_party/blink/public/common/associated_interfaces/associated_interface_registry.h"
 
 namespace content {
 class RenderFrame;
-}
+class RenderView;
+}  // namespace content
+
+class CefFrameImpl;
 
 class CefRenderFrameObserver : public content::RenderFrameObserver {
  public:
@@ -21,23 +25,37 @@ class CefRenderFrameObserver : public content::RenderFrameObserver {
   void OnInterfaceRequestForFrame(
       const std::string& interface_name,
       mojo::ScopedMessagePipeHandle* interface_pipe) override;
-  void DidStartProvisionalLoad(
-      blink::WebDocumentLoader* document_loader) override;
+  bool OnAssociatedInterfaceRequestForFrame(
+      const std::string& interface_name,
+      mojo::ScopedInterfaceEndpointHandle* handle) override;
+  void DidCommitProvisionalLoad(bool is_same_document_navigation,
+                                ui::PageTransition transition) override;
+  void DidFailProvisionalLoad() override;
   void DidFinishLoad() override;
   void FrameDetached() override;
-  void FrameFocused() override;
-  void FocusedNodeChanged(const blink::WebNode& node) override;
+  void FocusedElementChanged(const blink::WebElement& element) override;
   void DraggableRegionsChanged() override;
   void DidCreateScriptContext(v8::Handle<v8::Context> context,
                               int world_id) override;
   void WillReleaseScriptContext(v8::Handle<v8::Context> context,
                                 int world_id) override;
   void OnDestruct() override;
+  bool OnMessageReceived(const IPC::Message& message) override;
 
   service_manager::BinderRegistry* registry() { return &registry_; }
+  blink::AssociatedInterfaceRegistry* associated_interfaces() {
+    return &associated_interfaces_;
+  }
+
+  void AttachFrame(CefFrameImpl* frame);
 
  private:
+  void OnLoadStart();
+  void OnLoadError();
+
   service_manager::BinderRegistry registry_;
+  blink::AssociatedInterfaceRegistry associated_interfaces_;
+  CefFrameImpl* frame_ = nullptr;
 
   DISALLOW_COPY_AND_ASSIGN(CefRenderFrameObserver);
 };

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=1bc7b7dd592df33e6e5b7a3beb85e465d5e9e5a7$
+// $hash=37559903bacc38b0c955e1471f0d0dbeb79b11a8$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_RENDER_PROCESS_HANDLER_CTOCPP_H_
@@ -32,11 +32,13 @@ class CefRenderProcessHandlerCToCpp
                                  cef_render_process_handler_t> {
  public:
   CefRenderProcessHandlerCToCpp();
+  virtual ~CefRenderProcessHandlerCToCpp();
 
   // CefRenderProcessHandler methods.
   void OnRenderThreadCreated(CefRefPtr<CefListValue> extra_info) override;
   void OnWebKitInitialized() override;
-  void OnBrowserCreated(CefRefPtr<CefBrowser> browser) override;
+  void OnBrowserCreated(CefRefPtr<CefBrowser> browser,
+                        CefRefPtr<CefDictionaryValue> extra_info) override;
   void OnBrowserDestroyed(CefRefPtr<CefBrowser> browser) override;
   CefRefPtr<CefLoadHandler> GetLoadHandler() override;
   void OnContextCreated(CefRefPtr<CefBrowser> browser,
@@ -54,6 +56,7 @@ class CefRenderProcessHandlerCToCpp
                             CefRefPtr<CefFrame> frame,
                             CefRefPtr<CefDOMNode> node) override;
   bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
+                                CefRefPtr<CefFrame> frame,
                                 CefProcessId source_process,
                                 CefRefPtr<CefProcessMessage> message) override;
 };

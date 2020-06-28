@@ -70,7 +70,7 @@ class BackgroundLoadUnloadTestHandler : public ExtensionTestHandler {
     if (request_context() && !request_context_same_loader())
       VerifyExtensionInContext(extension, request_context(), false, false);
 
-    extension_ = NULL;
+    extension_ = nullptr;
 
     // Execute asynchronously so call stacks have a chance to unwind.
     // Will close the browser windows.
@@ -129,7 +129,7 @@ class BackgroundLoadUnloadTestHandler : public ExtensionTestHandler {
     }
   }
 
-  // CefRequestHandler methods:
+  // CefResourceRequestHandler methods:
   CefRefPtr<CefResourceHandler> GetResourceHandler(
       CefRefPtr<CefBrowser> browser,
       CefRefPtr<CefFrame> frame,
@@ -207,7 +207,7 @@ class BackgroundLoadUnloadTestHandler : public ExtensionTestHandler {
   }
 
   void OnDestroyTest() override {
-    extension_browser_ = NULL;
+    extension_browser_ = nullptr;
 
     EXPECT_TRUE(got_loaded_);
     EXPECT_TRUE(got_background_page_url_request_);
@@ -262,7 +262,7 @@ class BackgroundLoadUnloadTestHandler : public ExtensionTestHandler {
 
 }  // namespace
 
-EXTENSION_TEST_GROUP_ALL(BackgroundLoadUnload, BackgroundLoadUnloadTestHandler);
+EXTENSION_TEST_GROUP_ALL(BackgroundLoadUnload, BackgroundLoadUnloadTestHandler)
 
 namespace {
 
@@ -280,7 +280,7 @@ class BackgroundLoadNoUnloadTestHandler
     // Release everything that references the request context. This should
     // trigger unload of the extension.
     CloseBrowser(extension_browser_, false);
-    extension_browser_ = NULL;
+    extension_browser_ = nullptr;
     ReleaseRequestContexts();
   }
 };
@@ -288,4 +288,4 @@ class BackgroundLoadNoUnloadTestHandler
 }  // namespace
 
 EXTENSION_TEST_GROUP_MINIMAL_CUSTOM(BackgroundLoadNoUnload,
-                                    BackgroundLoadNoUnloadTestHandler);
+                                    BackgroundLoadNoUnloadTestHandler)

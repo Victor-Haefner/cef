@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,15 +9,18 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=ddcf76c62b6cb333671a122bb3993d3d7d5ab54e$
+// $hash=5477e0f2a6661422b3e2d719e97f8e76ce0a631c$
 //
 
 #include "libcef_dll/cpptoc/image_cpptoc.h"
 #include "libcef_dll/cpptoc/binary_value_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // GLOBAL FUNCTIONS - Body may be edited by hand.
 
 CEF_EXPORT cef_image_t* cef_image_create() {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Execute
@@ -32,6 +35,8 @@ namespace {
 // MEMBER FUNCTIONS - Body may be edited by hand.
 
 int CEF_CALLBACK image_is_empty(struct _cef_image_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -47,6 +52,8 @@ int CEF_CALLBACK image_is_empty(struct _cef_image_t* self) {
 
 int CEF_CALLBACK image_is_same(struct _cef_image_t* self,
                                struct _cef_image_t* that) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -73,6 +80,8 @@ int CEF_CALLBACK image_add_bitmap(struct _cef_image_t* self,
                                   cef_alpha_type_t alpha_type,
                                   const void* pixel_data,
                                   size_t pixel_data_size) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -96,6 +105,8 @@ int CEF_CALLBACK image_add_png(struct _cef_image_t* self,
                                float scale_factor,
                                const void* png_data,
                                size_t png_data_size) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -118,6 +129,8 @@ int CEF_CALLBACK image_add_jpeg(struct _cef_image_t* self,
                                 float scale_factor,
                                 const void* jpeg_data,
                                 size_t jpeg_data_size) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -137,6 +150,8 @@ int CEF_CALLBACK image_add_jpeg(struct _cef_image_t* self,
 }
 
 size_t CEF_CALLBACK image_get_width(struct _cef_image_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -151,6 +166,8 @@ size_t CEF_CALLBACK image_get_width(struct _cef_image_t* self) {
 }
 
 size_t CEF_CALLBACK image_get_height(struct _cef_image_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -166,6 +183,8 @@ size_t CEF_CALLBACK image_get_height(struct _cef_image_t* self) {
 
 int CEF_CALLBACK image_has_representation(struct _cef_image_t* self,
                                           float scale_factor) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -181,6 +200,8 @@ int CEF_CALLBACK image_has_representation(struct _cef_image_t* self,
 
 int CEF_CALLBACK image_remove_representation(struct _cef_image_t* self,
                                              float scale_factor) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -199,6 +220,8 @@ int CEF_CALLBACK image_get_representation_info(struct _cef_image_t* self,
                                                float* actual_scale_factor,
                                                int* pixel_width,
                                                int* pixel_height) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -249,6 +272,8 @@ image_get_as_bitmap(struct _cef_image_t* self,
                     cef_alpha_type_t alpha_type,
                     int* pixel_width,
                     int* pixel_height) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -289,6 +314,8 @@ image_get_as_png(struct _cef_image_t* self,
                  int with_transparency,
                  int* pixel_width,
                  int* pixel_height) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -330,6 +357,8 @@ image_get_as_jpeg(struct _cef_image_t* self,
                   int quality,
                   int* pixel_width,
                   int* pixel_height) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -384,21 +413,20 @@ CefImageCppToC::CefImageCppToC() {
   GetStruct()->get_as_jpeg = image_get_as_jpeg;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefImageCppToC::~CefImageCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefImage>
 CefCppToCRefCounted<CefImageCppToC, CefImage, cef_image_t>::UnwrapDerived(
     CefWrapperType type,
     cef_image_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefImageCppToC, CefImage, cef_image_t>::DebugObjCt
-        ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=a1187f55fe1b525d12e71327ba48445d648083d0$
+// $hash=5d865c197ea6caabc9c68b40e65d211499e462c5$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_APP_CTOCPP_H_
@@ -30,6 +30,7 @@ class CefAppCToCpp
     : public CefCToCppRefCounted<CefAppCToCpp, CefApp, cef_app_t> {
  public:
   CefAppCToCpp();
+  virtual ~CefAppCToCpp();
 
   // CefApp methods.
   void OnBeforeCommandLineProcessing(

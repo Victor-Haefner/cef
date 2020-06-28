@@ -3,8 +3,13 @@
 // can be found in the LICENSE file.
 
 #include "libcef/common/net/net_resource_provider.h"
-#include "libcef/common/content_client.h"
 
-base::StringPiece NetResourceProvider(int key) {
-  return CefContentClient::Get()->GetDataResource(key, ui::SCALE_FACTOR_NONE);
+#include "chrome/common/net/net_resource_provider.h"
+
+scoped_refptr<base::RefCountedMemory> NetResourceProvider(int key) {
+  // Chrome performs substitution of localized strings for directory listings.
+  scoped_refptr<base::RefCountedMemory> value = ChromeNetResourceProvider(key);
+  if (!value)
+    LOG(ERROR) << "No data resource available for id " << key;
+  return value;
 }

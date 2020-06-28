@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=51da93de534bc53bb94688f118290355623205ce$
+// $hash=b53a2be3ea825d25ee3071adc3084491649d12df$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_WEB_PLUGIN_INFO_VISITOR_CTOCPP_H_
@@ -34,6 +34,7 @@ class CefWebPluginInfoVisitorCToCpp
                                  cef_web_plugin_info_visitor_t> {
  public:
   CefWebPluginInfoVisitorCToCpp();
+  virtual ~CefWebPluginInfoVisitorCToCpp();
 
   // CefWebPluginInfoVisitor methods.
   bool Visit(CefRefPtr<CefWebPluginInfo> info, int count, int total) override;

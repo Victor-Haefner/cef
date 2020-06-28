@@ -27,6 +27,8 @@
   # Files in the chromium/src directory that should be evaluated for changes.
   # Similar changes may need to be applied to the CEF source code.
   'files': [
+    'chrome/app/chrome_*_manifest.*',
+    'chrome/app/chrome_*_manifests.*',
     'chrome/browser/browser_process.h',
     'chrome/browser/extensions/api/tabs/tabs_api.*',
     'chrome/browser/extensions/chrome_component_extension_resource_manager.*',
@@ -55,19 +57,12 @@
     'content/shell/renderer/shell_*',
     'content/shell/utility/shell_*',
     'extensions/shell/*',
+    'net/base/features.cc',
     'net/cookies/cookie_store.h',
+    'services/network/public/cpp/features.cc',
+    'ui/base/ui_base_features.cc',
   ],
   # Patterns that should not be found in the chromium/src directory after
   # applying patch files.
-  'patterns': [
-    {
-      # New instances of this static_cast are added to the Chromium sources with
-      # some regularity. If unfixed they will result in runtime crashes.
-      'pattern': 'static_cast<StoragePartitionImpl\*>(',
-      'exclude_matches': '^(.+?)test(.+?):',
-      'message': 'New instances in non-test files should be converted to ' +\
-                 'call StoragePartition methods.' +\
-                 '\nSee storage_partition_1973.patch.',
-    },
-  ],
+  'patterns': [],
 }

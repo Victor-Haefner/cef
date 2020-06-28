@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=5a8118d1095e7bd59478d85d9fa3dce72ff43c74$
+// $hash=bc37eb2fa694426b48707fdbfc216aadd21c4d6d$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_REGISTER_CDM_CALLBACK_CTOCPP_H_
@@ -34,6 +34,7 @@ class CefRegisterCdmCallbackCToCpp
                                  cef_register_cdm_callback_t> {
  public:
   CefRegisterCdmCallbackCToCpp();
+  virtual ~CefRegisterCdmCallbackCToCpp();
 
   // CefRegisterCdmCallback methods.
   void OnCdmRegistrationComplete(cef_cdm_registration_error_t result,

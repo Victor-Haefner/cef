@@ -126,9 +126,10 @@ class Handler : public CefMessageRouterBrowserSide::Handler {
       const RequestClient::Callback& request_callback =
           base::Bind(&Handler::OnRequestComplete, base::Unretained(this));
 
-      // Create and start the new CefURLRequest.
-      urlrequest_ = CefURLRequest::Create(
-          cef_request, new RequestClient(request_callback), NULL);
+      // Create and start a new CefURLRequest associated with the frame, so
+      // that it shares authentication with ClientHandler::GetAuthCredentials.
+      urlrequest_ = frame->CreateURLRequest(
+          cef_request, new RequestClient(request_callback));
 
       return true;
     }
@@ -146,13 +147,13 @@ class Handler : public CefMessageRouterBrowserSide::Handler {
       static_cast<RequestClient*>(urlrequest_->GetClient().get())->Detach();
 
       urlrequest_->Cancel();
-      urlrequest_ = NULL;
+      urlrequest_ = nullptr;
     }
 
     if (callback_.get()) {
       // Must always execute |callback_| before deleting it.
       callback_->Failure(ERR_ABORTED, test_runner::GetErrorString(ERR_ABORTED));
-      callback_ = NULL;
+      callback_ = nullptr;
     }
   }
 
@@ -165,8 +166,8 @@ class Handler : public CefMessageRouterBrowserSide::Handler {
     else
       callback_->Failure(error_code, test_runner::GetErrorString(error_code));
 
-    callback_ = NULL;
-    urlrequest_ = NULL;
+    callback_ = nullptr;
+    urlrequest_ = nullptr;
   }
 
   CefRefPtr<Callback> callback_;

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=a14c68e8a13c5461c962cde691d72701480b5183$
+// $hash=b94f64a13280f6f469c408f2348ed59d906bcd12$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_VIEWS_BUTTON_CPPTOC_H_
@@ -32,6 +32,7 @@ class CefButtonCppToC
     : public CefCppToCRefCounted<CefButtonCppToC, CefButton, cef_button_t> {
  public:
   CefButtonCppToC();
+  virtual ~CefButtonCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_VIEWS_BUTTON_CPPTOC_H_

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=bf9540b2bda9f7cae8cd39d002155550165ad94c$
+// $hash=c833c2d3e1fe4bcae98906f85e6f5751c17c267a$
 //
 
 #include "libcef_dll/cpptoc/test/translator_test_scoped_library_child_child_cpptoc.h"
@@ -156,6 +156,11 @@ CefTranslatorTestScopedLibraryChildChildCppToC::
       translator_test_scoped_library_child_child_set_value;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefTranslatorTestScopedLibraryChildChildCppToC::
+    ~CefTranslatorTestScopedLibraryChildChildCppToC() {}
+
 template <>
 CefOwnPtr<CefTranslatorTestScopedLibraryChildChild>
 CefCppToCScoped<CefTranslatorTestScopedLibraryChildChildCppToC,
@@ -175,17 +180,8 @@ CefCppToCScoped<CefTranslatorTestScopedLibraryChildChildCppToC,
     UnwrapDerivedRaw(CefWrapperType type,
                      cef_translator_test_scoped_library_child_child_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCScoped<
-    CefTranslatorTestScopedLibraryChildChildCppToC,
-    CefTranslatorTestScopedLibraryChildChild,
-    cef_translator_test_scoped_library_child_child_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCScoped<

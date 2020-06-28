@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=e1d5c05b971c108cff68c6f991a1a3e73fc486e7$
+// $hash=2163444626efca350f6377da7fbce6e2d2291ca4$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_LIFE_SPAN_HANDLER_CTOCPP_H_
@@ -34,6 +34,7 @@ class CefLifeSpanHandlerCToCpp
                                  cef_life_span_handler_t> {
  public:
   CefLifeSpanHandlerCToCpp();
+  virtual ~CefLifeSpanHandlerCToCpp();
 
   // CefLifeSpanHandler methods.
   bool OnBeforePopup(CefRefPtr<CefBrowser> browser,
@@ -46,6 +47,7 @@ class CefLifeSpanHandlerCToCpp
                      CefWindowInfo& windowInfo,
                      CefRefPtr<CefClient>& client,
                      CefBrowserSettings& settings,
+                     CefRefPtr<CefDictionaryValue>& extra_info,
                      bool* no_javascript_access) override;
   void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
   bool DoClose(CefRefPtr<CefBrowser> browser) override;

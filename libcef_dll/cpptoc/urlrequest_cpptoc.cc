@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=07e19d965f0eaea30c4fe94f76fbb4571568b8b3$
+// $hash=81e91e1d45ee86a325f375002d82241a381fde91$
 //
 
 #include "libcef_dll/cpptoc/urlrequest_cpptoc.h"
@@ -17,6 +17,7 @@
 #include "libcef_dll/cpptoc/request_cpptoc.h"
 #include "libcef_dll/cpptoc/response_cpptoc.h"
 #include "libcef_dll/ctocpp/urlrequest_client_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // GLOBAL FUNCTIONS - Body may be edited by hand.
 
@@ -24,6 +25,8 @@ CEF_EXPORT cef_urlrequest_t* cef_urlrequest_create(
     cef_request_t* request,
     struct _cef_urlrequest_client_t* client,
     cef_request_context_t* request_context) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Verify param: request; type: refptr_same
@@ -52,6 +55,8 @@ namespace {
 
 cef_request_t* CEF_CALLBACK
 urlrequest_get_request(struct _cef_urlrequest_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -67,6 +72,8 @@ urlrequest_get_request(struct _cef_urlrequest_t* self) {
 
 struct _cef_urlrequest_client_t* CEF_CALLBACK
 urlrequest_get_client(struct _cef_urlrequest_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -83,6 +90,8 @@ urlrequest_get_client(struct _cef_urlrequest_t* self) {
 
 cef_urlrequest_status_t CEF_CALLBACK
 urlrequest_get_request_status(struct _cef_urlrequest_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -99,6 +108,8 @@ urlrequest_get_request_status(struct _cef_urlrequest_t* self) {
 
 cef_errorcode_t CEF_CALLBACK
 urlrequest_get_request_error(struct _cef_urlrequest_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -114,6 +125,8 @@ urlrequest_get_request_error(struct _cef_urlrequest_t* self) {
 
 cef_response_t* CEF_CALLBACK
 urlrequest_get_response(struct _cef_urlrequest_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -130,6 +143,8 @@ urlrequest_get_response(struct _cef_urlrequest_t* self) {
 
 int CEF_CALLBACK
 urlrequest_response_was_cached(struct _cef_urlrequest_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -144,6 +159,8 @@ urlrequest_response_was_cached(struct _cef_urlrequest_t* self) {
 }
 
 void CEF_CALLBACK urlrequest_cancel(struct _cef_urlrequest_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -168,20 +185,19 @@ CefURLRequestCppToC::CefURLRequestCppToC() {
   GetStruct()->cancel = urlrequest_cancel;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefURLRequestCppToC::~CefURLRequestCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefURLRequest>
 CefCppToCRefCounted<CefURLRequestCppToC, CefURLRequest, cef_urlrequest_t>::
     UnwrapDerived(CefWrapperType type, cef_urlrequest_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefURLRequestCppToC, CefURLRequest, cef_urlrequest_t>::
-        DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefURLRequestCppToC,

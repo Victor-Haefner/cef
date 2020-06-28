@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=0f3d0ac97eddc889834f9d5ac12fe219598048be$
+// $hash=5945bc681b8f5e31bebe8a22d6f870ed714f0446$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_VIEWS_TEXTFIELD_DELEGATE_CTOCPP_H_
@@ -34,6 +34,7 @@ class CefTextfieldDelegateCToCpp
                                  cef_textfield_delegate_t> {
  public:
   CefTextfieldDelegateCToCpp();
+  virtual ~CefTextfieldDelegateCToCpp();
 
   // CefTextfieldDelegate methods.
   bool OnKeyEvent(CefRefPtr<CefTextfield> textfield,

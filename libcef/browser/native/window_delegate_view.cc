@@ -12,8 +12,14 @@
 #include "ui/views/layout/fill_layout.h"
 #include "ui/views/widget/widget.h"
 
-CefWindowDelegateView::CefWindowDelegateView(SkColor background_color)
-    : background_color_(background_color), web_view_(NULL) {}
+CefWindowDelegateView::CefWindowDelegateView(
+    SkColor background_color,
+    bool always_on_top,
+    base::RepeatingClosure on_bounds_changed)
+    : background_color_(background_color),
+      web_view_(nullptr),
+      always_on_top_(always_on_top),
+      on_bounds_changed_(on_bounds_changed) {}
 
 void CefWindowDelegateView::Init(gfx::AcceleratedWidget parent_widget,
                                  content::WebContents* web_contents,
@@ -37,15 +43,18 @@ void CefWindowDelegateView::Init(gfx::AcceleratedWidget parent_widget,
   // Set the WS_VISIBLE flag.
   params.type = views::Widget::InitParams::TYPE_CONTROL;
   // Don't set the WS_EX_COMPOSITED flag.
-  params.opacity = views::Widget::InitParams::OPAQUE_WINDOW;
+  params.opacity = views::Widget::InitParams::WindowOpacity::kOpaque;
   // Tell Aura not to draw the window frame on resize.
   params.remove_standard_frame = true;
   // Cause WidgetDelegate::CanActivate to return true. See comments in
   // CefBrowserHostImpl::PlatformSetFocus.
   params.activatable = views::Widget::InitParams::ACTIVATABLE_YES;
 
+  params.z_order = always_on_top_ ? ui::ZOrderLevel::kFloatingWindow
+                                  : ui::ZOrderLevel::kNormal;
+
   // Results in a call to InitContent().
-  widget->Init(params);
+  widget->Init(std::move(params));
 
   // |widget| should now be associated with |this|.
   DCHECK_EQ(widget, GetWidget());
@@ -62,7 +71,13 @@ void CefWindowDelegateView::InitContent() {
 }
 
 void CefWindowDelegateView::ViewHierarchyChanged(
-    const ViewHierarchyChangedDetails& details) {
+    const views::ViewHierarchyChangedDetails& details) {
   if (details.is_add && details.child == this)
     InitContent();
+}
+
+void CefWindowDelegateView::OnBoundsChanged(const gfx::Rect& previous_bounds) {
+  views::WidgetDelegateView::OnBoundsChanged(previous_bounds);
+  if (!on_bounds_changed_.is_null())
+    on_bounds_changed_.Run();
 }

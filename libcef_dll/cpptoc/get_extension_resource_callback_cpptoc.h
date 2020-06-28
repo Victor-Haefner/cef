@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=40e9d2ce0f99e3ead6341e2ecf029756cd99de7f$
+// $hash=c17b85008c84465dd7c687148dd37b540bb3f9e5$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_GET_EXTENSION_RESOURCE_CALLBACK_CPPTOC_H_
@@ -34,6 +34,7 @@ class CefGetExtensionResourceCallbackCppToC
                                  cef_get_extension_resource_callback_t> {
  public:
   CefGetExtensionResourceCallbackCppToC();
+  virtual ~CefGetExtensionResourceCallbackCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_GET_EXTENSION_RESOURCE_CALLBACK_CPPTOC_H_

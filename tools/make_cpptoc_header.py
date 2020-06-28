@@ -2,6 +2,7 @@
 # reserved. Use of this source code is governed by a BSD-style license that
 # can be found in the LICENSE file.
 
+from __future__ import absolute_import
 from cef_parser import *
 
 
@@ -73,6 +74,7 @@ def make_cpptoc_header(header, clsname):
              '    : public ' + template_class + '<'+clsname+'CppToC, '+clsname+', '+capiname+'> {\n'+ \
              ' public:\n'+ \
              '  '+clsname+'CppToC();\n'+ \
+             '  virtual ~'+clsname+'CppToC();\n'+ \
              '};\n\n'
 
   result += '#endif  // CEF_LIBCEF_DLL_CPPTOC_' + defname + '_CPPTOC_H_'

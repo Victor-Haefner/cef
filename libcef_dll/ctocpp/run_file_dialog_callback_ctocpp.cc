@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,10 +9,11 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=3ef21896ed5ba3e067ec9023865be7f2030934b6$
+// $hash=0065d3160cbd59f9fe8f5272acbca0a90a5eda81$
 //
 
 #include "libcef_dll/ctocpp/run_file_dialog_callback_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 #include "libcef_dll/transfer_util.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
@@ -21,6 +22,8 @@ NO_SANITIZE("cfi-icall")
 void CefRunFileDialogCallbackCToCpp::OnFileDialogDismissed(
     int selected_accept_filter,
     const std::vector<CefString>& file_paths) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_run_file_dialog_callback_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_file_dialog_dismissed))
     return;
@@ -52,6 +55,12 @@ void CefRunFileDialogCallbackCToCpp::OnFileDialogDismissed(
 
 CefRunFileDialogCallbackCToCpp::CefRunFileDialogCallbackCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefRunFileDialogCallbackCToCpp::~CefRunFileDialogCallbackCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_run_file_dialog_callback_t* CefCToCppRefCounted<
     CefRunFileDialogCallbackCToCpp,
@@ -60,16 +69,8 @@ cef_run_file_dialog_callback_t* CefCToCppRefCounted<
                                                    CefRunFileDialogCallback*
                                                        c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<
-    CefRunFileDialogCallbackCToCpp,
-    CefRunFileDialogCallback,
-    cef_run_file_dialog_callback_t>::DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

@@ -11,12 +11,16 @@
 
 #include "content/browser/browser_plugin/browser_plugin_embedder.h"
 #include "content/browser/browser_plugin/browser_plugin_guest.h"
-#include "content/browser/frame_host/render_widget_host_view_guest.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/public/browser/render_widget_host.h"
 
-CefWebContentsViewOSR::CefWebContentsViewOSR(SkColor background_color)
-    : background_color_(background_color), web_contents_(NULL) {}
+CefWebContentsViewOSR::CefWebContentsViewOSR(SkColor background_color,
+                                             bool use_shared_texture,
+                                             bool use_external_begin_frame)
+    : background_color_(background_color),
+      use_shared_texture_(use_shared_texture),
+      use_external_begin_frame_(use_external_begin_frame),
+      web_contents_(nullptr) {}
 
 CefWebContentsViewOSR::~CefWebContentsViewOSR() {}
 
@@ -25,8 +29,11 @@ void CefWebContentsViewOSR::WebContentsCreated(
   DCHECK(!web_contents_);
   web_contents_ = web_contents;
 
-  // Call this again for popup browsers now that the view should exist.
-  RenderViewCreated(web_contents_->GetRenderViewHost());
+  auto host = web_contents_->GetRenderViewHost();
+  CefRenderWidgetHostViewOSR* view =
+      static_cast<CefRenderWidgetHostViewOSR*>(host->GetWidget()->GetView());
+  if (view)
+    view->InstallTransparency();
 }
 
 gfx::NativeView CefWebContentsViewOSR::GetNativeView() const {
@@ -44,8 +51,6 @@ gfx::NativeWindow CefWebContentsViewOSR::GetTopLevelNativeWindow() const {
 void CefWebContentsViewOSR::GetContainerBounds(gfx::Rect* out) const {
   *out = GetViewBounds();
 }
-
-void CefWebContentsViewOSR::SizeContents(const gfx::Size& size) {}
 
 void CefWebContentsViewOSR::Focus() {}
 
@@ -83,7 +88,7 @@ void CefWebContentsViewOSR::TakeFocus(bool reverse) {
 }
 
 content::DropData* CefWebContentsViewOSR::GetDropData() const {
-  return NULL;
+  return nullptr;
 }
 
 gfx::Rect CefWebContentsViewOSR::GetViewBounds() const {
@@ -91,49 +96,33 @@ gfx::Rect CefWebContentsViewOSR::GetViewBounds() const {
   return view ? view->GetViewBounds() : gfx::Rect();
 }
 
-void CefWebContentsViewOSR::CreateView(const gfx::Size& initial_size,
-                                       gfx::NativeView context) {}
+void CefWebContentsViewOSR::CreateView(gfx::NativeView context) {}
 
 content::RenderWidgetHostViewBase* CefWebContentsViewOSR::CreateViewForWidget(
-    content::RenderWidgetHost* render_widget_host,
-    content::RenderWidgetHost* embedder_render_widget_host) {
+    content::RenderWidgetHost* render_widget_host) {
   if (render_widget_host->GetView()) {
     return static_cast<content::RenderWidgetHostViewBase*>(
         render_widget_host->GetView());
   }
 
-  CefRenderWidgetHostViewOSR* embedder_host_view = nullptr;
-  if (embedder_render_widget_host) {
-    embedder_host_view = static_cast<CefRenderWidgetHostViewOSR*>(
-        embedder_render_widget_host->GetView());
-  }
-
-  const bool is_guest_view_hack = !!embedder_render_widget_host;
-  return new CefRenderWidgetHostViewOSR(background_color_, render_widget_host,
-                                        embedder_host_view, is_guest_view_hack);
+  return new CefRenderWidgetHostViewOSR(background_color_, use_shared_texture_,
+                                        use_external_begin_frame_,
+                                        render_widget_host, nullptr);
 }
 
 // Called for popup and fullscreen widgets.
 content::RenderWidgetHostViewBase*
-CefWebContentsViewOSR::CreateViewForPopupWidget(
+CefWebContentsViewOSR::CreateViewForChildWidget(
     content::RenderWidgetHost* render_widget_host) {
   CefRenderWidgetHostViewOSR* view = GetView();
   CHECK(view);
 
-  return new CefRenderWidgetHostViewOSR(background_color_, render_widget_host,
-                                        view, false);
+  return new CefRenderWidgetHostViewOSR(background_color_, use_shared_texture_,
+                                        use_external_begin_frame_,
+                                        render_widget_host, view);
 }
 
 void CefWebContentsViewOSR::SetPageTitle(const base::string16& title) {}
-
-void CefWebContentsViewOSR::RenderViewCreated(content::RenderViewHost* host) {
-  if (!host)
-    return;
-  CefRenderWidgetHostViewOSR* view =
-      static_cast<CefRenderWidgetHostViewOSR*>(host->GetWidget()->GetView());
-  if (view)
-    view->InstallTransparency();
-}
 
 void CefWebContentsViewOSR::RenderViewReady() {}
 
@@ -144,17 +133,9 @@ void CefWebContentsViewOSR::RenderViewHostChanged(
 void CefWebContentsViewOSR::SetOverscrollControllerEnabled(bool enabled) {}
 
 #if defined(OS_MACOSX)
-void CefWebContentsViewOSR::SetAllowOtherViews(bool allow) {}
-
-bool CefWebContentsViewOSR::GetAllowOtherViews() const {
+bool CefWebContentsViewOSR::CloseTabAfterEventTrackingIfNeeded() {
   return false;
 }
-
-bool CefWebContentsViewOSR::IsEventTracking() const {
-  return false;
-}
-
-void CefWebContentsViewOSR::CloseTabAfterEventTracking() {}
 #endif  // defined(OS_MACOSX)
 
 void CefWebContentsViewOSR::StartDragging(

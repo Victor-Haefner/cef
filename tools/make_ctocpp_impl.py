@@ -2,6 +2,7 @@
 # reserved. Use of this source code is governed by a BSD-style license that
 # can be found in the LICENSE file.
 
+from __future__ import absolute_import
 from cef_parser import *
 
 
@@ -20,7 +21,7 @@ def make_ctocpp_impl_proto(clsname, name, func, parts):
 
     proto += '::'
 
-  proto += name + '(' + string.join(parts['args'], ', ') + ')' + const
+  proto += name + '(' + ', '.join(parts['args']) + ')' + const
   return proto
 
 
@@ -38,10 +39,19 @@ def make_ctocpp_function_impl_existing(clsname, name, func, impl):
          changes+impl['body']+'\n}\n\n'
 
 
-def make_ctocpp_function_impl_new(clsname, name, func):
+def make_ctocpp_function_impl_new(clsname, name, func, base_scoped):
+  # Special handling for the CefShutdown global function.
+  is_cef_shutdown = name == 'CefShutdown' and isinstance(
+      func.parent, obj_header)
+
   # build the C++ prototype
   parts = func.get_cpp_parts(True)
   result = make_ctocpp_impl_proto(clsname, name, func, parts) + ' {'
+
+  if isinstance(func.parent, obj_class) and \
+      not func.parent.has_attrib('no_debugct_check') and \
+      not base_scoped:
+    result += '\n  shutdown_checker::AssertNotShutdown();\n'
 
   if isinstance(func, obj_function_virtual):
     # determine how the struct should be referenced
@@ -93,7 +103,7 @@ def make_ctocpp_function_impl_new(clsname, name, func):
     # code could not be auto-generated
     result += '\n  // BEGIN DELETE BEFORE MODIFYING'
     result += '\n  // AUTO-GENERATED CONTENT'
-    result += '\n  // COULD NOT IMPLEMENT DUE TO: ' + string.join(invalid, ', ')
+    result += '\n  // COULD NOT IMPLEMENT DUE TO: ' + ', '.join(invalid)
     result += '\n  #pragma message("Warning: "__FILE__": ' + name + ' is not implemented")'
     result += '\n  // END DELETE BEFORE MODIFYING'
     result += '\n}\n\n'
@@ -315,6 +325,11 @@ def make_ctocpp_function_impl_new(clsname, name, func):
     result += '\n'
   result_len = len(result)
 
+  if is_cef_shutdown:
+    result += '\n\n#if DCHECK_IS_ON()'\
+              '\n  shutdown_checker::SetIsShutdown();'\
+              '\n#endif\n'
+
   # execution
   result += '\n  // Execute\n  '
 
@@ -340,7 +355,7 @@ def make_ctocpp_function_impl_new(clsname, name, func):
   if len(params) > 0:
     if not isinstance(func, obj_function_virtual):
       result += '\n      '
-    result += string.join(params, ',\n      ')
+    result += ',\n      '.join(params)
 
   result += ');\n'
 
@@ -373,7 +388,7 @@ def make_ctocpp_function_impl_new(clsname, name, func):
                 '\n      '+arg_name+' = '+assign+';'\
                 '\n    }'\
                 '\n  } else {'\
-                '\n    '+arg_name+' = NULL;'\
+                '\n    '+arg_name+' = nullptr;'\
                 '\n  }'
     elif arg_type == 'string_vec_byref':
       result += comment+\
@@ -447,28 +462,6 @@ def make_ctocpp_function_impl_new(clsname, name, func):
     result += '\n'
   result_len = len(result)
 
-  # special handling for the global CefShutdown function
-  if name == 'CefShutdown' and isinstance(func.parent, obj_header):
-    classes = func.parent.get_classes()
-
-    names = []
-    for cls in classes:
-      if cls.has_attrib('no_debugct_check'):
-        continue
-
-      if cls.is_library_side():
-        names.append(cls.get_name() + 'CToCpp')
-      else:
-        names.append(cls.get_name() + 'CppToC')
-
-    if len(names) > 0:
-      names = sorted(names)
-      result += '\n#if DCHECK_IS_ON()'\
-                '\n  // Check that all wrapper objects have been destroyed'
-      for name in names:
-        result += '\n  DCHECK(base::AtomicRefCountIsZero(&' + name + '::DebugObjCt));'
-      result += '\n#endif  // DCHECK_IS_ON()'
-
   if len(result) != result_len:
     result += '\n'
   result_len = len(result)
@@ -504,7 +497,7 @@ def make_ctocpp_function_impl_new(clsname, name, func):
   return result
 
 
-def make_ctocpp_function_impl(clsname, funcs, existing):
+def make_ctocpp_function_impl(clsname, funcs, existing, base_scoped):
   impl = ''
 
   for func in funcs:
@@ -515,14 +508,15 @@ def make_ctocpp_function_impl(clsname, funcs, existing):
       # an implementation exists that was not auto-generated
       impl += make_ctocpp_function_impl_existing(clsname, name, func, value)
     else:
-      impl += make_ctocpp_function_impl_new(clsname, name, func)
+      impl += make_ctocpp_function_impl_new(clsname, name, func, base_scoped)
 
   return impl
 
 
-def make_ctocpp_virtual_function_impl(header, cls, existing):
+def make_ctocpp_virtual_function_impl(header, cls, existing, base_scoped):
   impl = make_ctocpp_function_impl(cls.get_name(),
-                                   cls.get_virtual_funcs(), existing)
+                                   cls.get_virtual_funcs(), existing,
+                                   base_scoped)
 
   cur_cls = cls
   while True:
@@ -535,7 +529,7 @@ def make_ctocpp_virtual_function_impl(header, cls, existing):
         raise Exception('Class does not exist: ' + parent_name)
       impl += make_ctocpp_function_impl(cls.get_name(),
                                         parent_cls.get_virtual_funcs(),
-                                        existing)
+                                        existing, base_scoped)
     cur_cls = header.get_class(parent_name)
 
   return impl
@@ -593,7 +587,8 @@ def make_ctocpp_class_impl(header, clsname, impl):
     template_class = 'CefCToCppRefCounted'
 
   # generate virtual functions
-  virtualimpl = make_ctocpp_virtual_function_impl(header, cls, existing)
+  virtualimpl = make_ctocpp_virtual_function_impl(header, cls, existing,
+                                                  base_scoped)
   if len(virtualimpl) > 0:
     virtualimpl = '\n// VIRTUAL METHODS - Body may be edited by hand.\n\n' + virtualimpl
 
@@ -602,7 +597,8 @@ def make_ctocpp_class_impl(header, clsname, impl):
 
   # generate static functions
   staticimpl = make_ctocpp_function_impl(clsname,
-                                         cls.get_static_funcs(), existing)
+                                         cls.get_static_funcs(), existing,
+                                         base_scoped)
   if len(staticimpl) > 0:
     staticimpl = '\n// STATIC METHODS - Body may be edited by hand.\n\n' + staticimpl
 
@@ -613,7 +609,14 @@ def make_ctocpp_class_impl(header, clsname, impl):
 
   const =  '// CONSTRUCTOR - Do not edit by hand.\n\n'+ \
            clsname+'CToCpp::'+clsname+'CToCpp() {\n'+ \
-           '}\n\n'
+           '}\n\n'+ \
+           '// DESTRUCTOR - Do not edit by hand.\n\n'+ \
+           clsname+'CToCpp::~'+clsname+'CToCpp() {\n'
+
+  if not cls.has_attrib('no_debugct_check') and not base_scoped:
+    const += '  shutdown_checker::AssertNotShutdown();\n'
+
+  const += '}\n\n'
 
   # determine what includes are required by identifying what translation
   # classes are being used
@@ -632,24 +635,22 @@ def make_ctocpp_class_impl(header, clsname, impl):
     const += 'template<> '+capiname+'* '+parent_sig+'::UnwrapDerivedOwn(CefWrapperType type, CefOwnPtr<'+clsname+'> c) {\n'+ \
              unwrapderived[0] + \
              '  NOTREACHED() << "Unexpected class type: " << type;\n'+ \
-             '  return NULL;\n'+ \
+             '  return nullptr;\n'+ \
              '}\n\n' + \
              'template<> '+capiname+'* '+parent_sig+'::UnwrapDerivedRaw(CefWrapperType type, CefRawPtr<'+clsname+'> c) {\n'+ \
              unwrapderived[1] + \
              '  NOTREACHED() << "Unexpected class type: " << type;\n'+ \
-             '  return NULL;\n'+ \
+             '  return nullptr;\n'+ \
              '}\n\n'
   else:
     const += 'template<> '+capiname+'* '+parent_sig+'::UnwrapDerived(CefWrapperType type, '+clsname+'* c) {\n'+ \
              unwrapderived + \
              '  NOTREACHED() << "Unexpected class type: " << type;\n'+ \
-             '  return NULL;\n'+ \
+             '  return nullptr;\n'+ \
              '}\n\n'
 
-  const += '#if DCHECK_IS_ON()\n'+ \
-           'template<> base::AtomicRefCount '+parent_sig+'::DebugObjCt ATOMIC_DECLARATION;\n'+ \
-           '#endif\n\n'+ \
-           'template<> CefWrapperType '+parent_sig+'::kWrapperType = '+get_wrapper_type_enum(clsname)+';'
+  const += 'template<> CefWrapperType ' + parent_sig + '::kWrapperType = ' + get_wrapper_type_enum(
+      clsname) + ';'
 
   result += const
 
@@ -661,7 +662,7 @@ def make_ctocpp_global_impl(header, impl):
   existing = get_function_impls(impl, 'CEF_GLOBAL')
 
   # generate static functions
-  impl = make_ctocpp_function_impl(None, header.get_funcs(), existing)
+  impl = make_ctocpp_function_impl(None, header.get_funcs(), existing, False)
   if len(impl) > 0:
     impl = '\n// GLOBAL METHODS - Body may be edited by hand.\n\n' + impl
 
@@ -718,7 +719,7 @@ if __name__ == "__main__":
   # verify that the correct number of command-line arguments are provided
   if len(sys.argv) < 4:
     sys.stderr.write('Usage: ' + sys.argv[0] +
-                     ' <infile> <classname> <existing_impl>')
+                     ' <infile> <classname> <existing_impl>\n')
     sys.exit()
 
   # create the header object
@@ -727,12 +728,11 @@ if __name__ == "__main__":
 
   # read the existing implementation file into memory
   try:
-    f = open(sys.argv[3], 'r')
-    data = f.read()
-  except IOError, (errno, strerror):
+    with open(sys.argv[3], 'r') as f:
+      data = f.read()
+  except IOError as e:
+    (errno, strerror) = e.args
     raise Exception('Failed to read file ' + sys.argv[3] + ': ' + strerror)
-  else:
-    f.close()
 
   # dump the result to stdout
   sys.stdout.write(make_ctocpp_class_impl(header, sys.argv[2], data))

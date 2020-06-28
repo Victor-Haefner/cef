@@ -22,6 +22,10 @@ struct WebPluginParams;
 class WebURL;
 }  // namespace blink
 
+namespace net {
+class SiteForCookies;
+}
+
 namespace content {
 class BrowserPluginDelegate;
 class RenderFrame;
@@ -51,6 +55,9 @@ class CefExtensionsRendererClient : public ExtensionsRendererClient {
   void OnExtensionLoaded(const extensions::Extension& extension) override;
   void OnExtensionUnloaded(
       const extensions::ExtensionId& extension_id) override;
+  bool ExtensionAPIEnabledForServiceWorkerScript(
+      const GURL& scope,
+      const GURL& script_url) const override;
 
   // See CefContentRendererClient methods with the same names.
   void RenderThreadStarted();
@@ -61,6 +68,7 @@ class CefExtensionsRendererClient : public ExtensionsRendererClient {
   void WillSendRequest(blink::WebLocalFrame* frame,
                        ui::PageTransition transition_type,
                        const blink::WebURL& url,
+                       const net::SiteForCookies& site_for_cookies,
                        const url::Origin* initiator_origin,
                        GURL* new_url,
                        bool* attach_same_site_cookies);
@@ -69,11 +77,6 @@ class CefExtensionsRendererClient : public ExtensionsRendererClient {
   void RunScriptsAtDocumentIdle(content::RenderFrame* render_frame);
 
   static bool IsStandaloneExtensionProcess();
-  static bool ShouldFork(blink::WebLocalFrame* frame,
-                         const GURL& url,
-                         bool is_initial_navigation,
-                         bool is_server_redirect,
-                         bool* send_referrer);
   static content::BrowserPluginDelegate* CreateBrowserPluginDelegate(
       content::RenderFrame* render_frame,
       const content::WebPluginInfo& info,

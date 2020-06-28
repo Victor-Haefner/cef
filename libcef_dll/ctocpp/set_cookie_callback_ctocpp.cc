@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,15 +9,18 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=a5a1ea86be992226e3701109e637149b0fa5c7cd$
+// $hash=a00d1d8d0e2a5a7a63b8f9669301186ffc2fc664$
 //
 
 #include "libcef_dll/ctocpp/set_cookie_callback_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall")
 void CefSetCookieCallbackCToCpp::OnComplete(bool success) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_set_cookie_callback_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_complete))
     return;
@@ -32,6 +35,12 @@ void CefSetCookieCallbackCToCpp::OnComplete(bool success) {
 
 CefSetCookieCallbackCToCpp::CefSetCookieCallbackCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefSetCookieCallbackCToCpp::~CefSetCookieCallbackCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_set_cookie_callback_t* CefCToCppRefCounted<
     CefSetCookieCallbackCToCpp,
@@ -39,16 +48,8 @@ cef_set_cookie_callback_t* CefCToCppRefCounted<
     cef_set_cookie_callback_t>::UnwrapDerived(CefWrapperType type,
                                               CefSetCookieCallback* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefSetCookieCallbackCToCpp,
-                                         CefSetCookieCallback,
-                                         cef_set_cookie_callback_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefSetCookieCallbackCToCpp,

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=aa22fa92c538fe49e20e20365c4b65be8c79c02d$
+// $hash=d7188da59785fbdd640a0cfbe7728a95021ef2bd$
 //
 
 #include "libcef_dll/cpptoc/views/textfield_cpptoc.h"
@@ -21,11 +21,14 @@
 #include "libcef_dll/cpptoc/views/window_cpptoc.h"
 #include "libcef_dll/ctocpp/views/textfield_delegate_ctocpp.h"
 #include "libcef_dll/ctocpp/views/view_delegate_ctocpp.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // GLOBAL FUNCTIONS - Body may be edited by hand.
 
 CEF_EXPORT cef_textfield_t* cef_textfield_create(
     cef_textfield_delegate_t* delegate) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   // Unverified params: delegate
@@ -44,6 +47,8 @@ namespace {
 
 void CEF_CALLBACK textfield_set_password_input(struct _cef_textfield_t* self,
                                                int password_input) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -56,6 +61,8 @@ void CEF_CALLBACK textfield_set_password_input(struct _cef_textfield_t* self,
 }
 
 int CEF_CALLBACK textfield_is_password_input(struct _cef_textfield_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -71,6 +78,8 @@ int CEF_CALLBACK textfield_is_password_input(struct _cef_textfield_t* self) {
 
 void CEF_CALLBACK textfield_set_read_only(struct _cef_textfield_t* self,
                                           int read_only) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -82,6 +91,8 @@ void CEF_CALLBACK textfield_set_read_only(struct _cef_textfield_t* self,
 }
 
 int CEF_CALLBACK textfield_is_read_only(struct _cef_textfield_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -97,6 +108,8 @@ int CEF_CALLBACK textfield_is_read_only(struct _cef_textfield_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 textfield_get_text(struct _cef_textfield_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -112,6 +125,8 @@ textfield_get_text(struct _cef_textfield_t* self) {
 
 void CEF_CALLBACK textfield_set_text(struct _cef_textfield_t* self,
                                      const cef_string_t* text) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -128,6 +143,8 @@ void CEF_CALLBACK textfield_set_text(struct _cef_textfield_t* self,
 
 void CEF_CALLBACK textfield_append_text(struct _cef_textfield_t* self,
                                         const cef_string_t* text) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -145,6 +162,8 @@ void CEF_CALLBACK textfield_append_text(struct _cef_textfield_t* self,
 void CEF_CALLBACK
 textfield_insert_or_replace_text(struct _cef_textfield_t* self,
                                  const cef_string_t* text) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -160,6 +179,8 @@ textfield_insert_or_replace_text(struct _cef_textfield_t* self,
 }
 
 int CEF_CALLBACK textfield_has_selection(struct _cef_textfield_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -175,6 +196,8 @@ int CEF_CALLBACK textfield_has_selection(struct _cef_textfield_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 textfield_get_selected_text(struct _cef_textfield_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -190,6 +213,8 @@ textfield_get_selected_text(struct _cef_textfield_t* self) {
 
 void CEF_CALLBACK textfield_select_all(struct _cef_textfield_t* self,
                                        int reversed) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -201,6 +226,8 @@ void CEF_CALLBACK textfield_select_all(struct _cef_textfield_t* self,
 }
 
 void CEF_CALLBACK textfield_clear_selection(struct _cef_textfield_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -213,6 +240,8 @@ void CEF_CALLBACK textfield_clear_selection(struct _cef_textfield_t* self) {
 
 cef_range_t CEF_CALLBACK
 textfield_get_selected_range(struct _cef_textfield_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -228,6 +257,8 @@ textfield_get_selected_range(struct _cef_textfield_t* self) {
 
 void CEF_CALLBACK textfield_select_range(struct _cef_textfield_t* self,
                                          const cef_range_t* range) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -247,6 +278,8 @@ void CEF_CALLBACK textfield_select_range(struct _cef_textfield_t* self,
 
 size_t CEF_CALLBACK
 textfield_get_cursor_position(struct _cef_textfield_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -262,6 +295,8 @@ textfield_get_cursor_position(struct _cef_textfield_t* self) {
 
 void CEF_CALLBACK textfield_set_text_color(struct _cef_textfield_t* self,
                                            cef_color_t color) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -274,6 +309,8 @@ void CEF_CALLBACK textfield_set_text_color(struct _cef_textfield_t* self,
 
 cef_color_t CEF_CALLBACK
 textfield_get_text_color(struct _cef_textfield_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -290,6 +327,8 @@ textfield_get_text_color(struct _cef_textfield_t* self) {
 void CEF_CALLBACK
 textfield_set_selection_text_color(struct _cef_textfield_t* self,
                                    cef_color_t color) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -302,6 +341,8 @@ textfield_set_selection_text_color(struct _cef_textfield_t* self,
 
 cef_color_t CEF_CALLBACK
 textfield_get_selection_text_color(struct _cef_textfield_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -318,6 +359,8 @@ textfield_get_selection_text_color(struct _cef_textfield_t* self) {
 void CEF_CALLBACK
 textfield_set_selection_background_color(struct _cef_textfield_t* self,
                                          cef_color_t color) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -330,6 +373,8 @@ textfield_set_selection_background_color(struct _cef_textfield_t* self,
 
 cef_color_t CEF_CALLBACK
 textfield_get_selection_background_color(struct _cef_textfield_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -346,6 +391,8 @@ textfield_get_selection_background_color(struct _cef_textfield_t* self) {
 
 void CEF_CALLBACK textfield_set_font_list(struct _cef_textfield_t* self,
                                           const cef_string_t* font_list) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -363,6 +410,8 @@ void CEF_CALLBACK textfield_set_font_list(struct _cef_textfield_t* self,
 void CEF_CALLBACK textfield_apply_text_color(struct _cef_textfield_t* self,
                                              cef_color_t color,
                                              const cef_range_t* range) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -384,6 +433,8 @@ void CEF_CALLBACK textfield_apply_text_style(struct _cef_textfield_t* self,
                                              cef_text_style_t style,
                                              int add,
                                              const cef_range_t* range) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -402,8 +453,11 @@ void CEF_CALLBACK textfield_apply_text_style(struct _cef_textfield_t* self,
                                                 rangeVal);
 }
 
-int CEF_CALLBACK textfield_is_command_enabled(struct _cef_textfield_t* self,
-                                              int command_id) {
+int CEF_CALLBACK
+textfield_is_command_enabled(struct _cef_textfield_t* self,
+                             cef_text_field_commands_t command_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -417,8 +471,11 @@ int CEF_CALLBACK textfield_is_command_enabled(struct _cef_textfield_t* self,
   return _retval;
 }
 
-void CEF_CALLBACK textfield_execute_command(struct _cef_textfield_t* self,
-                                            int command_id) {
+void CEF_CALLBACK
+textfield_execute_command(struct _cef_textfield_t* self,
+                          cef_text_field_commands_t command_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -430,6 +487,8 @@ void CEF_CALLBACK textfield_execute_command(struct _cef_textfield_t* self,
 }
 
 void CEF_CALLBACK textfield_clear_edit_history(struct _cef_textfield_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -442,6 +501,8 @@ void CEF_CALLBACK textfield_clear_edit_history(struct _cef_textfield_t* self) {
 
 void CEF_CALLBACK textfield_set_placeholder_text(struct _cef_textfield_t* self,
                                                  const cef_string_t* text) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -458,6 +519,8 @@ void CEF_CALLBACK textfield_set_placeholder_text(struct _cef_textfield_t* self,
 
 cef_string_userfree_t CEF_CALLBACK
 textfield_get_placeholder_text(struct _cef_textfield_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -474,6 +537,8 @@ textfield_get_placeholder_text(struct _cef_textfield_t* self) {
 void CEF_CALLBACK
 textfield_set_placeholder_text_color(struct _cef_textfield_t* self,
                                      cef_color_t color) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -486,6 +551,8 @@ textfield_set_placeholder_text_color(struct _cef_textfield_t* self,
 
 void CEF_CALLBACK textfield_set_accessible_name(struct _cef_textfield_t* self,
                                                 const cef_string_t* name) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -502,6 +569,8 @@ void CEF_CALLBACK textfield_set_accessible_name(struct _cef_textfield_t* self,
 
 cef_browser_view_t* CEF_CALLBACK
 textfield_as_browser_view(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -518,6 +587,8 @@ textfield_as_browser_view(struct _cef_view_t* self) {
 }
 
 cef_button_t* CEF_CALLBACK textfield_as_button(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -534,6 +605,8 @@ cef_button_t* CEF_CALLBACK textfield_as_button(struct _cef_view_t* self) {
 }
 
 cef_panel_t* CEF_CALLBACK textfield_as_panel(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -551,6 +624,8 @@ cef_panel_t* CEF_CALLBACK textfield_as_panel(struct _cef_view_t* self) {
 
 cef_scroll_view_t* CEF_CALLBACK
 textfield_as_scroll_view(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -567,6 +642,8 @@ textfield_as_scroll_view(struct _cef_view_t* self) {
 }
 
 cef_textfield_t* CEF_CALLBACK textfield_as_textfield(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -584,6 +661,8 @@ cef_textfield_t* CEF_CALLBACK textfield_as_textfield(struct _cef_view_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK
 textfield_get_type_string(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -601,6 +680,8 @@ textfield_get_type_string(struct _cef_view_t* self) {
 
 cef_string_userfree_t CEF_CALLBACK textfield_to_string(struct _cef_view_t* self,
                                                        int include_children) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -617,6 +698,8 @@ cef_string_userfree_t CEF_CALLBACK textfield_to_string(struct _cef_view_t* self,
 }
 
 int CEF_CALLBACK textfield_is_valid(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -633,6 +716,8 @@ int CEF_CALLBACK textfield_is_valid(struct _cef_view_t* self) {
 }
 
 int CEF_CALLBACK textfield_is_attached(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -650,6 +735,8 @@ int CEF_CALLBACK textfield_is_attached(struct _cef_view_t* self) {
 
 int CEF_CALLBACK textfield_is_same(struct _cef_view_t* self,
                                    struct _cef_view_t* that) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -671,6 +758,8 @@ int CEF_CALLBACK textfield_is_same(struct _cef_view_t* self,
 
 struct _cef_view_delegate_t* CEF_CALLBACK
 textfield_get_delegate(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -688,6 +777,8 @@ textfield_get_delegate(struct _cef_view_t* self) {
 
 struct _cef_window_t* CEF_CALLBACK
 textfield_get_window(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -704,6 +795,8 @@ textfield_get_window(struct _cef_view_t* self) {
 }
 
 int CEF_CALLBACK textfield_get_id(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -720,6 +813,8 @@ int CEF_CALLBACK textfield_get_id(struct _cef_view_t* self) {
 }
 
 void CEF_CALLBACK textfield_set_id(struct _cef_view_t* self, int id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -731,6 +826,8 @@ void CEF_CALLBACK textfield_set_id(struct _cef_view_t* self, int id) {
 }
 
 int CEF_CALLBACK textfield_get_group_id(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -748,6 +845,8 @@ int CEF_CALLBACK textfield_get_group_id(struct _cef_view_t* self) {
 
 void CEF_CALLBACK textfield_set_group_id(struct _cef_view_t* self,
                                          int group_id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -761,6 +860,8 @@ void CEF_CALLBACK textfield_set_group_id(struct _cef_view_t* self,
 
 struct _cef_view_t* CEF_CALLBACK
 textfield_get_parent_view(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -778,6 +879,8 @@ textfield_get_parent_view(struct _cef_view_t* self) {
 
 struct _cef_view_t* CEF_CALLBACK
 textfield_get_view_for_id(struct _cef_view_t* self, int id) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -795,6 +898,8 @@ textfield_get_view_for_id(struct _cef_view_t* self, int id) {
 
 void CEF_CALLBACK textfield_set_bounds(struct _cef_view_t* self,
                                        const cef_rect_t* bounds) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -814,6 +919,8 @@ void CEF_CALLBACK textfield_set_bounds(struct _cef_view_t* self,
 }
 
 cef_rect_t CEF_CALLBACK textfield_get_bounds(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -831,6 +938,8 @@ cef_rect_t CEF_CALLBACK textfield_get_bounds(struct _cef_view_t* self) {
 
 cef_rect_t CEF_CALLBACK
 textfield_get_bounds_in_screen(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -848,6 +957,8 @@ textfield_get_bounds_in_screen(struct _cef_view_t* self) {
 
 void CEF_CALLBACK textfield_set_size(struct _cef_view_t* self,
                                      const cef_size_t* size) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -867,6 +978,8 @@ void CEF_CALLBACK textfield_set_size(struct _cef_view_t* self,
 }
 
 cef_size_t CEF_CALLBACK textfield_get_size(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -884,6 +997,8 @@ cef_size_t CEF_CALLBACK textfield_get_size(struct _cef_view_t* self) {
 
 void CEF_CALLBACK textfield_set_position(struct _cef_view_t* self,
                                          const cef_point_t* position) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -903,6 +1018,8 @@ void CEF_CALLBACK textfield_set_position(struct _cef_view_t* self,
 }
 
 cef_point_t CEF_CALLBACK textfield_get_position(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -919,6 +1036,8 @@ cef_point_t CEF_CALLBACK textfield_get_position(struct _cef_view_t* self) {
 }
 
 cef_size_t CEF_CALLBACK textfield_get_preferred_size(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -935,6 +1054,8 @@ cef_size_t CEF_CALLBACK textfield_get_preferred_size(struct _cef_view_t* self) {
 }
 
 void CEF_CALLBACK textfield_size_to_preferred_size(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -947,6 +1068,8 @@ void CEF_CALLBACK textfield_size_to_preferred_size(struct _cef_view_t* self) {
 }
 
 cef_size_t CEF_CALLBACK textfield_get_minimum_size(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -963,6 +1086,8 @@ cef_size_t CEF_CALLBACK textfield_get_minimum_size(struct _cef_view_t* self) {
 }
 
 cef_size_t CEF_CALLBACK textfield_get_maximum_size(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -980,6 +1105,8 @@ cef_size_t CEF_CALLBACK textfield_get_maximum_size(struct _cef_view_t* self) {
 
 int CEF_CALLBACK textfield_get_height_for_width(struct _cef_view_t* self,
                                                 int width) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -996,6 +1123,8 @@ int CEF_CALLBACK textfield_get_height_for_width(struct _cef_view_t* self,
 }
 
 void CEF_CALLBACK textfield_invalidate_layout(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1008,6 +1137,8 @@ void CEF_CALLBACK textfield_invalidate_layout(struct _cef_view_t* self) {
 }
 
 void CEF_CALLBACK textfield_set_visible(struct _cef_view_t* self, int visible) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1020,6 +1151,8 @@ void CEF_CALLBACK textfield_set_visible(struct _cef_view_t* self, int visible) {
 }
 
 int CEF_CALLBACK textfield_is_visible(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1036,6 +1169,8 @@ int CEF_CALLBACK textfield_is_visible(struct _cef_view_t* self) {
 }
 
 int CEF_CALLBACK textfield_is_drawn(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1052,6 +1187,8 @@ int CEF_CALLBACK textfield_is_drawn(struct _cef_view_t* self) {
 }
 
 void CEF_CALLBACK textfield_set_enabled(struct _cef_view_t* self, int enabled) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1064,6 +1201,8 @@ void CEF_CALLBACK textfield_set_enabled(struct _cef_view_t* self, int enabled) {
 }
 
 int CEF_CALLBACK textfield_is_enabled(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1081,6 +1220,8 @@ int CEF_CALLBACK textfield_is_enabled(struct _cef_view_t* self) {
 
 void CEF_CALLBACK textfield_set_focusable(struct _cef_view_t* self,
                                           int focusable) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1093,6 +1234,8 @@ void CEF_CALLBACK textfield_set_focusable(struct _cef_view_t* self,
 }
 
 int CEF_CALLBACK textfield_is_focusable(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1110,6 +1253,8 @@ int CEF_CALLBACK textfield_is_focusable(struct _cef_view_t* self) {
 
 int CEF_CALLBACK
 textfield_is_accessibility_focusable(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1126,6 +1271,8 @@ textfield_is_accessibility_focusable(struct _cef_view_t* self) {
 }
 
 void CEF_CALLBACK textfield_request_focus(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1139,6 +1286,8 @@ void CEF_CALLBACK textfield_request_focus(struct _cef_view_t* self) {
 
 void CEF_CALLBACK textfield_set_background_color(struct _cef_view_t* self,
                                                  cef_color_t color) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1152,6 +1301,8 @@ void CEF_CALLBACK textfield_set_background_color(struct _cef_view_t* self,
 
 cef_color_t CEF_CALLBACK
 textfield_get_background_color(struct _cef_view_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1169,6 +1320,8 @@ textfield_get_background_color(struct _cef_view_t* self) {
 
 int CEF_CALLBACK textfield_convert_point_to_screen(struct _cef_view_t* self,
                                                    cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1197,6 +1350,8 @@ int CEF_CALLBACK textfield_convert_point_to_screen(struct _cef_view_t* self,
 
 int CEF_CALLBACK textfield_convert_point_from_screen(struct _cef_view_t* self,
                                                      cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1225,6 +1380,8 @@ int CEF_CALLBACK textfield_convert_point_from_screen(struct _cef_view_t* self,
 
 int CEF_CALLBACK textfield_convert_point_to_window(struct _cef_view_t* self,
                                                    cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1253,6 +1410,8 @@ int CEF_CALLBACK textfield_convert_point_to_window(struct _cef_view_t* self,
 
 int CEF_CALLBACK textfield_convert_point_from_window(struct _cef_view_t* self,
                                                      cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1282,6 +1441,8 @@ int CEF_CALLBACK textfield_convert_point_from_window(struct _cef_view_t* self,
 int CEF_CALLBACK textfield_convert_point_to_view(struct _cef_view_t* self,
                                                  struct _cef_view_t* view,
                                                  cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1315,6 +1476,8 @@ int CEF_CALLBACK textfield_convert_point_to_view(struct _cef_view_t* self,
 int CEF_CALLBACK textfield_convert_point_from_view(struct _cef_view_t* self,
                                                    struct _cef_view_t* view,
                                                    cef_point_t* point) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -1437,20 +1600,19 @@ CefTextfieldCppToC::CefTextfieldCppToC() {
   GetStruct()->base.convert_point_from_view = textfield_convert_point_from_view;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefTextfieldCppToC::~CefTextfieldCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefTextfield>
 CefCppToCRefCounted<CefTextfieldCppToC, CefTextfield, cef_textfield_t>::
     UnwrapDerived(CefWrapperType type, cef_textfield_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefTextfieldCppToC, CefTextfield, cef_textfield_t>::
-        DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefTextfieldCppToC,

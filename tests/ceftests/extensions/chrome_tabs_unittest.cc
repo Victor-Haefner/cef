@@ -64,7 +64,7 @@ class TabsTestHandler : public ExtensionTestHandler {
     EXPECT_TRUE(extension_->IsSame(extension));
     EXPECT_FALSE(got_extension_unloaded_);
     got_extension_unloaded_.yes();
-    extension_ = NULL;
+    extension_ = nullptr;
 
     // Execute asynchronously so call stacks have a chance to unwind.
     // Will close the browser windows.
@@ -128,7 +128,7 @@ class TabsTestHandler : public ExtensionTestHandler {
     }
   }
 
-  // CefRequestHandler methods:
+  // CefResourceRequestHandler methods:
   CefRefPtr<CefResourceHandler> GetResourceHandler(
       CefRefPtr<CefBrowser> browser,
       CefRefPtr<CefFrame> frame,
@@ -199,8 +199,8 @@ class TabsTestHandler : public ExtensionTestHandler {
   }
 
   void OnDestroyTest() override {
-    main_browser_ = NULL;
-    extension_browser_ = NULL;
+    main_browser_ = nullptr;
+    extension_browser_ = nullptr;
 
     EXPECT_TRUE(got_extension_loaded_);
     EXPECT_TRUE(got_main_url_request_);
@@ -497,7 +497,7 @@ class CreateTestHandler : public TabsTestHandler {
   }
 
   void OnDestroyTest() override {
-    created_browser_ = NULL;
+    created_browser_ = nullptr;
 
     EXPECT_TRUE(got_on_before_browser_);
     EXPECT_TRUE(got_create_browser_url_request_);
@@ -529,7 +529,7 @@ class CreateTestHandler : public TabsTestHandler {
 
 }  // namespace
 
-TABS_TEST_GROUP_ALL(Create, CreateTestHandler);
+TABS_TEST_GROUP_ALL(Create, CreateTestHandler)
 
 namespace {
 
@@ -577,7 +577,7 @@ class ExecuteScriptNullTabTestHandler : public ExecuteScriptTestHandler {
 
 }  // namespace
 
-TABS_TEST_GROUP_ALL(ExecuteScriptNullTab, ExecuteScriptNullTabTestHandler);
+TABS_TEST_GROUP_ALL(ExecuteScriptNullTab, ExecuteScriptNullTabTestHandler)
 
 namespace {
 
@@ -610,7 +610,7 @@ class ExecuteScriptExplicitTabTestHandler : public ExecuteScriptTestHandler {
 }  // namespace
 
 TABS_TEST_GROUP_ALL(ExecuteScriptExplicitTab,
-                    ExecuteScriptExplicitTabTestHandler);
+                    ExecuteScriptExplicitTabTestHandler)
 
 namespace {
 
@@ -666,7 +666,7 @@ class ExecuteScriptFileTestHandler : public ExecuteScriptTestHandler {
 
 }  // namespace
 
-TABS_TEST_GROUP_ALL(ExecuteScriptFile, ExecuteScriptFileTestHandler);
+TABS_TEST_GROUP_ALL(ExecuteScriptFile, ExecuteScriptFileTestHandler)
 
 namespace {
 
@@ -717,8 +717,7 @@ class ExecuteScriptCallbackTestHandler : public ExecuteScriptTestHandler {
 
 }  // namespace
 
-TABS_TEST_GROUP_MINIMAL(ExecuteScriptCallback,
-                        ExecuteScriptCallbackTestHandler);
+TABS_TEST_GROUP_MINIMAL(ExecuteScriptCallback, ExecuteScriptCallbackTestHandler)
 
 namespace {
 
@@ -730,7 +729,7 @@ class ExecuteScriptResourceTabTestHandler : public ExecuteScriptTestHandler {
       RequestContextType request_context_type)
       : ExecuteScriptTestHandler(request_context_type) {}
 
-  // CefRequestHandler methods:
+  // CefResourceRequestHandler methods:
   CefRefPtr<CefResourceHandler> GetResourceHandler(
       CefRefPtr<CefBrowser> browser,
       CefRefPtr<CefFrame> frame,
@@ -775,7 +774,7 @@ class ExecuteScriptResourceTabTestHandler : public ExecuteScriptTestHandler {
 }  // namespace
 
 TABS_TEST_GROUP_MINIMAL(ExecuteScriptResource,
-                        ExecuteScriptResourceTabTestHandler);
+                        ExecuteScriptResourceTabTestHandler)
 
 //
 // chrome.tabs.insertCSS tests.
@@ -826,7 +825,7 @@ class InsertCSSNullTabTestHandler : public InsertCSSTestHandler {
 
 }  // namespace
 
-TABS_TEST_GROUP_ALL(InsertCSSNullTab, InsertCSSNullTabTestHandler);
+TABS_TEST_GROUP_ALL(InsertCSSNullTab, InsertCSSNullTabTestHandler)
 
 namespace {
 
@@ -858,7 +857,7 @@ class InsertCSSExplicitTabTestHandler : public InsertCSSTestHandler {
 
 }  // namespace
 
-TABS_TEST_GROUP_ALL(InsertCSSExplicitTab, InsertCSSExplicitTabTestHandler);
+TABS_TEST_GROUP_ALL(InsertCSSExplicitTab, InsertCSSExplicitTabTestHandler)
 
 namespace {
 
@@ -914,7 +913,7 @@ class InsertCSSFileTestHandler : public InsertCSSTestHandler {
 
 }  // namespace
 
-TABS_TEST_GROUP_ALL(InsertCSSFile, InsertCSSFileTestHandler);
+TABS_TEST_GROUP_ALL(InsertCSSFile, InsertCSSFileTestHandler)
 
 namespace {
 
@@ -964,7 +963,7 @@ class InsertCSSCallbackTestHandler : public InsertCSSTestHandler {
 
 }  // namespace
 
-TABS_TEST_GROUP_MINIMAL(InsertCSSCallback, InsertCSSCallbackTestHandler);
+TABS_TEST_GROUP_MINIMAL(InsertCSSCallback, InsertCSSCallbackTestHandler)
 
 namespace {
 
@@ -976,7 +975,7 @@ class InsertCSSResourceTabTestHandler : public InsertCSSTestHandler {
       RequestContextType request_context_type)
       : InsertCSSTestHandler(request_context_type) {}
 
-  // CefRequestHandler methods:
+  // CefResourceRequestHandler methods:
   CefRefPtr<CefResourceHandler> GetResourceHandler(
       CefRefPtr<CefBrowser> browser,
       CefRefPtr<CefFrame> frame,
@@ -1019,7 +1018,7 @@ class InsertCSSResourceTabTestHandler : public InsertCSSTestHandler {
 
 }  // namespace
 
-TABS_TEST_GROUP_MINIMAL(InsertCSSResource, InsertCSSResourceTabTestHandler);
+TABS_TEST_GROUP_MINIMAL(InsertCSSResource, InsertCSSResourceTabTestHandler)
 
 //
 // chrome.tabs.setZoom/getZoom tests.
@@ -1103,7 +1102,7 @@ class ZoomNullTabTestHandler : public ZoomTestHandler {
 
 }  // namespace
 
-TABS_TEST_GROUP_ALL(ZoomNullTab, ZoomNullTabTestHandler);
+TABS_TEST_GROUP_ALL(ZoomNullTab, ZoomNullTabTestHandler)
 
 namespace {
 
@@ -1134,7 +1133,7 @@ class ZoomExplicitTabTestHandler : public ZoomTestHandler {
 
 }  // namespace
 
-TABS_TEST_GROUP_ALL(ZoomExplicitTab, ZoomExplicitTabTestHandler);
+TABS_TEST_GROUP_ALL(ZoomExplicitTab, ZoomExplicitTabTestHandler)
 
 //
 // chrome.tabs.setZoomSettings/getZoomSettings tests.
@@ -1183,7 +1182,7 @@ class ZoomSettingsNullTabTestHandler : public ZoomSettingsTestHandler {
 
 }  // namespace
 
-TABS_TEST_GROUP_ALL(ZoomSettingsNullTab, ZoomSettingsNullTabTestHandler);
+TABS_TEST_GROUP_ALL(ZoomSettingsNullTab, ZoomSettingsNullTabTestHandler)
 
 namespace {
 
@@ -1216,5 +1215,4 @@ class ZoomSettingsExplicitTabTestHandler : public ZoomSettingsTestHandler {
 
 }  // namespace
 
-TABS_TEST_GROUP_ALL(ZoomSettingsExplicitTab,
-                    ZoomSettingsExplicitTabTestHandler);
+TABS_TEST_GROUP_ALL(ZoomSettingsExplicitTab, ZoomSettingsExplicitTabTestHandler)

@@ -37,12 +37,14 @@ class CefDownloadManagerDelegate : public download::DownloadItem::Observer,
   // DownloadManagerDelegate methods.
   bool DetermineDownloadTarget(
       download::DownloadItem* item,
-      const content::DownloadTargetCallback& callback) override;
-  void GetNextId(const content::DownloadIdCallback& callback) override;
+      content::DownloadTargetCallback* callback) override;
+  void GetNextId(content::DownloadIdCallback callback) override;
+  std::string ApplicationClientIdForFileScanning() override;
 
   // CefBrowserHostImpl::Observer methods.
   void OnBrowserDestroyed(CefBrowserHostImpl* browser) override;
 
+  CefBrowserHostImpl* GetOrAssociateBrowser(download::DownloadItem* item);
   CefBrowserHostImpl* GetBrowser(download::DownloadItem* item);
 
   content::DownloadManager* manager_;

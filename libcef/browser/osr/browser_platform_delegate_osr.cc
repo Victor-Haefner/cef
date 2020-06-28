@@ -17,6 +17,7 @@
 #include "content/browser/renderer_host/render_widget_host_input_event_router.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/public/browser/render_view_host.h"
+#include "ui/events/base_event_utils.h"
 
 CefBrowserPlatformDelegateOsr::CefBrowserPlatformDelegateOsr(
     std::unique_ptr<CefBrowserPlatformDelegateNative> native_delegate)
@@ -30,13 +31,16 @@ void CefBrowserPlatformDelegateOsr::CreateViewForWebContents(
   DCHECK(!view_osr_);
 
   // Use the OSR view instead of the default platform view.
-  view_osr_ = new CefWebContentsViewOSR(GetBackgroundColor());
+  view_osr_ = new CefWebContentsViewOSR(
+      GetBackgroundColor(), CanUseSharedTexture(), CanUseExternalBeginFrame());
   *view = view_osr_;
   *delegate_view = view_osr_;
 }
 
 void CefBrowserPlatformDelegateOsr::WebContentsCreated(
     content::WebContents* web_contents) {
+  CefBrowserPlatformDelegate::WebContentsCreated(web_contents);
+
   DCHECK(view_osr_);
   DCHECK(!view_osr_->web_contents());
 
@@ -69,35 +73,77 @@ void CefBrowserPlatformDelegateOsr::BrowserDestroyed(
   view_osr_ = nullptr;
 }
 
+bool CefBrowserPlatformDelegateOsr::CanUseSharedTexture() const {
+  return native_delegate_->CanUseSharedTexture();
+}
+
+bool CefBrowserPlatformDelegateOsr::CanUseExternalBeginFrame() const {
+  return native_delegate_->CanUseExternalBeginFrame();
+}
+
 SkColor CefBrowserPlatformDelegateOsr::GetBackgroundColor() const {
   return native_delegate_->GetBackgroundColor();
 }
 
-void CefBrowserPlatformDelegateOsr::SynchronizeVisualProperties() {
+void CefBrowserPlatformDelegateOsr::WasResized() {
   CefRenderWidgetHostViewOSR* view = GetOSRHostView();
   if (view)
-    view->SynchronizeVisualProperties();
+    view->WasResized();
 }
 
-void CefBrowserPlatformDelegateOsr::SendKeyEvent(
-    const content::NativeWebKeyboardEvent& event) {
+void CefBrowserPlatformDelegateOsr::SendKeyEvent(const CefKeyEvent& event) {
   CefRenderWidgetHostViewOSR* view = GetOSRHostView();
-  if (view)
-    view->SendKeyEvent(event);
+  if (!view)
+    return;
+
+  content::NativeWebKeyboardEvent web_event =
+      native_delegate_->TranslateWebKeyEvent(event);
+  view->SendKeyEvent(web_event);
 }
 
-void CefBrowserPlatformDelegateOsr::SendMouseEvent(
-    const blink::WebMouseEvent& event) {
+void CefBrowserPlatformDelegateOsr::SendMouseClickEvent(
+    const CefMouseEvent& event,
+    CefBrowserHost::MouseButtonType type,
+    bool mouseUp,
+    int clickCount) {
   CefRenderWidgetHostViewOSR* view = GetOSRHostView();
-  if (view)
-    view->SendMouseEvent(event);
+  if (!view)
+    return;
+
+  blink::WebMouseEvent web_event = native_delegate_->TranslateWebClickEvent(
+      event, type, mouseUp, clickCount);
+  view->SendMouseEvent(web_event);
+}
+
+void CefBrowserPlatformDelegateOsr::SendMouseMoveEvent(
+    const CefMouseEvent& event,
+    bool mouseLeave) {
+  CefRenderWidgetHostViewOSR* view = GetOSRHostView();
+  if (!view)
+    return;
+
+  blink::WebMouseEvent web_event =
+      native_delegate_->TranslateWebMoveEvent(event, mouseLeave);
+  view->SendMouseEvent(web_event);
 }
 
 void CefBrowserPlatformDelegateOsr::SendMouseWheelEvent(
-    const blink::WebMouseWheelEvent& event) {
+    const CefMouseEvent& event,
+    int deltaX,
+    int deltaY) {
+  CefRenderWidgetHostViewOSR* view = GetOSRHostView();
+  if (!view)
+    return;
+
+  blink::WebMouseWheelEvent web_event =
+      native_delegate_->TranslateWebWheelEvent(event, deltaX, deltaY);
+  view->SendMouseWheelEvent(web_event);
+}
+
+void CefBrowserPlatformDelegateOsr::SendTouchEvent(const CefTouchEvent& event) {
   CefRenderWidgetHostViewOSR* view = GetOSRHostView();
   if (view)
-    view->SendMouseWheelEvent(event);
+    view->SendTouchEvent(event);
 }
 
 void CefBrowserPlatformDelegateOsr::SendFocusEvent(bool setFocus) {
@@ -123,44 +169,9 @@ void CefBrowserPlatformDelegateOsr::ViewText(const std::string& text) {
   native_delegate_->ViewText(text);
 }
 
-void CefBrowserPlatformDelegateOsr::HandleKeyboardEvent(
+bool CefBrowserPlatformDelegateOsr::HandleKeyboardEvent(
     const content::NativeWebKeyboardEvent& event) {
-  native_delegate_->HandleKeyboardEvent(event);
-}
-
-void CefBrowserPlatformDelegateOsr::HandleExternalProtocol(const GURL& url) {
-  native_delegate_->HandleExternalProtocol(url);
-}
-
-void CefBrowserPlatformDelegateOsr::TranslateKeyEvent(
-    content::NativeWebKeyboardEvent& result,
-    const CefKeyEvent& key_event) const {
-  native_delegate_->TranslateKeyEvent(result, key_event);
-}
-
-void CefBrowserPlatformDelegateOsr::TranslateClickEvent(
-    blink::WebMouseEvent& result,
-    const CefMouseEvent& mouse_event,
-    CefBrowserHost::MouseButtonType type,
-    bool mouseUp,
-    int clickCount) const {
-  native_delegate_->TranslateClickEvent(result, mouse_event, type, mouseUp,
-                                        clickCount);
-}
-
-void CefBrowserPlatformDelegateOsr::TranslateMoveEvent(
-    blink::WebMouseEvent& result,
-    const CefMouseEvent& mouse_event,
-    bool mouseLeave) const {
-  native_delegate_->TranslateMoveEvent(result, mouse_event, mouseLeave);
-}
-
-void CefBrowserPlatformDelegateOsr::TranslateWheelEvent(
-    blink::WebMouseWheelEvent& result,
-    const CefMouseEvent& mouse_event,
-    int deltaX,
-    int deltaY) const {
-  native_delegate_->TranslateWheelEvent(result, mouse_event, deltaX, deltaY);
+  return native_delegate_->HandleKeyboardEvent(event);
 }
 
 CefEventHandle CefBrowserPlatformDelegateOsr::GetEventHandle(
@@ -192,15 +203,7 @@ bool CefBrowserPlatformDelegateOsr::IsViewsHosted() const {
 }
 
 void CefBrowserPlatformDelegateOsr::WasHidden(bool hidden) {
-  CefRenderWidgetHostViewOSR* view = GetOSRHostView();
-  if (view) {
-    if (hidden)
-      view->Hide();
-    else
-      view->Show();
-  }
-
-  // Also notify the WebContentsImpl for consistency.
+  // The WebContentsImpl will notify the OSR view.
   content::WebContentsImpl* web_contents =
       static_cast<content::WebContentsImpl*>(browser_->web_contents());
   if (web_contents) {
@@ -221,6 +224,12 @@ void CefBrowserPlatformDelegateOsr::Invalidate(cef_paint_element_type_t type) {
   CefRenderWidgetHostViewOSR* view = GetOSRHostView();
   if (view)
     view->Invalidate(type);
+}
+
+void CefBrowserPlatformDelegateOsr::SendExternalBeginFrame() {
+  CefRenderWidgetHostViewOSR* view = GetOSRHostView();
+  if (view)
+    view->SendExternalBeginFrame();
 }
 
 void CefBrowserPlatformDelegateOsr::SetWindowlessFrameRate(int frame_rate) {
@@ -294,7 +303,7 @@ void CefBrowserPlatformDelegateOsr::DragTargetDragEnter(
   const gfx::Point& screen_pt = GetScreenPoint(client_pt);
   blink::WebDragOperationsMask ops =
       static_cast<blink::WebDragOperationsMask>(allowed_ops);
-  int modifiers = TranslateModifiers(event.modifiers);
+  int modifiers = TranslateWebEventModifiers(event.modifiers);
 
   current_rwh_for_drag_->FilterDropData(drop_data);
 
@@ -358,7 +367,7 @@ void CefBrowserPlatformDelegateOsr::DragTargetDragOver(
 
   blink::WebDragOperationsMask ops =
       static_cast<blink::WebDragOperationsMask>(allowed_ops);
-  int modifiers = TranslateModifiers(event.modifiers);
+  int modifiers = TranslateWebEventModifiers(event.modifiers);
 
   target_rwh->DragTargetDragOver(transformed_pt, gfx::PointF(screen_pt), ops,
                                  modifiers);
@@ -428,7 +437,7 @@ void CefBrowserPlatformDelegateOsr::DragTargetDrop(const CefMouseEvent& event) {
         static_cast<CefDragDataImpl*>(drag_data_.get());
     base::AutoLock lock_scope(data_impl->lock());
     content::DropData* drop_data = data_impl->drop_data();
-    int modifiers = TranslateModifiers(event.modifiers);
+    int modifiers = TranslateWebEventModifiers(event.modifiers);
 
     target_rwh->DragTargetDrop(*drop_data, transformed_pt,
                                gfx::PointF(screen_pt), modifiers);

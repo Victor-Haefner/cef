@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=cd1be1f8f3953f2660aa1540bf1610eaecb12f8b$
+// $hash=d9c0c0cbb9298c485ae33ebcd51449bcc9d2ad68$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_WAITABLE_EVENT_CPPTOC_H_
@@ -32,6 +32,7 @@ class CefWaitableEventCppToC
                                  cef_waitable_event_t> {
  public:
   CefWaitableEventCppToC();
+  virtual ~CefWaitableEventCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_WAITABLE_EVENT_CPPTOC_H_

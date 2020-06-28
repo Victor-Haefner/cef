@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,17 +9,20 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=90213620b8d50879f770c6d7b9712425bab6ccf3$
+// $hash=cb03f04718426ea7b69d19191eeb0a23e3b62829$
 //
 
 #include "libcef_dll/cpptoc/sslstatus_cpptoc.h"
 #include "libcef_dll/cpptoc/x509certificate_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 namespace {
 
 // MEMBER FUNCTIONS - Body may be edited by hand.
 
 int CEF_CALLBACK sslstatus_is_secure_connection(struct _cef_sslstatus_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -35,6 +38,8 @@ int CEF_CALLBACK sslstatus_is_secure_connection(struct _cef_sslstatus_t* self) {
 
 cef_cert_status_t CEF_CALLBACK
 sslstatus_get_cert_status(struct _cef_sslstatus_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -50,6 +55,8 @@ sslstatus_get_cert_status(struct _cef_sslstatus_t* self) {
 
 cef_ssl_version_t CEF_CALLBACK
 sslstatus_get_sslversion(struct _cef_sslstatus_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -65,6 +72,8 @@ sslstatus_get_sslversion(struct _cef_sslstatus_t* self) {
 
 cef_ssl_content_status_t CEF_CALLBACK
 sslstatus_get_content_status(struct _cef_sslstatus_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -81,6 +90,8 @@ sslstatus_get_content_status(struct _cef_sslstatus_t* self) {
 
 struct _cef_x509certificate_t* CEF_CALLBACK
 sslstatus_get_x509certificate(struct _cef_sslstatus_t* self) {
+  shutdown_checker::AssertNotShutdown();
+
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
   DCHECK(self);
@@ -107,20 +118,19 @@ CefSSLStatusCppToC::CefSSLStatusCppToC() {
   GetStruct()->get_x509certificate = sslstatus_get_x509certificate;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefSSLStatusCppToC::~CefSSLStatusCppToC() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 CefRefPtr<CefSSLStatus>
 CefCppToCRefCounted<CefSSLStatusCppToC, CefSSLStatus, cef_sslstatus_t>::
     UnwrapDerived(CefWrapperType type, cef_sslstatus_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCppToCRefCounted<CefSSLStatusCppToC, CefSSLStatus, cef_sslstatus_t>::
-        DebugObjCt ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefSSLStatusCppToC,

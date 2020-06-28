@@ -13,7 +13,7 @@
 #include "ui/views/widget/widget.h"
 #include "ui/views/window/native_frame_view.h"
 
-#if defined(OS_LINUX)
+#if defined(OS_LINUX) && defined(USE_X11)
 #include <X11/Xlib.h>
 #include "ui/gfx/x/x11_types.h"
 #endif
@@ -149,7 +149,7 @@ class CaptionlessFrameView : public views::NonClientFrameView {
     return HTCAPTION;
   }
 
-  void GetWindowMask(const gfx::Size& size, gfx::Path* window_mask) override {
+  void GetWindowMask(const gfx::Size& size, SkPath* window_mask) override {
     // Nothing to do here.
   }
 
@@ -250,6 +250,7 @@ void CefWindowView::CreateWidget() {
   views::Widget::InitParams params;
   params.delegate = this;
   params.type = views::Widget::InitParams::TYPE_WINDOW;
+  params.bounds = gfx::Rect(CalculatePreferredSize());
   bool can_activate = true;
 
   if (cef_delegate()) {
@@ -267,6 +268,10 @@ void CefWindowView::CreateWidget() {
       if (is_menu) {
         // Don't clip the window to parent bounds.
         params.type = views::Widget::InitParams::TYPE_MENU;
+
+        // Don't set "always on top" for the window.
+        params.z_order = ui::ZOrderLevel::kNormal;
+
         can_activate = can_activate_menu;
         if (can_activate_menu)
           params.activatable = views::Widget::InitParams::ACTIVATABLE_YES;
@@ -282,7 +287,7 @@ void CefWindowView::CreateWidget() {
   }
 #endif
 
-  widget->Init(params);
+  widget->Init(std::move(params));
 
   // |widget| should now be associated with |this|.
   DCHECK_EQ(widget, GetWidget());
@@ -294,7 +299,7 @@ void CefWindowView::CreateWidget() {
     DCHECK(widget->widget_delegate()->CanActivate());
   }
 
-#if defined(OS_LINUX)
+#if defined(OS_LINUX) && defined(USE_X11)
   if (is_frameless_) {
     ::Window window = view_util::GetWindowHandle(widget);
     DCHECK(window);
@@ -323,13 +328,13 @@ void CefWindowView::CreateWidget() {
     };
 
     Atom mwmHintsProperty = XInternAtom(display, "_MOTIF_WM_HINTS", 0);
-    struct MwmHints hints;
+    struct MwmHints hints = {};
     hints.flags = MWM_HINTS_DECORATIONS;
     hints.decorations = 0;
     XChangeProperty(display, window, mwmHintsProperty, mwmHintsProperty, 32,
                     PropModeReplace, (unsigned char*)&hints, 5);
   }
-#endif  // defined(OS_LINUX)
+#endif  // defined(OS_LINUX) && defined(USE_X11)
 }
 
 CefRefPtr<CefWindow> CefWindowView::GetCefWindow() const {
@@ -408,12 +413,10 @@ views::NonClientFrameView* CefWindowView::CreateNonClientFrameView(
     // DesktopNativeWidgetAura::CreateNonClientFrameView() returns
     // NativeFrameView by default. Extend that type.
     return new NativeFrameViewEx(widget, this);
-  } else {
-    // Widget::CreateNonClientFrameView() returns CustomFrameView by default.
-    // Need to extend CustomFrameView on this platform.
-    NOTREACHED() << "Platform does not use NativeFrameView";
   }
 
+  // Use Chromium provided CustomFrameView. In case if we would like to
+  // customize the frame, provide own implementation.
   return nullptr;
 }
 
@@ -461,7 +464,7 @@ bool CefWindowView::MaybeGetMaximumSize(gfx::Size* size) const {
 }
 
 void CefWindowView::ViewHierarchyChanged(
-    const views::View::ViewHierarchyChangedDetails& details) {
+    const views::ViewHierarchyChangedDetails& details) {
   if (details.child == this) {
     // This View's parent types (RootView, ClientView) are not exposed via the
     // CEF API. Therefore don't send notifications about this View's parent
@@ -518,8 +521,9 @@ void CefWindowView::SetDraggableRegions(
   draggable_region_.reset(new SkRegion);
   for (const CefDraggableRegion& region : regions) {
     draggable_region_->op(
-        region.bounds.x, region.bounds.y, region.bounds.x + region.bounds.width,
-        region.bounds.y + region.bounds.height,
+        {region.bounds.x, region.bounds.y,
+         region.bounds.x + region.bounds.width,
+         region.bounds.y + region.bounds.height},
         region.draggable ? SkRegion::kUnion_Op : SkRegion::kDifference_Op);
   }
 }

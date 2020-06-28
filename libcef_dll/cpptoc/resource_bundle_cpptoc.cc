@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=76fd150e3335695d6d1096d82975d5decaf67460$
+// $hash=ba0a12367019906d32dae965d7d1b5245d02b442$
 //
 
 #include "libcef_dll/cpptoc/resource_bundle_cpptoc.h"
@@ -137,6 +137,10 @@ CefResourceBundleCppToC::CefResourceBundleCppToC() {
       resource_bundle_get_data_resource_for_scale;
 }
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefResourceBundleCppToC::~CefResourceBundleCppToC() {}
+
 template <>
 CefRefPtr<CefResourceBundle> CefCppToCRefCounted<
     CefResourceBundleCppToC,
@@ -144,16 +148,8 @@ CefRefPtr<CefResourceBundle> CefCppToCRefCounted<
     cef_resource_bundle_t>::UnwrapDerived(CefWrapperType type,
                                           cef_resource_bundle_t* s) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCppToCRefCounted<CefResourceBundleCppToC,
-                                         CefResourceBundle,
-                                         cef_resource_bundle_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCppToCRefCounted<CefResourceBundleCppToC,

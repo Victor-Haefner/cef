@@ -7,6 +7,7 @@
 #include "libcef/browser/thread_util.h"
 
 #include "ui/gfx/canvas.h"
+#include "ui/views/controls/button/menu_button_controller.h"
 #include "ui/views/controls/menu/menu_config.h"
 
 namespace {
@@ -14,10 +15,10 @@ namespace {
 class ButtonPressedLock : public CefMenuButtonPressedLock {
  public:
   explicit ButtonPressedLock(views::MenuButton* menu_button)
-      : pressed_lock_(menu_button) {}
+      : pressed_lock_(menu_button->button_controller()) {}
 
  private:
-  views::MenuButton::PressedLock pressed_lock_;
+  views::MenuButtonController::PressedLock pressed_lock_;
 
   IMPLEMENT_REFCOUNTING_DELETE_ON_UIT(ButtonPressedLock);
   DISALLOW_COPY_AND_ASSIGN(ButtonPressedLock);
@@ -50,10 +51,10 @@ void CefMenuButtonView::SetDrawStringsFlags(int flags) {
   label()->SetDrawStringsFlags(flags);
 }
 
-void CefMenuButtonView::OnMenuButtonClicked(views::MenuButton* source,
-                                            const gfx::Point& point,
-                                            const ui::Event* event) {
-  cef_delegate()->OnMenuButtonPressed(GetCefMenuButton(),
-                                      CefPoint(point.x(), point.y()),
-                                      new ButtonPressedLock(source));
+void CefMenuButtonView::ButtonPressed(views::Button* source,
+                                      const ui::Event& event) {
+  auto position = source->GetMenuPosition();
+  cef_delegate()->OnMenuButtonPressed(
+      GetCefMenuButton(), CefPoint(position.x(), position.y()),
+      new ButtonPressedLock(static_cast<views::MenuButton*>(source)));
 }

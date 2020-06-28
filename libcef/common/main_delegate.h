@@ -16,6 +16,7 @@
 
 namespace base {
 class CommandLine;
+class MessageLoop;
 class Thread;
 }  // namespace base
 
@@ -25,13 +26,15 @@ class BrowserMainRunner;
 
 class CefContentBrowserClient;
 class CefContentRendererClient;
-class CefContentUtilityClient;
+class CefUIThread;
+class ChromeContentUtilityClient;
 
 class CefMainDelegate : public content::ContentMainDelegate {
  public:
   explicit CefMainDelegate(CefRefPtr<CefApp> application);
   ~CefMainDelegate() override;
 
+  void PreCreateMainMessageLoop() override;
   bool BasicStartupComplete(int* exit_code) override;
   void PreSandboxStartup() override;
   void SandboxInitialized(const std::string& process_type) override;
@@ -46,6 +49,8 @@ class CefMainDelegate : public content::ContentMainDelegate {
   content::ContentRendererClient* CreateContentRendererClient() override;
   content::ContentUtilityClient* CreateContentUtilityClient() override;
 
+  bool CreateUIThread(base::OnceClosure setup_callback);
+
   // Shut down the browser runner.
   void ShutdownBrowser();
 
@@ -56,11 +61,11 @@ class CefMainDelegate : public content::ContentMainDelegate {
   void InitializeResourceBundle();
 
   std::unique_ptr<content::BrowserMainRunner> browser_runner_;
-  std::unique_ptr<base::Thread> ui_thread_;
+  std::unique_ptr<CefUIThread> ui_thread_;
 
   std::unique_ptr<CefContentBrowserClient> browser_client_;
   std::unique_ptr<CefContentRendererClient> renderer_client_;
-  std::unique_ptr<CefContentUtilityClient> utility_client_;
+  std::unique_ptr<ChromeContentUtilityClient> utility_client_;
   CefContentClient content_client_;
 
   DISALLOW_COPY_AND_ASSIGN(CefMainDelegate);

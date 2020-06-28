@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=969d3fc910749941d45de67f9fd45cb112934186$
+// $hash=4f6f41aa30704aeb2d3dbb6b54d430ea3392bf29$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_CONTEXT_MENU_PARAMS_CTOCPP_H_
@@ -33,6 +33,7 @@ class CefContextMenuParamsCToCpp
                                  cef_context_menu_params_t> {
  public:
   CefContextMenuParamsCToCpp();
+  virtual ~CefContextMenuParamsCToCpp();
 
   // CefContextMenuParams methods.
   int GetXCoord() OVERRIDE;

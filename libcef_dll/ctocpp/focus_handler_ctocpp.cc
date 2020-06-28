@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,17 +9,20 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=18801168856dec585bbc6151fe8817689113ad20$
+// $hash=14a73b2c762047ce55f3e40837050b5f5e950bac$
 //
 
 #include "libcef_dll/ctocpp/focus_handler_ctocpp.h"
 #include "libcef_dll/cpptoc/browser_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
 NO_SANITIZE("cfi-icall")
 void CefFocusHandlerCToCpp::OnTakeFocus(CefRefPtr<CefBrowser> browser,
                                         bool next) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_focus_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_take_focus))
     return;
@@ -38,6 +41,8 @@ void CefFocusHandlerCToCpp::OnTakeFocus(CefRefPtr<CefBrowser> browser,
 NO_SANITIZE("cfi-icall")
 bool CefFocusHandlerCToCpp::OnSetFocus(CefRefPtr<CefBrowser> browser,
                                        FocusSource source) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_focus_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_set_focus))
     return false;
@@ -59,6 +64,8 @@ bool CefFocusHandlerCToCpp::OnSetFocus(CefRefPtr<CefBrowser> browser,
 
 NO_SANITIZE("cfi-icall")
 void CefFocusHandlerCToCpp::OnGotFocus(CefRefPtr<CefBrowser> browser) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_focus_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_got_focus))
     return;
@@ -78,6 +85,12 @@ void CefFocusHandlerCToCpp::OnGotFocus(CefRefPtr<CefBrowser> browser) {
 
 CefFocusHandlerCToCpp::CefFocusHandlerCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefFocusHandlerCToCpp::~CefFocusHandlerCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_focus_handler_t*
 CefCToCppRefCounted<CefFocusHandlerCToCpp,
@@ -85,16 +98,8 @@ CefCToCppRefCounted<CefFocusHandlerCToCpp,
                     cef_focus_handler_t>::UnwrapDerived(CefWrapperType type,
                                                         CefFocusHandler* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefFocusHandlerCToCpp,
-                                         CefFocusHandler,
-                                         cef_focus_handler_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefFocusHandlerCToCpp,

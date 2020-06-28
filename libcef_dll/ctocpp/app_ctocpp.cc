@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=4eae7e6a1575c4ca6b59433049de3f1d7db747d7$
+// $hash=4f70dc8d5391cb5254f038ec2b3b56804b447087$
 //
 
 #include "libcef_dll/ctocpp/app_ctocpp.h"
@@ -69,7 +69,7 @@ NO_SANITIZE("cfi-icall")
 CefRefPtr<CefResourceBundleHandler> CefAppCToCpp::GetResourceBundleHandler() {
   cef_app_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_resource_bundle_handler))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -85,7 +85,7 @@ NO_SANITIZE("cfi-icall")
 CefRefPtr<CefBrowserProcessHandler> CefAppCToCpp::GetBrowserProcessHandler() {
   cef_app_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_browser_process_handler))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -101,7 +101,7 @@ NO_SANITIZE("cfi-icall")
 CefRefPtr<CefRenderProcessHandler> CefAppCToCpp::GetRenderProcessHandler() {
   cef_app_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, get_render_process_handler))
-    return NULL;
+    return nullptr;
 
   // AUTO-GENERATED CONTENT - DELETE THIS COMMENT BEFORE MODIFYING
 
@@ -117,20 +117,17 @@ CefRefPtr<CefRenderProcessHandler> CefAppCToCpp::GetRenderProcessHandler() {
 
 CefAppCToCpp::CefAppCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefAppCToCpp::~CefAppCToCpp() {}
+
 template <>
 cef_app_t* CefCToCppRefCounted<CefAppCToCpp, CefApp, cef_app_t>::UnwrapDerived(
     CefWrapperType type,
     CefApp* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount
-    CefCToCppRefCounted<CefAppCToCpp, CefApp, cef_app_t>::DebugObjCt
-        ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType

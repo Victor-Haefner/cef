@@ -27,6 +27,7 @@ bool CefParseURL(const CefString& url, CefURLParts& parts) {
   CefString(&parts.port).FromString(gurl.port());
   CefString(&parts.path).FromString(gurl.path());
   CefString(&parts.query).FromString(gurl.query());
+  CefString(&parts.fragment).FromString(gurl.ref());
 
   return true;
 }
@@ -42,6 +43,8 @@ bool CefCreateURL(const CefURLParts& parts, CefString& url) {
   std::string port = CefString(parts.port.str, parts.port.length, false);
   std::string path = CefString(parts.path.str, parts.path.length, false);
   std::string query = CefString(parts.query.str, parts.query.length, false);
+  std::string fragment =
+      CefString(parts.fragment.str, parts.fragment.length, false);
 
   GURL gurl;
   if (!spec.empty()) {
@@ -62,6 +65,8 @@ bool CefCreateURL(const CefURLParts& parts, CefString& url) {
       ss << path;
     if (!query.empty())
       ss << "?" << query;
+    if (!fragment.empty())
+      ss << "#" << fragment;
     gurl = GURL(ss.str());
   }
 
@@ -102,8 +107,7 @@ CefString CefBase64Encode(const void* data, size_t data_size) {
   if (data_size == 0)
     return CefString();
 
-  base::StringPiece input;
-  input.set(static_cast<const char*>(data), data_size);
+  base::StringPiece input(static_cast<const char*>(data), data_size);
   std::string output;
   base::Base64Encode(input, &output);
   return output;
@@ -111,13 +115,13 @@ CefString CefBase64Encode(const void* data, size_t data_size) {
 
 CefRefPtr<CefBinaryValue> CefBase64Decode(const CefString& data) {
   if (data.size() == 0)
-    return NULL;
+    return nullptr;
 
   const std::string& input = data;
   std::string output;
   if (base::Base64Decode(input, &output))
     return CefBinaryValue::Create(output.data(), output.size());
-  return NULL;
+  return nullptr;
 }
 
 CefString CefURIEncode(const CefString& text, bool use_plus) {
@@ -130,7 +134,8 @@ CefString CefURIDecode(const CefString& text,
   const net::UnescapeRule::Type type =
       static_cast<net::UnescapeRule::Type>(unescape_rule);
   if (convert_to_utf8)
-    return net::UnescapeAndDecodeUTF8URLComponent(text.ToString(), type);
+    return net::UnescapeAndDecodeUTF8URLComponentWithAdjustments(
+        text.ToString(), type, nullptr);
   else
     return net::UnescapeURLComponent(text.ToString(), type);
 }

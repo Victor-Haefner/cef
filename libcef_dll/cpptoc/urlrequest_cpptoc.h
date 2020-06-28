@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=4ac16685c58362697a07a6f3b46e31e517b6bc00$
+// $hash=0cb270bce0e74831fb24a5aafbde34e460464e63$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_URLREQUEST_CPPTOC_H_
@@ -31,6 +31,7 @@ class CefURLRequestCppToC : public CefCppToCRefCounted<CefURLRequestCppToC,
                                                        cef_urlrequest_t> {
  public:
   CefURLRequestCppToC();
+  virtual ~CefURLRequestCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_URLREQUEST_CPPTOC_H_

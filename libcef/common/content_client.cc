@@ -9,7 +9,6 @@
 
 #include "include/cef_stream.h"
 #include "include/cef_version.h"
-#include "libcef/browser/content_browser_client.h"
 #include "libcef/browser/extensions/pdf_extension_util.h"
 #include "libcef/common/cef_switches.h"
 #include "libcef/common/extensions/extensions_util.h"
@@ -30,11 +29,13 @@
 #include "chrome/common/chrome_paths.h"
 #include "chrome/common/chrome_switches.h"
 #include "chrome/common/pepper_flash.h"
+#include "content/public/browser/child_process_security_policy.h"
 #include "content/public/common/content_constants.h"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/pepper_plugin_info.h"
-#include "content/public/common/user_agent.h"
 #include "ppapi/shared_impl/ppapi_permissions.h"
+#include "third_party/widevine/cdm/buildflags.h"
+#include "ui/base/l10n/l10n_util.h"
 #include "ui/base/resource/resource_bundle.h"
 
 #if defined(OS_LINUX)
@@ -43,7 +44,7 @@
 
 namespace {
 
-CefContentClient* g_content_client = NULL;
+CefContentClient* g_content_client = nullptr;
 
 // The following plugin-related methods are from
 // chrome/common/chrome_content_client.cc
@@ -161,11 +162,13 @@ bool GetSystemPepperFlash(content::PepperPluginInfo* plugin) {
   std::string manifest_data;
   if (!base::ReadFileToString(manifest_path, &manifest_data))
     return false;
-  std::unique_ptr<base::Value> manifest_value(
-      base::JSONReader::Read(manifest_data, base::JSON_ALLOW_TRAILING_COMMAS));
+  std::unique_ptr<base::Value> manifest_value(base::Value::ToUniquePtrValue(
+      std::move(base::JSONReader::Read(manifest_data,
+                                       base::JSON_ALLOW_TRAILING_COMMAS)
+                    .value())));
   if (!manifest_value.get())
     return false;
-  base::DictionaryValue* manifest = NULL;
+  base::DictionaryValue* manifest = nullptr;
   if (!manifest_value->GetAsDictionary(&manifest))
     return false;
 
@@ -185,13 +188,14 @@ CefContentClient::CefContentClient(CefRefPtr<CefApp> application)
     : application_(application),
       pack_loading_disabled_(false),
       allow_pack_file_load_(false),
-      scheme_info_list_locked_(false) {
+      scheme_info_list_locked_(false),
+      resource_bundle_delegate_(this) {
   DCHECK(!g_content_client);
   g_content_client = this;
 }
 
 CefContentClient::~CefContentClient() {
-  g_content_client = NULL;
+  g_content_client = nullptr;
 }
 
 // static
@@ -213,7 +217,7 @@ void CefContentClient::AddContentDecryptionModules(
     std::vector<content::CdmInfo>* cdms,
     std::vector<media::CdmHostFilePath>* cdm_host_file_paths) {
 #if defined(OS_LINUX)
-#if defined(WIDEVINE_CDM_AVAILABLE) && BUILDFLAG(ENABLE_LIBRARY_CDMS)
+#if BUILDFLAG(ENABLE_WIDEVINE) && BUILDFLAG(ENABLE_LIBRARY_CDMS)
   CefWidevineLoader::AddContentDecryptionModules(cdms, cdm_host_file_paths);
 #endif
 #endif
@@ -233,31 +237,7 @@ void CefContentClient::AddAdditionalSchemes(Schemes* schemes) {
   scheme_info_list_locked_ = true;
 }
 
-std::string CefContentClient::GetProduct() const {
-  const base::CommandLine* command_line =
-      base::CommandLine::ForCurrentProcess();
-  if (command_line->HasSwitch(switches::kProductVersion))
-    return command_line->GetSwitchValueASCII(switches::kProductVersion);
-
-  return GetChromeProduct();
-}
-
-std::string CefContentClient::GetChromeProduct() const {
-  return base::StringPrintf("Chrome/%d.%d.%d.%d", CHROME_VERSION_MAJOR,
-                            CHROME_VERSION_MINOR, CHROME_VERSION_BUILD,
-                            CHROME_VERSION_PATCH);
-}
-
-std::string CefContentClient::GetUserAgent() const {
-  const base::CommandLine* command_line =
-      base::CommandLine::ForCurrentProcess();
-  if (command_line->HasSwitch(switches::kUserAgent))
-    return command_line->GetSwitchValueASCII(switches::kUserAgent);
-
-  return content::BuildUserAgentFromProduct(GetProduct());
-}
-
-base::string16 CefContentClient::GetLocalizedString(int message_id) const {
+base::string16 CefContentClient::GetLocalizedString(int message_id) {
   base::string16 value =
       ui::ResourceBundle::GetSharedInstance().GetLocalizedString(message_id);
   if (value.empty())
@@ -266,9 +246,19 @@ base::string16 CefContentClient::GetLocalizedString(int message_id) const {
   return value;
 }
 
+base::string16 CefContentClient::GetLocalizedString(
+    int message_id,
+    const base::string16& replacement) {
+  base::string16 value = l10n_util::GetStringFUTF16(message_id, replacement);
+  if (value.empty())
+    LOG(ERROR) << "No localized string available for id " << message_id;
+
+  return value;
+}
+
 base::StringPiece CefContentClient::GetDataResource(
     int resource_id,
-    ui::ScaleFactor scale_factor) const {
+    ui::ScaleFactor scale_factor) {
   base::StringPiece value =
       ui::ResourceBundle::GetSharedInstance().GetRawDataResourceForScale(
           resource_id, scale_factor);
@@ -279,7 +269,7 @@ base::StringPiece CefContentClient::GetDataResource(
 }
 
 base::RefCountedMemory* CefContentClient::GetDataResourceBytes(
-    int resource_id) const {
+    int resource_id) {
   base::RefCountedMemory* value =
       ui::ResourceBundle::GetSharedInstance().LoadDataResourceBytes(
           resource_id);
@@ -289,7 +279,7 @@ base::RefCountedMemory* CefContentClient::GetDataResourceBytes(
   return value;
 }
 
-gfx::Image& CefContentClient::GetNativeImageNamed(int resource_id) const {
+gfx::Image& CefContentClient::GetNativeImageNamed(int resource_id) {
   gfx::Image& value =
       ui::ResourceBundle::GetSharedInstance().GetNativeImageNamed(resource_id);
   if (value.IsEmpty())
@@ -302,9 +292,15 @@ void CefContentClient::AddCustomScheme(const SchemeInfo& scheme_info) {
   DCHECK(!scheme_info_list_locked_);
   scheme_info_list_.push_back(scheme_info);
 
-  if (CefContentBrowserClient::Get()) {
-    CefContentBrowserClient::Get()->RegisterCustomScheme(
-        scheme_info.scheme_name);
+  base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
+  if (!command_line->HasSwitch(switches::kProcessType)) {
+    // Register as a Web-safe scheme in the browser process so that requests for
+    // the scheme from a render process will be allowed in
+    // resource_dispatcher_host_impl.cc ShouldServiceRequest.
+    content::ChildProcessSecurityPolicy* policy =
+        content::ChildProcessSecurityPolicy::GetInstance();
+    if (!policy->IsWebSafeScheme(scheme_info.scheme_name))
+      policy->RegisterWebSafeScheme(scheme_info.scheme_name);
   }
 }
 
@@ -335,74 +331,4 @@ void CefContentClient::SetPDFEntryFunctions(
   g_pdf_get_interface = get_interface;
   g_pdf_initialize_module = initialize_module;
   g_pdf_shutdown_module = shutdown_module;
-}
-
-base::FilePath CefContentClient::GetPathForResourcePack(
-    const base::FilePath& pack_path,
-    ui::ScaleFactor scale_factor) {
-  // Only allow the cef pack file to load.
-  if (!pack_loading_disabled_ && allow_pack_file_load_)
-    return pack_path;
-  return base::FilePath();
-}
-
-base::FilePath CefContentClient::GetPathForLocalePack(
-    const base::FilePath& pack_path,
-    const std::string& locale) {
-  if (!pack_loading_disabled_)
-    return pack_path;
-  return base::FilePath();
-}
-
-gfx::Image CefContentClient::GetImageNamed(int resource_id) {
-  return gfx::Image();
-}
-
-gfx::Image CefContentClient::GetNativeImageNamed(int resource_id) {
-  return gfx::Image();
-}
-
-base::RefCountedStaticMemory* CefContentClient::LoadDataResourceBytes(
-    int resource_id,
-    ui::ScaleFactor scale_factor) {
-  return NULL;
-}
-
-bool CefContentClient::GetRawDataResource(int resource_id,
-                                          ui::ScaleFactor scale_factor,
-                                          base::StringPiece* value) {
-  if (application_.get()) {
-    CefRefPtr<CefResourceBundleHandler> handler =
-        application_->GetResourceBundleHandler();
-    if (handler.get()) {
-      void* data = NULL;
-      size_t data_size = 0;
-      if (scale_factor != ui::SCALE_FACTOR_NONE) {
-        if (handler->GetDataResourceForScale(
-                resource_id, static_cast<cef_scale_factor_t>(scale_factor),
-                data, data_size)) {
-          *value = base::StringPiece(static_cast<char*>(data), data_size);
-        }
-      } else if (handler->GetDataResource(resource_id, data, data_size)) {
-        *value = base::StringPiece(static_cast<char*>(data), data_size);
-      }
-    }
-  }
-
-  return (pack_loading_disabled_ || !value->empty());
-}
-
-bool CefContentClient::GetLocalizedString(int message_id,
-                                          base::string16* value) {
-  if (application_.get()) {
-    CefRefPtr<CefResourceBundleHandler> handler =
-        application_->GetResourceBundleHandler();
-    if (handler.get()) {
-      CefString cef_str;
-      if (handler->GetLocalizedString(message_id, cef_str))
-        *value = cef_str;
-    }
-  }
-
-  return (pack_loading_disabled_ || !value->empty());
 }

@@ -4,7 +4,7 @@
 
 #include "libcef/common/widevine_loader.h"
 
-#if defined(WIDEVINE_CDM_AVAILABLE) && BUILDFLAG(ENABLE_LIBRARY_CDMS)
+#if BUILDFLAG(ENABLE_WIDEVINE) && BUILDFLAG(ENABLE_LIBRARY_CDMS)
 
 #include "libcef/browser/context.h"
 #include "libcef/browser/thread_util.h"
@@ -27,6 +27,7 @@
 #include "media/cdm/supported_cdm_versions.h"
 #include "services/service_manager/embedder/switches.h"
 #include "services/service_manager/sandbox/switches.h"
+#include "third_party/widevine/cdm/widevine_cdm_common.h"  // nogncheck
 
 namespace {
 
@@ -119,7 +120,8 @@ std::unique_ptr<base::DictionaryValue> ParseManifestFile(
   }
 
   JSONStringValueDeserializer deserializer(manifest_contents);
-  std::unique_ptr<base::Value> manifest(deserializer.Deserialize(NULL, NULL));
+  std::unique_ptr<base::Value> manifest(
+      deserializer.Deserialize(nullptr, nullptr));
 
   if (!manifest.get() || !manifest->is_dict())
     return nullptr;
@@ -249,7 +251,7 @@ bool GetCodecs(const base::DictionaryValue& manifest,
 // fail. Unrecognized values will be reported but otherwise ignored.
 bool GetEncryptionSchemes(
     const base::DictionaryValue& manifest,
-    base::flat_set<media::EncryptionMode>* encryption_schemes,
+    base::flat_set<media::EncryptionScheme>* encryption_schemes,
     std::string* error_message) {
   DCHECK(encryption_schemes);
 
@@ -258,7 +260,7 @@ bool GetEncryptionSchemes(
   if (!value) {
     // No manifest entry found, so assume only 'cenc' supported for backwards
     // compatibility.
-    encryption_schemes->insert(media::EncryptionMode::kCenc);
+    encryption_schemes->insert(media::EncryptionScheme::kCenc);
     return true;
   }
 
@@ -270,8 +272,8 @@ bool GetEncryptionSchemes(
     return false;
   }
 
-  const base::Value::ListStorage& list = value->GetList();
-  base::flat_set<media::EncryptionMode> result;
+  const base::span<const base::Value> list = value->GetList();
+  base::flat_set<media::EncryptionScheme> result;
   for (const auto& item : list) {
     if (!item.is_string()) {
       std::stringstream ss;
@@ -283,9 +285,9 @@ bool GetEncryptionSchemes(
 
     const std::string& scheme = item.GetString();
     if (scheme == kCdmSupportedEncryptionSchemeCenc) {
-      result.insert(media::EncryptionMode::kCenc);
+      result.insert(media::EncryptionScheme::kCenc);
     } else if (scheme == kCdmSupportedEncryptionSchemeCbcs) {
-      result.insert(media::EncryptionMode::kCbcs);
+      result.insert(media::EncryptionScheme::kCbcs);
     } else {
       std::stringstream ss;
       ss << "Unrecognized encryption scheme " << scheme << " in manifest entry "
@@ -415,14 +417,14 @@ void LoadWidevineCdmInfoOnBlockingThread(
   cef_cdm_registration_error_t result =
       LoadWidevineCdmInfo(base_path, args.get(), &error_message);
   if (result != CEF_CDM_REGISTRATION_ERROR_NONE) {
-    CEF_POST_TASK(CEF_UIT, base::Bind(DeliverWidevineCdmCallback, result,
-                                      error_message, callback));
+    CEF_POST_TASK(CEF_UIT, base::BindOnce(DeliverWidevineCdmCallback, result,
+                                          error_message, callback));
     return;
   }
 
   // Continue execution on the UI thread.
-  CEF_POST_TASK(CEF_UIT, base::Bind(RegisterWidevineCdmOnUIThread,
-                                    base::Passed(std::move(args)), callback));
+  CEF_POST_TASK(CEF_UIT, base::BindOnce(RegisterWidevineCdmOnUIThread,
+                                        std::move(args), callback));
 }
 
 }  // namespace
@@ -444,7 +446,7 @@ void CefWidevineLoader::LoadWidevineCdm(
   }
 
   CEF_POST_USER_VISIBLE_TASK(
-      base::Bind(LoadWidevineCdmInfoOnBlockingThread, path, callback));
+      base::BindOnce(LoadWidevineCdmInfoOnBlockingThread, path, callback));
 }
 
 void CefWidevineLoader::OnContextInitialized() {
@@ -502,4 +504,4 @@ CefWidevineLoader::CefWidevineLoader() {}
 
 CefWidevineLoader::~CefWidevineLoader() {}
 
-#endif  // defined(WIDEVINE_CDM_AVAILABLE) && BUILDFLAG(ENABLE_LIBRARY_CDMS)
+#endif  // BUILDFLAG(ENABLE_WIDEVINE) && BUILDFLAG(ENABLE_LIBRARY_CDMS)

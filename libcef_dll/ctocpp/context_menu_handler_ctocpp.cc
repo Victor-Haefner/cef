@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=24773b11214ee3ee5b5a1772f515c292bfaf5485$
+// $hash=d0eec19bee7cbc38c676ef6ca936483cc93bb7fc$
 //
 
 #include "libcef_dll/ctocpp/context_menu_handler_ctocpp.h"
@@ -18,6 +18,7 @@
 #include "libcef_dll/cpptoc/frame_cpptoc.h"
 #include "libcef_dll/cpptoc/menu_model_cpptoc.h"
 #include "libcef_dll/cpptoc/run_context_menu_callback_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
@@ -27,6 +28,8 @@ void CefContextMenuHandlerCToCpp::OnBeforeContextMenu(
     CefRefPtr<CefFrame> frame,
     CefRefPtr<CefContextMenuParams> params,
     CefRefPtr<CefMenuModel> model) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_context_menu_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_before_context_menu))
     return;
@@ -64,6 +67,8 @@ bool CefContextMenuHandlerCToCpp::RunContextMenu(
     CefRefPtr<CefContextMenuParams> params,
     CefRefPtr<CefMenuModel> model,
     CefRefPtr<CefRunContextMenuCallback> callback) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_context_menu_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, run_context_menu))
     return false;
@@ -108,6 +113,8 @@ bool CefContextMenuHandlerCToCpp::OnContextMenuCommand(
     CefRefPtr<CefContextMenuParams> params,
     int command_id,
     EventFlags event_flags) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_context_menu_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_context_menu_command))
     return false;
@@ -140,6 +147,8 @@ NO_SANITIZE("cfi-icall")
 void CefContextMenuHandlerCToCpp::OnContextMenuDismissed(
     CefRefPtr<CefBrowser> browser,
     CefRefPtr<CefFrame> frame) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_context_menu_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_context_menu_dismissed))
     return;
@@ -164,6 +173,12 @@ void CefContextMenuHandlerCToCpp::OnContextMenuDismissed(
 
 CefContextMenuHandlerCToCpp::CefContextMenuHandlerCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefContextMenuHandlerCToCpp::~CefContextMenuHandlerCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_context_menu_handler_t* CefCToCppRefCounted<
     CefContextMenuHandlerCToCpp,
@@ -171,16 +186,8 @@ cef_context_menu_handler_t* CefCToCppRefCounted<
     cef_context_menu_handler_t>::UnwrapDerived(CefWrapperType type,
                                                CefContextMenuHandler* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefContextMenuHandlerCToCpp,
-                                         CefContextMenuHandler,
-                                         cef_context_menu_handler_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefContextMenuHandlerCToCpp,

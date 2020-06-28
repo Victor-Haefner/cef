@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=edc9c069d5c2f1402225d566d8108c78b446605b$
+// $hash=667fe6d2620ca95df5e503f6332cf3e2342032ff$
 //
 
 #include "libcef_dll/ctocpp/download_handler_ctocpp.h"
@@ -17,6 +17,7 @@
 #include "libcef_dll/cpptoc/browser_cpptoc.h"
 #include "libcef_dll/cpptoc/download_item_callback_cpptoc.h"
 #include "libcef_dll/cpptoc/download_item_cpptoc.h"
+#include "libcef_dll/shutdown_checker.h"
 
 // VIRTUAL METHODS - Body may be edited by hand.
 
@@ -26,6 +27,8 @@ void CefDownloadHandlerCToCpp::OnBeforeDownload(
     CefRefPtr<CefDownloadItem> download_item,
     const CefString& suggested_name,
     CefRefPtr<CefBeforeDownloadCallback> callback) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_download_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_before_download))
     return;
@@ -61,6 +64,8 @@ void CefDownloadHandlerCToCpp::OnDownloadUpdated(
     CefRefPtr<CefBrowser> browser,
     CefRefPtr<CefDownloadItem> download_item,
     CefRefPtr<CefDownloadItemCallback> callback) {
+  shutdown_checker::AssertNotShutdown();
+
   cef_download_handler_t* _struct = GetStruct();
   if (CEF_MEMBER_MISSING(_struct, on_download_updated))
     return;
@@ -90,6 +95,12 @@ void CefDownloadHandlerCToCpp::OnDownloadUpdated(
 
 CefDownloadHandlerCToCpp::CefDownloadHandlerCToCpp() {}
 
+// DESTRUCTOR - Do not edit by hand.
+
+CefDownloadHandlerCToCpp::~CefDownloadHandlerCToCpp() {
+  shutdown_checker::AssertNotShutdown();
+}
+
 template <>
 cef_download_handler_t* CefCToCppRefCounted<
     CefDownloadHandlerCToCpp,
@@ -97,16 +108,8 @@ cef_download_handler_t* CefCToCppRefCounted<
     cef_download_handler_t>::UnwrapDerived(CefWrapperType type,
                                            CefDownloadHandler* c) {
   NOTREACHED() << "Unexpected class type: " << type;
-  return NULL;
+  return nullptr;
 }
-
-#if DCHECK_IS_ON()
-template <>
-base::AtomicRefCount CefCToCppRefCounted<CefDownloadHandlerCToCpp,
-                                         CefDownloadHandler,
-                                         cef_download_handler_t>::DebugObjCt
-    ATOMIC_DECLARATION;
-#endif
 
 template <>
 CefWrapperType CefCToCppRefCounted<CefDownloadHandlerCToCpp,

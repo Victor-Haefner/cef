@@ -9,17 +9,15 @@
 
 #include "base/files/file_util.h"
 #include "base/logging.h"
-#include "base/threading/thread_restrictions.h"
-#include "net/cert/crl_set.h"
-#include "net/ssl/ssl_config_service.h"
+#include "content/public/browser/network_service_instance.h"
+#include "services/network/network_service.h"
 
 namespace {
 
-// Based on chrome/browser/net/crl_set_fetcher.cc.
-
-void SetCRLSetIfNewer(scoped_refptr<net::CRLSet> crl_set) {
-  CEF_REQUIRE_IOT();
-  net::SSLConfigService::SetCRLSetIfNewer(crl_set);
+void UpdateCRLSet(const std::string& crl_set_bytes) {
+  CEF_REQUIRE_UIT();
+  content::GetNetworkService()->UpdateCRLSet(
+      base::as_bytes(base::make_span(crl_set_bytes)), base::DoNothing());
 }
 
 void LoadFromDisk(const base::FilePath& path) {
@@ -31,14 +29,9 @@ void LoadFromDisk(const base::FilePath& path) {
     return;
   }
 
-  scoped_refptr<net::CRLSet> crl_set;
-  if (!net::CRLSet::Parse(crl_set_bytes, &crl_set)) {
-    LOG(WARNING) << "Failed to parse CRL set from " << path.MaybeAsASCII();
-    return;
-  }
-
-  VLOG(1) << "Loaded " << crl_set_bytes.size() << " bytes of CRL set from disk";
-  CEF_POST_TASK(CEF_IOT, base::BindOnce(&SetCRLSetIfNewer, crl_set));
+  VLOG(1) << "Loading " << crl_set_bytes.size()
+          << " bytes of CRL set from disk";
+  CEF_POST_TASK(CEF_UIT, base::BindOnce(&UpdateCRLSet, crl_set_bytes));
 }
 
 }  // namespace

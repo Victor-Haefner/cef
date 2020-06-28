@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=ca60a81bdcaf1ccc995d002a15f9d352a6916329$
+// $hash=1e8cc9fc4bad94fa2d42eb1fef1e5445f59c1033$
 //
 
 #ifndef CEF_LIBCEF_DLL_CPPTOC_STREAM_WRITER_CPPTOC_H_
@@ -31,6 +31,7 @@ class CefStreamWriterCppToC : public CefCppToCRefCounted<CefStreamWriterCppToC,
                                                          cef_stream_writer_t> {
  public:
   CefStreamWriterCppToC();
+  virtual ~CefStreamWriterCppToC();
 };
 
 #endif  // CEF_LIBCEF_DLL_CPPTOC_STREAM_WRITER_CPPTOC_H_

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=c3cba0bb48cac1b56ddebe47e4ce92ce6417b37c$
+// $hash=d07e79689f98b41fd7a0fb8c45dcae12a945cfe4$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_BROWSER_PROCESS_HANDLER_CTOCPP_H_
@@ -32,6 +32,7 @@ class CefBrowserProcessHandlerCToCpp
                                  cef_browser_process_handler_t> {
  public:
   CefBrowserProcessHandlerCToCpp();
+  virtual ~CefBrowserProcessHandlerCToCpp();
 
   // CefBrowserProcessHandler methods.
   void OnContextInitialized() override;

@@ -6,7 +6,6 @@
 #define CEF_LIBCEF_DLL_CTOCPP_CTOCPP_REF_COUNTED_H_
 #pragma once
 
-#include "include/base/cef_atomic_ref_count.h"
 #include "include/base/cef_logging.h"
 #include "include/base/cef_macros.h"
 #include "include/capi/cef_base_capi.h"
@@ -35,24 +34,11 @@ class CefCToCppRefCounted : public BaseName {
   }
   bool Release() const;
   bool HasOneRef() const { return UnderlyingHasOneRef(); }
-
-#if DCHECK_IS_ON()
-  // Simple tracking of allocated objects.
-  static base::AtomicRefCount DebugObjCt;
-#endif
+  bool HasAtLeastOneRef() const { return UnderlyingHasAtLeastOneRef(); }
 
  protected:
-  CefCToCppRefCounted() {
-#if DCHECK_IS_ON()
-    base::AtomicRefCountInc(&DebugObjCt);
-#endif
-  }
-
-  virtual ~CefCToCppRefCounted() {
-#if DCHECK_IS_ON()
-    base::AtomicRefCountDec(&DebugObjCt);
-#endif
-  }
+  CefCToCppRefCounted() {}
+  virtual ~CefCToCppRefCounted() {}
 
   // If returning the structure across the DLL boundary use Unwrap() instead.
   StructName* GetStruct() const {
@@ -99,6 +85,15 @@ class CefCToCppRefCounted : public BaseName {
     return base->has_one_ref(base) ? true : false;
   }
 
+  NO_SANITIZE("cfi-icall")
+  bool UnderlyingHasAtLeastOneRef() const {
+    cef_base_ref_counted_t* base =
+        reinterpret_cast<cef_base_ref_counted_t*>(GetStruct());
+    if (!base->has_one_ref)
+      return false;
+    return base->has_at_least_one_ref(base) ? true : false;
+  }
+
   CefRefCount ref_count_;
 
   static CefWrapperType kWrapperType;
@@ -117,7 +112,7 @@ template <class ClassName, class BaseName, class StructName>
 CefRefPtr<BaseName> CefCToCppRefCounted<ClassName, BaseName, StructName>::Wrap(
     StructName* s) {
   if (!s)
-    return NULL;
+    return nullptr;
 
   // Wrap their structure with the CefCToCppRefCounted object.
   WrapperStruct* wrapperStruct = new WrapperStruct;
@@ -137,7 +132,7 @@ template <class ClassName, class BaseName, class StructName>
 StructName* CefCToCppRefCounted<ClassName, BaseName, StructName>::Unwrap(
     CefRefPtr<BaseName> c) {
   if (!c.get())
-    return NULL;
+    return nullptr;
 
   WrapperStruct* wrapperStruct = GetWrapperStruct(c.get());
 

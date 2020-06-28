@@ -6,8 +6,8 @@
 #include "libcef/common/extensions/extensions_util.h"
 
 #include "chrome/browser/content_settings/cookie_settings_factory.h"
-#include "chrome/browser/extensions/api/streams_private/streams_private_api.h"
 #include "chrome/browser/plugins/plugin_prefs_factory.h"
+#include "chrome/browser/profiles/renderer_updater_factory.h"
 #include "chrome/browser/spellchecker/spellcheck_factory.h"
 #include "chrome/browser/themes/theme_service_factory.h"
 #include "chrome/browser/ui/prefs/prefs_tab_helper.h"
@@ -21,6 +21,7 @@ void EnsureBrowserContextKeyedServiceFactoriesBuilt() {
   CookieSettingsFactory::GetInstance();
   PluginPrefsFactory::GetInstance();
   PrefsTabHelper::GetServiceInstance();
+  RendererUpdaterFactory::GetInstance();
   SpellcheckServiceFactory::GetInstance();
   ThemeServiceFactory::GetInstance();
 
@@ -28,7 +29,6 @@ void EnsureBrowserContextKeyedServiceFactoriesBuilt() {
     extensions::AlarmManager::GetFactoryInstance();
     extensions::RendererStartupHelperFactory::GetInstance();
     extensions::StorageFrontend::GetFactoryInstance();
-    extensions::StreamsPrivateAPI::GetFactoryInstance();
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Chromium Embedded Framework Authors. All rights
+// Copyright (c) 2020 The Chromium Embedded Framework Authors. All rights
 // reserved. Use of this source code is governed by a BSD-style license that
 // can be found in the LICENSE file.
 //
@@ -9,7 +9,7 @@
 // implementations. See the translator.README.txt file in the tools directory
 // for more information.
 //
-// $hash=0a8c13f4edfdcc40560eee18301f158f488b6f49$
+// $hash=22460d6f937eddf1ec07dcea2325bba205101d47$
 //
 
 #ifndef CEF_LIBCEF_DLL_CTOCPP_LOAD_HANDLER_CTOCPP_H_
@@ -31,6 +31,7 @@ class CefLoadHandlerCToCpp : public CefCToCppRefCounted<CefLoadHandlerCToCpp,
                                                         cef_load_handler_t> {
  public:
   CefLoadHandlerCToCpp();
+  virtual ~CefLoadHandlerCToCpp();
 
   // CefLoadHandler methods.
   void OnLoadingStateChange(CefRefPtr<CefBrowser> browser,
